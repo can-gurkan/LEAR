@@ -3,6 +3,9 @@ extensions [ py ]
 globals [
   init-prompt
   init-rule
+  ; generation-stats  ; List to store performance by generation
+  ; current-best-value ; Track the most successful rule
+  ; best-rule-energy  ; Energy achieved by best rule
 ]
 
 breed [llm-agents llm-agent]
@@ -12,6 +15,9 @@ llm-agents-own [
   input
   rule
   energy
+  ; lifetime ; age of the agent
+  ; food-collected  ; total food agent gathered
+  ; parent-rule ; parent rule
 ]
 
 
@@ -49,6 +55,9 @@ to setup
   ; all agents start with the same simple rule (for now)
   set init-rule "lt random 20 rt random 20 fd 1"
 
+  ; Set generation stats as empty list
+  ; set generation-stats []
+
   setup-env
   setup-llm-agents
   reset-ticks
@@ -68,7 +77,7 @@ to go
 end
 
 to evolve-agents
-  if ticks >= 1 and ticks mod 1000 = 0 [
+  if ticks >= 1 and ticks mod 100 = 0 [
     ask min-one-of llm-agents [energy] [
       die
     ]
@@ -81,8 +90,14 @@ to evolve-agents
 end
 
 to-report mutate-rule
-  py:set "agent_code" rule
-  let new-rule py:runresult "mutate_code(agent_code)"
+  let info (list
+    rule
+    input
+  )
+  py:set "agent_info" info
+  print "Evolution happening now..."
+  print info
+  let new-rule py:runresult "mutate_code(agent_info)"
   print new-rule
   report new-rule
 end
@@ -200,7 +215,7 @@ num-llm-agents
 num-llm-agents
 0
 25
-5.0
+10.0
 1
 1
 NIL
@@ -215,7 +230,7 @@ num-food-sources
 num-food-sources
 0
 100
-20.0
+30.0
 1
 1
 NIL
