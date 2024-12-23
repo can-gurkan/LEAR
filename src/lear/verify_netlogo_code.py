@@ -23,7 +23,7 @@ class NetLogoVerifier:
             'run', 'runresult',
             'file', 'import', 'export',
             'python',
-            'clear', 'reset', 'setup', 'go'
+            'clear', 'reset', 'setup', 'go', 'ifelse-value', 'ifelse'
         }
         
         self.arithmetic_operators = {'+', '-', '*', '/', '^'}
@@ -90,39 +90,41 @@ class NetLogoVerifier:
         """Check if commands are properly formed."""
         tokens = code.split()
         i = 0
-        
         while i < len(tokens):
             token = tokens[i].lower()
-            
-            # Check if token is a command
             if token in self.allowed_commands:
-                # Commands should be followed by a numeric value or expression
+                # Check if we have at least one more token
                 if i + 1 >= len(tokens):
                     return False, f"Command '{token}' needs a value"
-                
-                # Basic check for numeric value or expression
-                next_token = tokens[i + 1]
-                if not self._is_valid_numeric_expression(next_token) and not next_token.lower() in ['random', 'random-float']:
-                    return False, f"Invalid value for command '{token}': {next_token}"
-                i += 2
+
+                # Check for random keyword
+                if tokens[i + 1].lower() in self.allowed_reporters:
+                    # Need one more token after random
+                    if i + 2 >= len(tokens):
+                        return False, f"{tokens[i + 1].lower()} needs a numeric value"
+                    # Validate the number after random
+                    if not self._is_valid_numeric_expression(tokens[i + 2]):
+                        return False, f"Invalid value after 'random': {tokens[i + 2]}"
+                    i += 3  # Skip command, random, and the number
+                else:
+                    # Normal numeric value check
+                    next_token = tokens[i + 1]
+                    if not self._is_valid_numeric_expression(next_token):
+                        return False, f"Invalid value for command '{token}': {next_token}"
+                    i += 2  # Skip command and its value
             else:
                 i += 1
-        
+
         return True, ""
 
     def _is_valid_numeric_expression(self, expr: str) -> bool:
         """Check if expression is a valid numeric value or calculation."""
         try:
-            # Try to evaluate as a number
             float(expr)
             return True
         except ValueError:
-            # Check if it's a valid reporter or expression
-            # This is a simplified check - could be made more robust
-            valid_chars = set('0123456789.+-*/() ')
-            valid_chars.update(self.allowed_reporters)
-            return all(c in valid_chars for c in expr)
-
+            return False
+        
     def _check_value_ranges(self, code: str) -> Tuple[bool, str]:
         """Check if numeric values are within reasonable ranges."""
         # Extract numeric values

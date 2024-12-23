@@ -3,10 +3,14 @@ extensions [ py ]
 globals [
   init-prompt
   init-rule
-  ; generation-stats  ; List to store performance by generation
-  ; current-best-value ; Track the most successful rule
-  ; best-rule-energy  ; Energy achieved by best rule
+  generation-stats
+  current-best-value
+  best-rule-energy
+  error-log
+  TICKS_PER_EVOLUTION
+  old-rule  ; Added this
 ]
+
 
 breed [llm-agents llm-agent]
 breed [food-sources food-source]
@@ -15,10 +19,30 @@ llm-agents-own [
   input
   rule
   energy
-  ; lifetime ; age of the agent
-  ; food-collected  ; total food agent gathered
-  ; parent-rule ; parent rule
+  lifetime ; age of the agent
+  food-collected  ; total food agent gathered
+  parent-rule ; parent rule
 ]
+
+to-report get-generation-metrics
+  let current-gen floor (ticks / TICKS_PER_EVOLUTION)
+  let result (list 0 0 0 0 0)  ; Default result
+
+  carefully [
+    set result (list
+      current-gen
+      ifelse-value any? llm-agents [mean [energy] of llm-agents] [0]
+      ifelse-value any? llm-agents [mean [lifetime] of llm-agents] [0]
+      ifelse-value any? llm-agents [mean [food-collected] of llm-agents] [0]
+      length error-log
+    )
+  ] [
+    ; If error occurs, result stays as default (0 0 0 0 0)
+  ]
+
+  report result  ; Single report statement directly in to-report
+end
+
 
 
 ;;; Setup Procedures
@@ -28,7 +52,14 @@ to setup-llm-agents
     set color red
     setxy random-xcor random-ycor
     set rule init-rule
+    setup-new-agent ; Init with zero energy
   ]
+end
+
+to setup-new-agent
+  set energy 0
+  set food-collected 0
+  set lifetime 0
 end
 
 to spawn-food [num]
@@ -50,13 +81,13 @@ to setup
   py:setup py:python
   py:run "from mutate_code import mutate_code"
 
-  ; the prompt should be a lot more detailed
-  set init-prompt "Modify the given NetLogo code"
-  ; all agents start with the same simple rule (for now)
+  set init-prompt ""
   set init-rule "lt random 20 rt random 20 fd 1"
+  set TICKS_PER_EVOLUTION 1000
 
-  ; Set generation stats as empty list
-  ; set generation-stats []
+  set generation-stats []
+  set error-log []
+  set best-rule-energy 0
 
   setup-env
   setup-llm-agents
@@ -67,8 +98,13 @@ end
 
 to go
   ask llm-agents [
+    set lifetime lifetime + 1
     set input get-observation
-    run rule
+    carefully [
+      run rule
+    ] [
+      print "ERROR WHILE RUNNING THE RULE"
+    ]
     eat-food
   ]
   evolve-agents
@@ -77,15 +113,45 @@ to go
 end
 
 to evolve-agents
-  if ticks >= 1 and ticks mod 100 = 0 [
+  if ticks >= 1 and ticks mod TICKS_PER_EVOLUTION = 0 [
     ask min-one-of llm-agents [energy] [
       die
     ]
     ask max-one-of llm-agents [energy] [
-      hatch 1 [
-        set rule mutate-rule
+      carefully [
+        set old-rule rule
+        hatch 1 [
+          set parent-rule old-rule
+          set rule mutate-rule
+          setup-new-agent
+        ]
+      ] [
+        hatch 1 [
+          set rule [rule] of myself
+          setup-new-agent  ; Use the existing procedure
+          let error-info (list error-message rule ticks)
+          set error-log lput error-info error-log
+        ]
       ]
     ]
+
+    ask llm-agents [
+      set food-collected 0
+      set energy 0
+    ]
+    update-generation-stats
+  ]
+end
+
+to update-generation-stats
+  let gen-energy mean [energy] of llm-agents
+  let gen-info (list ticks gen-energy)
+  set generation-stats lput gen-info generation-stats
+
+  let best-agent max-one-of llm-agents [energy]
+  if [energy] of best-agent > best-rule-energy [
+    set best-rule-energy [energy] of best-agent
+    set current-best-value [rule] of best-agent
   ]
 end
 
@@ -93,13 +159,34 @@ to-report mutate-rule
   let info (list
     rule
     input
+    parent-rule
+    energy
+    ticks
+    error-log
   )
+
   py:set "agent_info" info
+
   print "Evolution happening now..."
-  print info
-  let new-rule py:runresult "mutate_code(agent_info)"
-  print new-rule
-  report new-rule
+  print word "Current World Info: " info
+
+  let result rule
+
+  print word "Current Rule: " result
+
+  carefully [
+    let new-rule py:runresult "mutate_code(agent_info, 'groq')"
+
+    ; if new-rule != false and new-rule != "" [
+    ;  set result new-rule ; Return original Rule
+    ; ]
+    set result new-rule
+    print word "New Rule Updated: " new-rule
+  ] [
+    let error-info (list error-message rule ticks)
+    set error-log lput error-info error-log
+  ]
+  report result
 end
 
 to eat-food
@@ -108,12 +195,18 @@ to eat-food
       die
     ]
     set energy energy + 1
+    set food-collected food-collected + 1
   ]
 end
 
 to replenish-food
   if count food-sources < num-food-sources [
-    spawn-food (num-food-sources - count food-sources)
+    carefully [
+      spawn-food (num-food-sources - count food-sources)
+    ] [
+      let error-info (list error-message "food-spawn" ticks)
+      set error-log lput error-info error-log
+    ]
   ]
 end
 
@@ -246,6 +339,42 @@ llm-mutation?
 0
 1
 -1000
+
+PLOT
+30
+495
+420
+785
+Mean Energy of Agents
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"Mean Energy" 1.0 0 -817084 true "" "plot mean [energy] of llm-agents"
+
+PLOT
+470
+495
+880
+780
+Maximum energy plot
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"Max Energy" 1000.0 0 -16777216 true "" "plot [energy] of max-one-of llm-agents [energy]"
 
 @#$#@#$#@
 ## WHAT IS IT?
