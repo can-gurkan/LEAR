@@ -1,13 +1,13 @@
 extensions [ py ]
 
 globals [
+  generation
   init-prompt
   init-rule
   generation-stats
   current-best-value
   best-rule-energy
   error-log
-  TICKS_PER_EVOLUTION
   old-rule  ; Added this
 ]
 
@@ -19,31 +19,10 @@ llm-agents-own [
   input
   rule
   energy
-  lifetime ; age of the agent
-  food-collected  ; total food agent gathered
-  parent-rule ; parent rule
+  lifetime ;; age of the agent
+  food-collected  ;; total food agent gathered
+  parent-rule ;; parent rule
 ]
-
-to-report get-generation-metrics
-  let current-gen floor (ticks / TICKS_PER_EVOLUTION)
-  let result (list 0 0 0 0 0)  ; Default result
-
-  carefully [
-    set result (list
-      current-gen
-      ifelse-value any? llm-agents [mean [energy] of llm-agents] [0]
-      ifelse-value any? llm-agents [mean [lifetime] of llm-agents] [0]
-      ifelse-value any? llm-agents [mean [food-collected] of llm-agents] [0]
-      length error-log
-    )
-  ] [
-    ; If error occurs, result stays as default (0 0 0 0 0)
-  ]
-
-  report result  ; Single report statement directly in to-report
-end
-
-
 
 ;;; Setup Procedures
 
@@ -83,7 +62,6 @@ to setup
 
   set init-prompt ""
   set init-rule "lt random 20 rt random 20 fd 1"
-  set TICKS_PER_EVOLUTION 1000
 
   set generation-stats []
   set error-log []
@@ -97,6 +75,7 @@ end
 ;;; Go Procedures
 
 to go
+  do-plotting
   ask llm-agents [
     set lifetime lifetime + 1
     set input get-observation
@@ -113,7 +92,7 @@ to go
 end
 
 to evolve-agents
-  if ticks >= 1 and ticks mod TICKS_PER_EVOLUTION = 0 [
+  if ticks >= 1 and ticks mod ticks-per-generation = 0 [
     ask min-one-of llm-agents [energy] [
       die
     ]
@@ -144,7 +123,8 @@ to evolve-agents
 end
 
 to update-generation-stats
-  let gen-energy mean [energy] of llm-agents
+  set generation generation + 1
+  let gen-energy mean-energy
   let gen-info (list ticks gen-energy)
   set generation-stats lput gen-info generation-stats
 
@@ -237,6 +217,35 @@ end
 to-report mean-energy
   report mean [energy] of llm-agents
 end
+
+to-report get-generation-metrics
+  let result (list 0 0 0 0 0)  ; Default result
+
+  carefully [
+    set result (list
+      generation
+      ifelse-value any? llm-agents [mean-energy] [0]
+      ifelse-value any? llm-agents [mean [lifetime] of llm-agents] [0] ; {{{ why is this important }}}
+      ifelse-value any? llm-agents [mean [food-collected] of llm-agents] [0]
+      length error-log ; {{{ why length? }}}
+    )
+  ] [
+    ; If error occurs, result stays as default (0 0 0 0 0)
+  ]
+  report result  ; Single report statement directly in to-report
+end
+
+;;; Plotting
+
+to do-plotting
+  if ticks mod ticks-per-generation = 0 [
+    set-current-plot "Mean Energy of Agents"
+    set-current-plot-pen "Mean Energy"
+    plotxy generation mean-energy
+    set-current-plot-pen "Max Energy"
+    plotxy generation max [energy] of llm-agents
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -267,9 +276,9 @@ ticks
 
 BUTTON
 20
-145
+165
 90
-178
+198
 NIL
 setup
 NIL
@@ -284,9 +293,9 @@ NIL
 
 BUTTON
 100
-145
+165
 170
-178
+198
 NIL
 go
 T
@@ -316,9 +325,9 @@ HORIZONTAL
 
 SLIDER
 20
-65
+60
 195
-98
+93
 num-food-sources
 num-food-sources
 0
@@ -341,40 +350,49 @@ llm-mutation?
 -1000
 
 PLOT
-30
-495
-420
-785
+680
+60
+1090
+350
 Mean Energy of Agents
-NIL
-NIL
+generation
+energy
 0.0
-10.0
+5.0
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
-"Mean Energy" 1.0 0 -817084 true "" "plot mean [energy] of llm-agents"
+"Mean Energy" 1.0 0 -817084 true "" ""
+"Max Energy" 1.0 0 -13345367 true "" ""
 
-PLOT
-470
-495
-880
-780
-Maximum energy plot
+SLIDER
+20
+100
+195
+133
+ticks-per-generation
+ticks-per-generation
+1
+2000
+200.0
+1
+1
 NIL
+HORIZONTAL
+
+MONITOR
+680
+10
+757
+55
 NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"Max Energy" 1000.0 0 -16777216 true "" "plot [energy] of max-one-of llm-agents [energy]"
+generation
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
