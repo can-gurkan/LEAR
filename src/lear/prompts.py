@@ -77,7 +77,7 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
 INPUT CONTEXT:
 - Current rule: {}
 - Food sensor readings: {}
-  - Input list contains three values representing distances to food in three cone regions of 30 degrees each
+  - Input list contains three values representing distances to food in three cone regions of 20 degrees each
   - The first item in the input list is the distance to the nearest food in the left cone, the second is the right cone, and the third is the front cone
   - Each value encodes the distance to nearest food source where a value of 0 indicates no food
   - Non-zero lower values indicate closer food

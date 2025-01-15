@@ -34,7 +34,7 @@ class BaseCodeGenerator(ABC):
         prompt_library = LEARPrompts()
         
         if model_type == 'groq':
-            prompt = prompt_library.groq_prompt
+            prompt = prompt_library.groq_prompt2
         elif model_type == 'claude':
             prompt = prompt_library.claude_prompt2
                 
