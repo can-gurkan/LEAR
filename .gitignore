@@ -5,6 +5,10 @@ build/
 dist/
 wheels/
 *.egg-info
+*.log
+
+# logs
+Logs/
 
 # venv
 .venv
