@@ -15,3 +15,9 @@ Logs/
 
 # env
 .env
+
+# netlogo
+*.tmp.nlogo
+
+# macOS
+.DS_Store
