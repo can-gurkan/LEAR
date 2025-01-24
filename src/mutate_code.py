@@ -5,7 +5,8 @@ from verify_netlogo_code import NetLogoVerifier
 from groq_generator import GroqCodeGenerator
 from claude_generator import ClaudeCodeGenerator
 
-LOG_FILE = "../../Logs/netlogo_evolution.log"
+LOG_FILE = "../Logs/netlogo_evolution.log"
+
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
