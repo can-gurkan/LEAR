@@ -12,3 +12,5 @@ wheels/
 
 # env
 .env
+.DS_Store
+Logs/netlogo_evolution.log
