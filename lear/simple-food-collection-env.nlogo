@@ -82,7 +82,17 @@ to go
     carefully [
       run rule
     ] [
-      print "ERROR WHILE RUNNING THE RULE"
+      let error-info (word
+        "ERROR WHILE RUNNING RULE: " rule
+        " | Agent: " who
+        " | Tick: " ticks
+        " | Energy: " energy
+        " | Lifetime: " lifetime
+        " | Food Collected: " food-collected
+        " | Input: " input
+      )
+      print error-info
+      set error-log lput error-info error-log
     ]
     eat-food
   ]
@@ -142,7 +152,6 @@ to-report mutate-rule
     parent-rule
     energy
     ticks
-    error-log
   )
 
   py:set "agent_info" info
