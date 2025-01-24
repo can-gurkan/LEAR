@@ -10,11 +10,6 @@ LOG_FILE = "../Logs/netlogo_evolution.log"
 # Create log file if it doesn't exist
 os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
 
-<<<<<<<< HEAD:mutate_code.py
-LOG_FILE = "../Logs/netlogo_evolution.log"
-
-========
->>>>>>>> origin/main:lear/mutate_code.py
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
