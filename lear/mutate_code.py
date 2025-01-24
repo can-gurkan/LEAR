@@ -4,8 +4,11 @@ from config import load_config
 from verify_netlogo_code import NetLogoVerifier
 from groq_generator import GroqCodeGenerator
 from claude_generator import ClaudeCodeGenerator
+import os
 
-LOG_FILE = "../Logs/netlogo_evolution.log"
+LOG_FILE = "../../Logs/netlogo_evolution.log"
+# Create log file if it doesn't exist
+os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
 
 logging.basicConfig(
     filename=LOG_FILE,
