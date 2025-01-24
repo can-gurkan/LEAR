@@ -84,10 +84,6 @@ to go
     ] [
       let error-info (word
         "ERROR WHILE RUNNING RULE: " rule
-        " | Agent: " who
-        " | Tick: " ticks
-        " | Energy: " energy
-        " | Lifetime: " lifetime
         " | Food Collected: " food-collected
         " | Input: " input
       )
