@@ -307,6 +307,91 @@ class NetLogoVerifier:
             return False, "Unclosed brackets"
         return True, ""
 
+    # Recursive Helper Function that validates if, ifelse, and ifelse-value statements
+    def _validate_if_statements(self, tokens: str) -> Tuple[bool, str, int]:
+
+        i = 0
+        while i < len(tokens):
+            token = tokens[i].lower()
+            if token == 'ifelse' or token == 'ifelse-value':
+
+                # Check condition
+                condition_end = self._find_condition_end(tokens[i+1:])
+                if condition_end == -1:
+                    return False, f"Invalid {token} condition", -1
+                    
+                # Skip past condition
+                i += condition_end + 1
+                    
+                # Check for true branch
+                if i >= len(tokens) or tokens[i] != '[':
+                    return False, f"Missing true branch for {token}", -1
+                true_branch_end = self._find_matching_bracket(tokens[i:])
+                if true_branch_end == -1:
+                    return False, f"Invalid true branch for {token}", -1
+
+                # recursively validate potential if/ifelse statements inside true branch
+                is_valid = self._validate_if_statements(tokens[i+1:i+true_branch_end+1])
+                if not is_valid[0]:
+                    return False, is_valid[1], -1
+                    
+                # Skip past true branch
+                i += true_branch_end + 1
+                    
+                # Check for false branch
+                if i >= len(tokens) or tokens[i] != '[':
+                    return False, f"Missing false branch for {token}", -1
+                false_branch_end = self._find_matching_bracket(tokens[i:])
+                if false_branch_end == -1:
+                    return False, f"Invalid false branch for {token}", -1
+
+                # recursively validate potential if/ifelse statements inside false branch
+                
+                is_valid = self._validate_if_statements(tokens[i+1:i+false_branch_end+1])
+                if not is_valid[0]:
+                    return False, is_valid[1], -1
+                    
+                # Skip past false branch
+                i += false_branch_end + 1
+                
+                # if all checks pass, then return True for valid statement
+                return True, f'Valid {token} statement', i
+
+            # Handle if structure
+            elif token == 'if':
+                # Check condition
+                condition_end = self._find_condition_end(tokens[i+1:])
+                if condition_end == -1:
+                    return False, "Invalid if condition", -1
+                    
+                # Skip past condition
+                i += condition_end + 1
+                    
+                # Check for branch
+                if i >= len(tokens) or tokens[i] != '[':
+                    return False, "Missing branch for if", -1
+                branch_end = self._find_matching_bracket(tokens[i:])
+                if branch_end == -1:
+                    return False, "Invalid branch for if", -1
+
+                # recursively validate potential if/ifelse statements inside branch
+                is_valid = self._validate_if_statements(tokens[i+1:i+branch_end+1])
+                if not is_valid[0]:
+                    return False, is_valid[1], -1
+
+                # Checking to see if a false/else branch exists (in case LLM structured if statement as ifelse statement)
+                i += branch_end + 1   
+                # Check for false/else branch
+                if i < len(tokens) and tokens[i] == '[':
+                    return False, "Contains else branch for if statement", -1
+                    
+                
+                # if all checks pass, then return True for valid statement
+                return True, f'Valid {token} statement', i
+            
+            else:
+                return True, 'Not a if/ifelse/ifelse-value', i
+
     def _check_command_syntax(self, code: str) -> Tuple[bool, str]:
         """
         Validate syntax of NetLogo commands and control structures.
@@ -354,57 +439,69 @@ class NetLogoVerifier:
         while i < len(tokens):
             token = tokens[i].lower()
             
-            # Handle ifelse structure
-            if token == 'ifelse':
-                # Check condition
-                condition_end = self._find_condition_end(tokens[i+1:])
-                if condition_end == -1:
-                    return False, "Invalid ifelse condition"
+            # # Handle ifelse structure
+            # if token == 'ifelse':
+            #     # Check condition
+            #     condition_end = self._find_condition_end(tokens[i+1:])
+            #     if condition_end == -1:
+            #         return False, "Invalid ifelse condition"
                 
-                # Skip past condition
-                i += condition_end + 1
+            #     # Skip past condition
+            #     i += condition_end + 1
                 
-                # Check for true branch
-                if i >= len(tokens) or tokens[i] != '[':
-                    return False, "Missing true branch for ifelse"
-                true_branch_end = self._find_matching_bracket(tokens[i:])
-                if true_branch_end == -1:
-                    return False, "Invalid true branch for ifelse"
+            #     # Check for true branch
+            #     if i >= len(tokens) or tokens[i] != '[':
+            #         return False, "Missing true branch for ifelse"
+            #     true_branch_end = self._find_matching_bracket(tokens[i:])
+            #     if true_branch_end == -1:
+            #         return False, "Invalid true branch for ifelse"
                 
-                # Skip past true branch
-                i += true_branch_end + 1
+            #     # Skip past true branch
+            #     i += true_branch_end + 1
                 
-                # Check for false branch
-                if i >= len(tokens) or tokens[i] != '[':
-                    return False, "Missing false branch for ifelse"
-                false_branch_end = self._find_matching_bracket(tokens[i:])
-                if false_branch_end == -1:
-                    return False, "Invalid false branch for ifelse"
+            #     # Check for false branch
+            #     if i >= len(tokens) or tokens[i] != '[':
+            #         return False, "Missing false branch for ifelse"
+            #     false_branch_end = self._find_matching_bracket(tokens[i:])
+            #     if false_branch_end == -1:
+            #         return False, "Invalid false branch for ifelse"
                 
-                # Skip past false branch
-                i += false_branch_end + 1
-                continue
+            #     # Skip past false branch
+            #     i += false_branch_end + 1
+            #     continue
 
-            # Handle if structure
-            if token == 'if':
-                # Check condition
-                condition_end = self._find_condition_end(tokens[i+1:])
-                if condition_end == -1:
-                    return False, "Invalid if condition"
+            # # Handle if structure
+            # if token == 'if':
+            #     # Check condition
+            #     condition_end = self._find_condition_end(tokens[i+1:])
+            #     if condition_end == -1:
+            #         return False, "Invalid if condition"
                 
-                # Skip past condition
-                i += condition_end + 1
+            #     # Skip past condition
+            #     i += condition_end + 1
                 
-                # Check for branch
-                if i >= len(tokens) or tokens[i] != '[':
-                    return False, "Missing branch for if"
-                branch_end = self._find_matching_bracket(tokens[i:])
-                if branch_end == -1:
-                    return False, "Invalid branch for if"
+            #     # Check for branch
+            #     if i >= len(tokens) or tokens[i] != '[':
+            #         return False, "Missing branch for if"
+            #     branch_end = self._find_matching_bracket(tokens[i:])
+            #     if branch_end == -1:
+            #         return False, "Invalid branch for if"
                 
-                # Skip past branch
-                i += branch_end + 1
-                continue
+            #     # Skip past branch
+            #     i += branch_end + 1
+            #     continue
+
+            is_valid, message, index = self._validate_if_statements(tokens[i:])
+            if not is_valid:
+                return is_valid, message
+
+            i += index
+
+            # check if at end of code
+            if i < len(tokens):
+                token = tokens[i].lower()
+            else:
+                return True, ""
 
             # Handle regular commands
             if token in self.allowed_commands:
