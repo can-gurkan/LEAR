@@ -51,7 +51,6 @@ class GroqCodeGenerator(BaseCodeGenerator):
             )
             
             new_code = response.new_code.strip()
-            print(new_code)
             
             # Verify safety
             is_safe, safety_msg = self.verifier.is_safe(new_code)
