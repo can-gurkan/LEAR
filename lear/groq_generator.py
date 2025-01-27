@@ -3,6 +3,7 @@ from groq import Groq
 import logging
 from code_generator_base import BaseCodeGenerator, NLogoCode
 from verify_netlogo_code import NetLogoVerifier
+import traceback
 
 class GroqCodeGenerator(BaseCodeGenerator):
     def __init__(self, api_key: str, verifier: NetLogoVerifier):
@@ -33,7 +34,7 @@ class GroqCodeGenerator(BaseCodeGenerator):
             # Generate new code
             prompt = self.get_base_prompt(agent_info=agent_info, model_type='groq')
             response = self.client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model="llama-3.3-70b-versatile",
                 response_model=NLogoCode,
                 messages=[
                     {
@@ -62,5 +63,5 @@ class GroqCodeGenerator(BaseCodeGenerator):
                 return agent_info[0]
             
         except Exception as e:
-            logging.error(f"Error during code generation: {str(e)}")
+            logging.error(f"Error during code generation: {traceback.print_exc()}")
             return agent_info[0]
