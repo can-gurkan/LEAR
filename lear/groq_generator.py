@@ -4,7 +4,8 @@ import logging
 from code_generator_base import BaseCodeGenerator, NLogoCode
 from verify_netlogo_code import NetLogoVerifier
 import traceback
-from dspy_experiment.prompt import NetLogoPrompt
+from dspy_experiment.prompt_simple import NetLogoPrompt
+from dspy_experiment.prompt_pseudocode import NetLogoPromptPseudocode
 
 class GroqCodeGenerator(BaseCodeGenerator):
     def __init__(self, api_key: str, verifier: NetLogoVerifier):
@@ -32,32 +33,28 @@ class GroqCodeGenerator(BaseCodeGenerator):
             # Log attempt
             logging.info(f"Attempting generation for rule: {agent_info[0]} with food input: {agent_info[1]}")
             
-            # Generate new code
-            # prompt = self.get_base_prompt(agent_info=agent_info, model_type='groq')
-            # response = self.client.chat.completions.create(
-            #     model="llama-3.3-70b-versatile",
-            #     response_model=NLogoCode,
-            #     messages=[
-            #         {
-            #             "role": "system", 
-            #             "content": """You are an expert in evolving NetLogo agent behaviors.
-            #             Focus on creating efficient, survival-optimized netlogo code."""
-            #         },
-            #         {
-            #             "role": "user",
-            #             "content": prompt
-            #         }
-            #     ],
-            #     temperature=0.65,
+            # prompt = NetLogoPromptPseudocode()
+            # result = prompt(
+            #     current_rule=agent_info[0],
+            #     sensor_readings=str(agent_info[1])
             # )
+            
+            # # Log the reasoning process
+            # logging.info(f"Strategy: {result.strategy}")
+            # logging.info(f"Pseudocode: {result.pseudocode}")
+            # new_code = result.movement_code
+
             prompt = NetLogoPrompt()
             result = prompt(
                 current_rule=agent_info[0],
                 sensor_readings=str(agent_info[1])
             )
-            reasoning = result.reasoning
-            logging.info(f"Reasoning: {reasoning}")
             new_code = result.movement_code
+            reasoning = result.reasoning
+            logging.info("--------------------------------")
+            logging.info(f"Reasoning: {reasoning}")
+            logging.info(f"Pseudocode: {result.pseudocode}")
+            logging.info(f"New code: {new_code}")
             
             # Verify safety
             is_safe, safety_msg = self.verifier.is_safe(new_code)

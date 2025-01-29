@@ -13,10 +13,15 @@ class NetLogoMovement(dspy.Signature):
     sensor_readings = dspy.InputField(
         desc="List of 3 values representing food distances"
     )
-    movement_code = dspy.OutputField(desc="NetLogo code for turtle movement")
+
     reasoning = dspy.OutputField(
-        desc="Step-by-step reasoning for the movement strategy"
+        desc="Step-by-step reasoning for the movement strategy."
     )
+    pseudocode = dspy.OutputField(
+        desc="In psuedocode, detail the movement strategy."
+    )
+
+    movement_code = dspy.OutputField(desc="NetLogo code for turtle movement")
 
 
 # Create the program using ChainOfThought for explicit reasoning

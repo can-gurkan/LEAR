@@ -232,3 +232,87 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
 
         Return ONLY the NetLogo code with no explanations. Make it mathematically interesting and behaviorally complex while ensuring it remains valid NetLogo syntax."""
         
+        self.groq_prompt2_reasoning = """You are an expert at designing movement strategies for autonomous agents seeking food. Given the current state, reason about the optimal movement strategy and provide pseudocode with reasoning.
+
+        INPUT CONTEXT:
+        - Current rule: {}
+        - Food sensor readings: {}
+          - Input list contains three values representing distances to food in three cone regions of 20 degrees each
+          - The first item in the input list is the distance to the nearest food in the left cone, the second is the right cone, and the third is the front cone
+          - Each value encodes the distance to nearest food source where a value of 0 indicates no food
+          - Non-zero lower values indicate closer food
+
+        STRATEGIC GOALS:
+        1. Balance exploration and food-seeking behavior
+        2. Respond to sensor readings intelligently
+        3. Combine different movement patterns
+
+        EXAMPLE REASONING AND PSEUDOCODE:
+        Input: [5, 0, 2]
+        Pseudocode:
+        # Food is closest in front (2), make small adjustment to align better
+        turn_slightly_right()
+        # Move a small step to maintain precise control
+        move_forward_small_step()
+        # Correct course slightly to stay on target
+        turn_slightly_left()
+
+        Input: [0, 3, 0]
+        Pseudocode:
+        # Only food is in right cone, need to orient that direction
+        move_forward_small()
+        # Turn toward the food with some randomness to avoid local minima
+        turn_right_random()
+        # Move a variable distance to handle uncertain food location
+        move_forward_random()
+
+        Return ONLY pseudocode with embedded reasoning as comments."""
+
+        self.groq_prompt2_code = """You are an expert NetLogo coder. Convert the given movement strategy and pseudocode into valid NetLogo code.
+
+        VALID COMMANDS AND SYNTAX:
+        - Movement: fd/forward, rt/right, lt/left
+        - Reporters: random, random-float, sin, cos
+        - Format: [command] [positive_number | reporter_expression]
+
+        CONSTRAINTS:
+        1. Commands must only use the above valid commands and reporters
+        2. All numbers must be positive
+        3. No variable definitions or new commands
+        4. Maximum 5 movement commands per sequence
+        5. Each command must be space-separated
+        6. Code must be a single line with no comments
+
+        INPUT:
+        Strategy: {}
+        Pseudocode: {}
+
+        EXAMPLES:
+        Pseudocode:
+        # Food is closest in front (2), make small adjustment to align better
+        turn_slightly_right()
+        # Move a small step to maintain precise control
+        move_forward_small_step()
+        # Correct course slightly to stay on target
+        turn_slightly_left()
+        NetLogo: rt 15 fd 1 lt 10
+
+        Pseudocode:
+        # Only food is in right cone, need to orient that direction
+        move_forward_small()
+        # Turn toward the food with some randomness to avoid local minima
+        turn_right_random()
+        # Move a variable distance to handle uncertain food location
+        move_forward_random()
+        NetLogo: fd 0.5 rt random 45 fd random-float 2
+
+        Pseudocode:
+        # No food nearby, need to explore efficiently
+        turn_random_direction()
+        # Move a longer distance to cover more ground
+        move_forward_large()
+        # Add some variation to create more organic movement
+        turn_slightly_random()
+        NetLogo: rt random-float 90 fd 3 lt random 20
+
+        Generate ONLY the NetLogo code with no explanations. Code must be runnable in NetLogo."""
