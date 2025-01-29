@@ -18,3 +18,9 @@ Logs/
 .env
 .DS_Store
 Logs/netlogo_evolution.log
+
+# netlogo
+*.tmp.nlogo
+
+# macOS
+.DS_Store

@@ -82,7 +82,7 @@ class NetLogoVerifier:
             'fd', 'forward',
             'rt', 'right',
             'lt', 'left',
-            'if', 'ifelse',
+            #'if', 'ifelse',
             'set', 'let'  # Added variable assignment
         }
         
@@ -307,6 +307,158 @@ class NetLogoVerifier:
             return False, "Unclosed brackets"
         return True, ""
 
+
+    # Helper function that goes over allowed movement commands
+    def _validate_allowed_commands(self, tokens) -> Tuple[bool, str]:
+        '''
+        Helper function for the _validate_if_statements function. Handles allowed commands inside if/ifelse/ifelse-value branches
+
+        -----Parameters-----
+        tokens (List): the tokens comprising the statement structure
+
+        -----Returns-----
+        results (Tuple[bool, str, int]): first element is whether statement is valid (True/False), second is associated message
+        '''
+        # Handle regular commands
+        i = 0
+        while i < len(tokens):
+            if token in self.allowed_commands:
+                # Check if we have at least one more token
+                if i + 1 >= len(tokens):
+                    return False, f"Command '{token}' needs a value"
+
+                # Check for random keyword
+                if tokens[i + 1].lower() in self.allowed_reporters:
+                    # Need one more token after random
+                    if i + 2 >= len(tokens):
+                        return False, f"{tokens[i + 1].lower()} needs a numeric value"
+                    # Validate the number after random
+                    if not self._is_valid_numeric_expression(tokens[i + 2]):
+                        return False, f"Invalid value after 'random': {tokens[i + 2]}"
+                    i += 3  # Skip command, random, and the number
+                else:
+                    # Normal numeric value check
+                    next_token = tokens[i + 1]
+                    if not self._is_valid_numeric_expression(next_token):
+                        return False, f"Invalid value for command '{token}': {next_token}"
+                    i += 2  # Skip command and its value
+
+        return True
+
+    # Recursive Helper Function that validates if, ifelse, and ifelse-value statements
+    def _validate_if_statements(self, tokens) -> Tuple[bool, str, int]:
+        '''
+        Helper function for the _check_command_syntax function. Handles if, ifelse, and ifelse-value statements and the content within them.
+
+        -----Parameters-----
+        tokens (List): the tokens comprising the statement structure
+
+        -----Returns-----
+        results (Tuple[bool, str, int]): first element is whether statement is valid (True/False), second is associated message, and third is last element index+1 of structure
+        '''
+
+        i = 0
+        while i < len(tokens):
+            token = tokens[i].lower()
+            if token == 'ifelse' or token == 'ifelse-value':
+
+                # Check condition
+                condition_end = self._find_condition_end(tokens[i+1:])
+                if condition_end == -1:
+                    return False, f"Invalid {token} condition", -1
+                    
+                # Skip past condition
+                i += condition_end + 1
+                    
+                # Check for true branch
+                if i >= len(tokens) or tokens[i] != '[':
+                    return False, f"Missing true branch for {token}", -1
+                true_branch_end = self._find_matching_bracket(tokens[i:])
+                if true_branch_end == -1:
+                    return False, f"Invalid true branch for {token}", -1
+
+                # recursively validate potential if/ifelse statements inside true branch
+                is_valid = self._validate_if_statements(tokens[i+1:i+true_branch_end+1])
+                if not is_valid[0]:
+                    return False, is_valid[1], -1
+
+                # Check movement commands inside brackets if not if/ifelse/ifelse-value statement
+                if is_valid[2] == 'Not a if/ifelse/ifelse-value':
+
+                    valid_movement = self._validate_allowed_commands(tokens[i+1:i+true_branch_end+1])
+                    if not valid_movement[0]:
+                        return False, valid_movement[1], -1
+
+                # Skip past true branch
+                i += true_branch_end + 1
+                    
+                # Check for false branch
+                if i >= len(tokens) or tokens[i] != '[':
+                    return False, f"Missing false branch for {token}", -1
+                false_branch_end = self._find_matching_bracket(tokens[i:])
+                if false_branch_end == -1:
+                    return False, f"Invalid false branch for {token}", -1
+
+                # recursively validate potential if/ifelse statements inside false branch
+                is_valid = self._validate_if_statements(tokens[i+1:i+false_branch_end+1])
+                if not is_valid[0]:
+                    return False, is_valid[1], -1
+
+                # Check movement commands inside brackets if not if/ifelse/ifelse-value statement
+                if is_valid[2] == 'Not a if/ifelse/ifelse-value':
+
+                    valid_movement = self._validate_allowed_commands(tokens[i+1:i+false_branch_end+1])
+                    if not valid_movement[0]:
+                        return False, valid_movement[1], -1
+                    
+                # Skip past false branch
+                i += false_branch_end + 1
+                
+                # if all checks pass, then return True for valid statement
+                return True, f'Valid {token} statement', i
+
+            # Handle if structure
+            elif token == 'if':
+                # Check condition
+                condition_end = self._find_condition_end(tokens[i+1:])
+                if condition_end == -1:
+                    return False, "Invalid if condition", -1
+                    
+                # Skip past condition
+                i += condition_end + 1
+                    
+                # Check for branch
+                if i >= len(tokens) or tokens[i] != '[':
+                    return False, "Missing branch for if", -1
+                branch_end = self._find_matching_bracket(tokens[i:])
+                if branch_end == -1:
+                    return False, "Invalid branch for if", -1
+
+                # recursively validate potential if/ifelse statements inside branch
+                is_valid = self._validate_if_statements(tokens[i+1:i+branch_end+1])
+                if not is_valid[0]:
+                    return False, is_valid[1], -1
+
+                # Check movement commands inside brackets if not if/ifelse/ifelse-value statement
+                if is_valid[2] == 'Not a if/ifelse/ifelse-value':
+
+                    valid_movement = self._validate_allowed_commands(tokens[i+1:i+branch_end+1])
+                    if not valid_movement[0]:
+                        return False, valid_movement[1], -1
+
+                # Checking to see if a false/else branch exists (in case LLM structured if statement as ifelse statement)
+                i += branch_end + 1   
+                # Check for false/else branch
+                if i < len(tokens) and tokens[i] == '[':
+                    return False, "Contains else branch for if statement", -1
+                    
+                
+                # if all checks pass, then return True for valid statement
+                return True, f'Valid {token} statement', i
+            
+            else:
+                return True, 'Not a if/ifelse/ifelse-value', i
+
     def _check_command_syntax(self, code: str) -> Tuple[bool, str]:
         """
         Validate syntax of NetLogo commands and control structures.
@@ -332,83 +484,69 @@ class NetLogoVerifier:
         while i < len(tokens):
             token = tokens[i].lower()
             
-            # Handle ifelse structure with enhanced validation
-            if token == 'ifelse':
-                # Validate condition
-                condition_tokens = []
-                j = i + 1
-                while j < len(tokens) and tokens[j] != '[':
-                    condition_tokens.append(tokens[j])
-                    j += 1
+            # # Handle ifelse structure
+            # if token == 'ifelse':
+            #     # Check condition
+            #     condition_end = self._find_condition_end(tokens[i+1:])
+            #     if condition_end == -1:
+            #         return False, "Invalid ifelse condition"
                 
-                if not self._validate_condition(' '.join(condition_tokens)):
-                    return False, f"Invalid ifelse condition: {' '.join(condition_tokens)}"
+            #     # Skip past condition
+            #     i += condition_end + 1
                 
-                i = j  # Move to opening bracket
+            #     # Check for true branch
+            #     if i >= len(tokens) or tokens[i] != '[':
+            #         return False, "Missing true branch for ifelse"
+            #     true_branch_end = self._find_matching_bracket(tokens[i:])
+            #     if true_branch_end == -1:
+            #         return False, "Invalid true branch for ifelse"
+            
+            #     # Skip past true branch
+            #     i += true_branch_end + 1
                 
-                # Validate true branch
-                if i >= len(tokens) or tokens[i] != '[':
-                    return False, "Missing true branch for ifelse"
-                    
-                true_branch_end = self._find_matching_bracket(tokens[i:])
-                if true_branch_end == -1:
-                    return False, "Invalid true branch for ifelse"
-                    
-                # Recursively validate true branch content
-                true_branch = ' '.join(tokens[i+1:i+true_branch_end])
-                is_valid, error_msg = self._check_command_syntax(true_branch)
-                if not is_valid:
-                    return False, f"In true branch: {error_msg}"
+            #     # Check for false branch
+            #     if i >= len(tokens) or tokens[i] != '[':
+            #         return False, "Missing false branch for ifelse"
+            #     false_branch_end = self._find_matching_bracket(tokens[i:])
+            #     if false_branch_end == -1:
+            #         return False, "Invalid false branch for ifelse"
                 
-                i += true_branch_end + 1
-                
-                # Validate false branch
-                if i >= len(tokens) or tokens[i] != '[':
-                    return False, "Missing false branch for ifelse"
-                    
-                false_branch_end = self._find_matching_bracket(tokens[i:])
-                if false_branch_end == -1:
-                    return False, "Invalid false branch for ifelse"
-                    
-                # Recursively validate false branch content
-                false_branch = ' '.join(tokens[i+1:i+false_branch_end])
-                is_valid, error_msg = self._check_command_syntax(false_branch)
-                if not is_valid:
-                    return False, f"In false branch: {error_msg}"
-                
-                i += false_branch_end + 1
-                continue
+            #     # Skip past false branch
+            #     i += false_branch_end + 1
+            #     continue
 
-            # Handle if structure with enhanced validation
-            if token == 'if':
-                # Validate condition
-                condition_tokens = []
-                j = i + 1
-                while j < len(tokens) and tokens[j] != '[':
-                    condition_tokens.append(tokens[j])
-                    j += 1
+            # # Handle if structure
+            # if token == 'if':
+            #     # Check condition
+            #     condition_end = self._find_condition_end(tokens[i+1:])
+            #     if condition_end == -1:
+            #         return False, "Invalid if condition"
                 
-                if not self._validate_condition(' '.join(condition_tokens)):
-                    return False, f"Invalid if condition: {' '.join(condition_tokens)}"
+            #     # Skip past condition
+            #     i += condition_end + 1
                 
-                i = j  # Move to opening bracket
+            #     # Check for branch
+            #     if i >= len(tokens) or tokens[i] != '[':
+            #         return False, "Missing branch for if"
+            #     branch_end = self._find_matching_bracket(tokens[i:])
+            #     if branch_end == -1:
+            #         return False, "Invalid branch for if"
                 
-                # Validate branch
-                if i >= len(tokens) or tokens[i] != '[':
-                    return False, "Missing branch for if"
-                    
-                branch_end = self._find_matching_bracket(tokens[i:])
-                if branch_end == -1:
-                    return False, "Invalid branch for if"
-                    
-                # Recursively validate branch content
-                branch = ' '.join(tokens[i+1:i+branch_end])
-                is_valid, error_msg = self._check_command_syntax(branch)
-                if not is_valid:
-                    return False, f"In if branch: {error_msg}"
-                
-                i += branch_end + 1
-                continue
+            #     # Skip past branch
+            #     i += branch_end + 1
+            #     continue
+
+            is_valid, message, index = self._validate_if_statements(tokens[i:])
+            if not is_valid:
+                return is_valid, message
+
+            i += index
+
+            # check if at end of code
+            if i < len(tokens):
+                token = tokens[i].lower()
+            else:
+                return True, ""
 
             # Handle regular commands with enhanced validation
             if token in self.allowed_commands:
