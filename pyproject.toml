@@ -17,6 +17,7 @@ dependencies = [
     "setuptools==59.5.0",
     "python-dotenv~=1.0.1",
     "anthropic~=0.42.0",
+    "dspy>=2.5.43",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
