@@ -313,10 +313,11 @@ class NetLogoVerifier:
         
         This check ensures that:
         - Commands have required parameters
-        - Control structures (if/ifelse) are properly formed
-        - Brackets are used correctly for blocks
+        - Control structures (if/ifelse) are properly formed and nested
+        - Complex conditions with item comparisons are valid
         - Random number generation is properly formatted
         - Variable assignments follow correct syntax
+        - Nested control structures are properly handled
         
         Parameters:
             code (str): The code to validate
@@ -325,112 +326,139 @@ class NetLogoVerifier:
             Tuple[bool, str]:
                 - bool: True if syntax is valid
                 - str: Error message describing syntax issues if found
-                
-        Implementation Details:
-            - Tokenizes code for efficient parsing
-            - Handles both simple commands and complex control structures
-            - Validates command parameters and values
-            - Provides specific error messages for:
-                * Missing command parameters
-                * Invalid control structure syntax
-                * Incorrect random number usage
-                * Invalid variable assignments
-                
-        Example:
-            Input: "fd 10 rt 90"
-            Output: (True, "")
-            
-            Input: "fd"
-            Output: (False, "Command 'fd' needs a value")
-            
-            Input: "if x < 10 [fd 1"
-            Output: (False, "Invalid branch for if")
-            
-            Input: "ifelse random 10 < 5 [fd 1] [rt 90]"
-            Output: (True, "")
         """
         tokens = code.split()
         i = 0
         while i < len(tokens):
             token = tokens[i].lower()
             
-            # Handle ifelse structure
+            # Handle ifelse structure with enhanced validation
             if token == 'ifelse':
-                # Check condition
-                condition_end = self._find_condition_end(tokens[i+1:])
-                if condition_end == -1:
-                    return False, "Invalid ifelse condition"
+                # Validate condition
+                condition_tokens = []
+                j = i + 1
+                while j < len(tokens) and tokens[j] != '[':
+                    condition_tokens.append(tokens[j])
+                    j += 1
                 
-                # Skip past condition
-                i += condition_end + 1
+                if not self._validate_condition(' '.join(condition_tokens)):
+                    return False, f"Invalid ifelse condition: {' '.join(condition_tokens)}"
                 
-                # Check for true branch
+                i = j  # Move to opening bracket
+                
+                # Validate true branch
                 if i >= len(tokens) or tokens[i] != '[':
                     return False, "Missing true branch for ifelse"
+                    
                 true_branch_end = self._find_matching_bracket(tokens[i:])
                 if true_branch_end == -1:
                     return False, "Invalid true branch for ifelse"
+                    
+                # Recursively validate true branch content
+                true_branch = ' '.join(tokens[i+1:i+true_branch_end])
+                is_valid, error_msg = self._check_command_syntax(true_branch)
+                if not is_valid:
+                    return False, f"In true branch: {error_msg}"
                 
-                # Skip past true branch
                 i += true_branch_end + 1
                 
-                # Check for false branch
+                # Validate false branch
                 if i >= len(tokens) or tokens[i] != '[':
                     return False, "Missing false branch for ifelse"
+                    
                 false_branch_end = self._find_matching_bracket(tokens[i:])
                 if false_branch_end == -1:
                     return False, "Invalid false branch for ifelse"
+                    
+                # Recursively validate false branch content
+                false_branch = ' '.join(tokens[i+1:i+false_branch_end])
+                is_valid, error_msg = self._check_command_syntax(false_branch)
+                if not is_valid:
+                    return False, f"In false branch: {error_msg}"
                 
-                # Skip past false branch
                 i += false_branch_end + 1
                 continue
 
-            # Handle if structure
+            # Handle if structure with enhanced validation
             if token == 'if':
-                # Check condition
-                condition_end = self._find_condition_end(tokens[i+1:])
-                if condition_end == -1:
-                    return False, "Invalid if condition"
+                # Validate condition
+                condition_tokens = []
+                j = i + 1
+                while j < len(tokens) and tokens[j] != '[':
+                    condition_tokens.append(tokens[j])
+                    j += 1
                 
-                # Skip past condition
-                i += condition_end + 1
+                if not self._validate_condition(' '.join(condition_tokens)):
+                    return False, f"Invalid if condition: {' '.join(condition_tokens)}"
                 
-                # Check for branch
+                i = j  # Move to opening bracket
+                
+                # Validate branch
                 if i >= len(tokens) or tokens[i] != '[':
                     return False, "Missing branch for if"
+                    
                 branch_end = self._find_matching_bracket(tokens[i:])
                 if branch_end == -1:
                     return False, "Invalid branch for if"
+                    
+                # Recursively validate branch content
+                branch = ' '.join(tokens[i+1:i+branch_end])
+                is_valid, error_msg = self._check_command_syntax(branch)
+                if not is_valid:
+                    return False, f"In if branch: {error_msg}"
                 
-                # Skip past branch
                 i += branch_end + 1
                 continue
 
-            # Handle regular commands
+            # Handle regular commands with enhanced validation
             if token in self.allowed_commands:
                 # Check if we have at least one more token
                 if i + 1 >= len(tokens):
                     return False, f"Command '{token}' needs a value"
 
-                # Check for random keyword
-                if tokens[i + 1].lower() in self.allowed_reporters:
-                    # Need one more token after random
-                    if i + 2 >= len(tokens):
-                        return False, f"{tokens[i + 1].lower()} needs a numeric value"
-                    # Validate the number after random
-                    if not self._is_valid_numeric_expression(tokens[i + 2]):
-                        return False, f"Invalid value after 'random': {tokens[i + 2]}"
-                    i += 3  # Skip command, random, and the number
+                # Handle movement commands with random
+                if token in {'fd', 'forward', 'rt', 'right', 'lt', 'left'}:
+                    next_token = tokens[i + 1].lower()
+                    if next_token == 'random':
+                        if i + 2 >= len(tokens):
+                            return False, "random needs a numeric value"
+                        if not self._is_valid_numeric_expression(tokens[i + 2]):
+                            return False, f"Invalid value after random: {tokens[i + 2]}"
+                        i += 3
+                    else:
+                        if not self._is_valid_numeric_expression(next_token):
+                            return False, f"Invalid value for {token}: {next_token}"
+                        i += 2
                 else:
-                    # Normal numeric value check
-                    next_token = tokens[i + 1]
-                    if not self._is_valid_numeric_expression(next_token):
-                        return False, f"Invalid value for command '{token}': {next_token}"
-                    i += 2  # Skip command and its value
+                    i += 2
             else:
                 i += 1
 
         return True, ""
+        
+    def _validate_condition(self, condition: str) -> bool:
+        """Validate complex conditions including item comparisons."""
+        condition = condition.strip()
+        
+        # Check for item comparisons
+        if 'item' in condition:
+            # Match patterns like: item N input <op> (item M input | number)
+            pattern = r'^item\s+\d+\s+input\s*[<>=!]+\s*(item\s+\d+\s+input|\d+)$'
+            if re.match(pattern, condition):
+                return True
+                
+            # Match patterns like: item N input != 0
+            pattern = r'^item\s+\d+\s+input\s*!=\s*0$'
+            if re.match(pattern, condition):
+                return True
+                
+        # Check for random comparisons
+        if 'random' in condition:
+            pattern = r'^random\s+\d+\s*[<>=!]+\s*\d+$'
+            if re.match(pattern, condition):
+                return True
+                
+        return False
 
     def _find_condition_end(self, tokens: List[str]) -> int:
         """Find the end of a condition expression."""
