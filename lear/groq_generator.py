@@ -4,6 +4,7 @@ import logging
 from code_generator_base import BaseCodeGenerator, NLogoCode
 from verify_netlogo_code import NetLogoVerifier
 import traceback
+from dspy_experiment.prompt import NetLogoPrompt
 
 class GroqCodeGenerator(BaseCodeGenerator):
     def __init__(self, api_key: str, verifier: NetLogoVerifier):
@@ -32,25 +33,31 @@ class GroqCodeGenerator(BaseCodeGenerator):
             logging.info(f"Attempting generation for rule: {agent_info[0]} with food input: {agent_info[1]}")
             
             # Generate new code
-            prompt = self.get_base_prompt(agent_info=agent_info, model_type='groq')
-            response = self.client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                response_model=NLogoCode,
-                messages=[
-                    {
-                        "role": "system", 
-                        "content": """You are an expert in evolving NetLogo agent behaviors.
-                        Focus on creating efficient, survival-optimized netlogo code."""
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.65,
+            # prompt = self.get_base_prompt(agent_info=agent_info, model_type='groq')
+            # response = self.client.chat.completions.create(
+            #     model="llama-3.3-70b-versatile",
+            #     response_model=NLogoCode,
+            #     messages=[
+            #         {
+            #             "role": "system", 
+            #             "content": """You are an expert in evolving NetLogo agent behaviors.
+            #             Focus on creating efficient, survival-optimized netlogo code."""
+            #         },
+            #         {
+            #             "role": "user",
+            #             "content": prompt
+            #         }
+            #     ],
+            #     temperature=0.65,
+            # )
+            prompt = NetLogoPrompt()
+            result = prompt(
+                current_rule=agent_info[0],
+                sensor_readings=str(agent_info[1])
             )
-            
-            new_code = response.new_code.strip()
+            reasoning = result.reasoning
+            logging.info(f"Reasoning: {reasoning}")
+            new_code = result.movement_code
             
             # Verify safety
             is_safe, safety_msg = self.verifier.is_safe(new_code)
