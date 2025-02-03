@@ -3,11 +3,17 @@ from typing import Tuple, Optional
 from pydantic import BaseModel
 from prompts import LEARPrompts
 import logging
+from retry_handler import CodeRetryHandler
+from verify_netlogo_code import NetLogoVerifier
 
 class NLogoCode(BaseModel):
     new_code: str
 
 class BaseCodeGenerator(ABC):
+    def __init__(self, verifier: NetLogoVerifier):
+        """Initialize with verifier instance."""
+        self.verifier = verifier
+        self.retry_handler = CodeRetryHandler(verifier)
     def validate_input(self, agent_info: list) -> Tuple[bool, Optional[str]]:
         """Validate the input format and content."""
         if not isinstance(agent_info, list) or len(agent_info) < 2:

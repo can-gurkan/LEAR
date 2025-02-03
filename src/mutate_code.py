@@ -130,10 +130,10 @@ def mutate_code(agent_info: list, model_type: str = "groq") -> str:
 #     return prompt
 
 # if __name__ == "__main__":
-    # config = load_config()
-    # GROQ_API_KEY = config['GROQ_API_KEY']
+#     config = load_config()
+#     GROQ_API_KEY = config['GROQ_API_KEY']
 #     if not GROQ_API_KEY:
 #         raise ValueError("GROQ_API_KEY environment variable not set")
     
 #     verifier = NetLogoVerifier()
-#     mutator = NetLogoMutator(GROQ_API_KEY, verifier)
+#     mutator = mutate_code(GROQ_API_KEY, verifier)
