@@ -12,9 +12,12 @@ Logs/
 
 # venv
 .venv
+*.log
 
 # env
 .env
+.DS_Store
+Logs/netlogo_evolution.log
 
 # netlogo
 *.tmp.nlogo

@@ -82,17 +82,7 @@ to go
     carefully [
       run rule
     ] [
-      let error-info (word
-        "ERROR WHILE RUNNING RULE: " rule
-        " | Agent: " who
-        " | Tick: " ticks
-        " | Energy: " energy
-        " | Lifetime: " lifetime
-        " | Food Collected: " food-collected
-        " | Input: " input
-      )
-      print error-info
-      set error-log lput error-info error-log
+     print error-message
     ]
     eat-food
   ]
