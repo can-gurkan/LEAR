@@ -3,7 +3,6 @@ import dspy_experiment.config
 from prompts import LEARPrompts
 
 
-# Define the signature for the NetLogo movement program
 class NetLogoMovement(dspy.Signature):
     """Generate movement code for a NetLogo turtle agent optimized for food collection."""
 
@@ -21,10 +20,10 @@ class NetLogoMovement(dspy.Signature):
         desc="In psuedocode, detail the movement strategy."
     )
 
-    movement_code = dspy.OutputField(desc="NetLogo code for turtle movement")
+    movement_code = dspy.OutputField(
+        desc="NetLogo code for turtle movement. 'item 0 input' is the distance to the left cone, 'item 1 input' is the distance to the middle cone, and 'item 2 input' is the distance to the right cone."
+    )
 
-
-# Create the program using ChainOfThought for explicit reasoning
 class NetLogoPrompt(dspy.Module):
     def __init__(self):
         super().__init__()

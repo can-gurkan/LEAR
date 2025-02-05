@@ -1,0 +1,49 @@
+{
+  "self": {
+    "lm": null,
+    "traces": [],
+    "train": [],
+    "demos": [],
+    "signature": {
+      "instructions": "Convert pseudocode to NetLogo code with verification.",
+      "fields": [
+        {
+          "prefix": "Pseudocode:",
+          "description": "Natural language description of NetLogo behavior"
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Netlogo Code:",
+          "description": "Syntactically correct NetLogo code that implements the desired pseudocode behavior"
+        }
+      ]
+    },
+    "extended_signature": {
+      "instructions": "Convert pseudocode to NetLogo code with verification.",
+      "fields": [
+        {
+          "prefix": "Pseudocode:",
+          "description": "Natural language description of NetLogo behavior"
+        },
+        {
+          "prefix": "Reasoning: Let's think step by step in order to",
+          "description": "${reasoning}"
+        },
+        {
+          "prefix": "Netlogo Code:",
+          "description": "Syntactically correct NetLogo code that implements the desired pseudocode behavior"
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "dependency_versions": {
+      "python": "3.11.10",
+      "dspy": "2.5.43",
+      "cloudpickle": "3.1.1"
+    }
+  }
+}
