@@ -1,5 +1,31 @@
 class LEARPrompts:
+    """Collection of prompts used throughout the LEAR system"""
+    
     def __init__(self):
+        # Evolution goals used in text-based evolution
+        self.evolution_goals = """Evolution Goals:
+1. Optimize movement for efficient food collection
+2. Balance exploration and exploitation
+3. Maintain simple, efficient NetLogo commands
+4. Consider both immediate food sources and long-term survival"""
+
+        # Chain of thought prompt for langchain providers
+        self.langchain_cot_system = "You are a NetLogo code evolution expert. Think step-by-step."
+        self.langchain_cot_template = """{}
+            
+Current code block to evolve:
+```netlogo
+{code}
+```
+
+Food distance inputs: {inputs}
+
+Analysis steps:
+1. Identify patterns in existing code
+2. Determine needed modifications based on food inputs
+3. Propose updated code with clear explanations
+4. Validate syntax before final answer"""
+
         self.groq_prompt = """You are an expert NetLogo movement code generator. Generate movement code following these precise specifications:
 
 VALID COMMANDS AND SYNTAX:
@@ -231,4 +257,3 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
         You are encouraged to be creative and generate complex patterns that go beyond basic movement rules. Focus on creating sophisticated behaviors that could lead to emergent patterns in the simulation.
 
         Return ONLY the NetLogo code with no explanations. Make it mathematically interesting and behaviorally complex while ensuring it remains valid NetLogo syntax."""
-        

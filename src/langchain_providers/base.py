@@ -9,6 +9,7 @@ from langchain.chains import LLMChain
 
 from ..code_generator_base import BaseCodeGenerator
 from ..verify_netlogo_code import NetLogoVerifier
+from ..prompts import LEARPrompts
 
 # Load environment variables
 load_dotenv()
@@ -30,22 +31,14 @@ class LangchainProviderBase(BaseCodeGenerator):
         """Construct chain-of-thought prompt template."""
         base_prompt = self.get_base_prompt(agent_info, 'langchain')
         
+        prompt_library = LEARPrompts()
         return ChatPromptTemplate.from_messages([
-            ("system", "You are a NetLogo code evolution expert. Think step-by-step."),
-            ("user", f"""{base_prompt}
-            
-            Current code block to evolve:
-            ```netlogo
-            {agent_info[0]}
-            ```
-            
-            Food distance inputs: {agent_info[1]}
-            
-            Analysis steps:
-            1. Identify patterns in existing code
-            2. Determine needed modifications based on food inputs
-            3. Propose updated code with clear explanations
-            4. Validate syntax before final answer""")
+            ("system", prompt_library.langchain_cot_system),
+            ("user", prompt_library.langchain_cot_template.format(
+                base_prompt,
+                code=agent_info[0],
+                inputs=agent_info[1]
+            ))
         ])
     
     def _generate_code_internal(self, agent_info: list, error_prompt: Optional[str] = None) -> str:

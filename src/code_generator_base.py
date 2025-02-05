@@ -30,7 +30,7 @@ class BaseCodeGenerator(ABC):
             
         return True, None
 
-    def get_base_prompt(self, agent_info: list, model_type: str) -> str:
+    def get_base_prompt(self, agent_info: list, model_type: str = 'groq') -> str:
         """Construct and return base prompt."""
         
         # Considering only rule and food input for now

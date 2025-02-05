@@ -8,7 +8,7 @@ globals [
   current-best-value
   best-rule-energy
   error-log
-  old-rule  ; Added this
+  old-rule
 ]
 
 
@@ -66,6 +66,7 @@ to setup
   set generation-stats []
   set error-log []
   set best-rule-energy 0
+  set use-text-evolution? false  ; Initialize text evolution setting
 
   setup-env
   setup-llm-agents
@@ -154,7 +155,8 @@ to-report mutate-rule
   print word "Current Rule: " result
 
   carefully [
-    let new-rule py:runresult "mutate_code(agent_info, 'groq')"
+    print use-text-evolution?
+    let new-rule py:runresult (word "mutate_code(agent_info, 'groq', " use-text-evolution? ")")
 
     ; if new-rule != false and new-rule != "" [
     ;  set result new-rule ; Return original Rule
@@ -345,6 +347,17 @@ SWITCH
 llm-mutation?
 llm-mutation?
 0
+1
+-1000
+
+SWITCH
+20
+260
+162
+293
+use-text-evolution?
+use-text-evolution?
+1
 1
 -1000
 
