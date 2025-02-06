@@ -231,4 +231,41 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
         You are encouraged to be creative and generate complex patterns that go beyond basic movement rules. Focus on creating sophisticated behaviors that could lead to emergent patterns in the simulation.
 
         Return ONLY the NetLogo code with no explanations. Make it mathematically interesting and behaviorally complex while ensuring it remains valid NetLogo syntax."""
-        
+
+        self.claude_prompt3 = """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
+
+INPUT CONTEXT:
+- Current rule: {}
+- Food sensor readings: {}
+  - Input list contains three values representing distances to food in three cone regions of 20 degrees each
+  - The first item in the input list is the distance to the nearest food in the left cone, the second is the right cone, and the third is the front cone
+  - Each value encodes the distance to nearest food source where a value of 0 indicates no food
+  - Non-zero lower values indicate closer food
+  - Use these to inform movement strategy
+
+CONSTRAINTS:
+1. Do not include code to kill or control any other agents
+2. Do not include code to interact with the environment
+3. Do not include code to change the environment
+4. Do not include code to create new agents
+5. Do not include code to create new food sources
+6. Do not include code to change the rules of the simulation
+
+EXAMPLES OF VALID PATTERNS:
+Current Rule: fd 1 rt random 45 fd 2 lt 30
+Valid: ifelse item 0 input != 0 [rt 15 fd 0.5] [rt random 30 lt random 30 fd 5]
+Why: Turns right and goes forward a little to reach food if the first element of input list contains a non-zero value, else moves forward in big steps and turns randomly to explore
+
+INVALID EXAMPLES:
+❌ ask turtle 1 [die]
+❌ ask other turtles [die]
+❌ set energy 100
+❌ hatch-food 5
+❌ clear-all
+
+STRATEGIC GOALS:
+1. Balance exploration and food-seeking behavior
+2. Respond to sensor readings intelligently
+3. Combine different movement patterns
+
+Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
