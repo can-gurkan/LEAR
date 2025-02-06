@@ -4,10 +4,12 @@ import logging
 from code_generator_base import BaseCodeGenerator, NLogoCode
 from verify_netlogo_code import NetLogoVerifier
 import traceback
+import gin
 # from langchain_groq import ChatGroq
 
+@gin.configurable
 class GroqCodeGenerator(BaseCodeGenerator):
-    def __init__(self, api_key: str, verifier: NetLogoVerifier):
+    def __init__(self, api_key: str, verifier: NetLogoVerifier, temp=0):
         """Initialize with API key and verifier instance."""
         super().__init__(verifier)
         self.api_key = api_key
@@ -19,6 +21,7 @@ class GroqCodeGenerator(BaseCodeGenerator):
         except Exception as e:
             logging.error(f"Failed to initialize Groq client: {str(e)}")
             raise
+        self.temperature = temp
 
     def _generate_code_internal(self, agent_info: list, error_prompt: str = None) -> str:
         """Internal method to generate code using Groq API."""
@@ -43,7 +46,7 @@ class GroqCodeGenerator(BaseCodeGenerator):
                     "content": prompt
                 }
             ],
-            temperature=0.65,
+            temperature=self.temperature,
         )
         return response.new_code.strip()
 

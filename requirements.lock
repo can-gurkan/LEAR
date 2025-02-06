@@ -51,6 +51,8 @@ fonttools==4.55.0
 frozenlist==1.5.0
     # via aiohttp
     # via aiosignal
+gin-config==0.5.0
+    # via lear
 groq==0.12.0
     # via langchain-groq
     # via lear
