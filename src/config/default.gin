@@ -1,0 +1,7 @@
+# Default parameters
+
+import code_generator_base
+
+get_base_prompt.model_prompt = 'groq_prompt2'
+GroqCodeGenerator.temp = 0.65
+ClaudeCodeGenerator.temp = 0.7

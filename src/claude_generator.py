@@ -2,10 +2,12 @@ from anthropic import Anthropic
 import logging
 from code_generator_base import BaseCodeGenerator
 from verify_netlogo_code import NetLogoVerifier
+import gin
 # from langchain_anthropic import ChatAnthropic
 
+@gin.configurable
 class ClaudeCodeGenerator(BaseCodeGenerator):
-    def __init__(self, api_key: str, verifier: NetLogoVerifier):
+    def __init__(self, api_key: str, verifier: NetLogoVerifier, temp=0):
         """Initialize with API key and verifier instance."""
         super().__init__(verifier)
         self.api_key = api_key
@@ -14,6 +16,7 @@ class ClaudeCodeGenerator(BaseCodeGenerator):
         except Exception as e:
             logging.error(f"Failed to initialize Claude client: {str(e)}")
             raise
+        self.temperature = temp
 
     def _generate_code_internal(self, agent_info: list, error_prompt: str = None) -> str:
         """Internal method to generate code using Claude API."""
@@ -33,7 +36,7 @@ class ClaudeCodeGenerator(BaseCodeGenerator):
                     "content": prompt
                 },
             ],
-            temperature=0.7,
+            temperature=self.temperature,
         )
         return response.content[0].text.strip()
 
