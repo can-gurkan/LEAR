@@ -7,7 +7,7 @@ import gin
 
 @gin.configurable
 class ClaudeCodeGenerator(BaseCodeGenerator):
-    def __init__(self, api_key: str, verifier: NetLogoVerifier, temp=0):
+    def __init__(self, api_key: str, verifier: NetLogoVerifier, temp=0, max_tokens=1024, model_name="claude-3-5-sonnet-20241022"):
         """Initialize with API key and verifier instance."""
         super().__init__(verifier)
         self.api_key = api_key
@@ -17,6 +17,8 @@ class ClaudeCodeGenerator(BaseCodeGenerator):
             logging.error(f"Failed to initialize Claude client: {str(e)}")
             raise
         self.temperature = temp
+        self.max_tokens = max_tokens
+        self.model_name = model_name
 
     def _generate_code_internal(self, agent_info: list, error_prompt: str = None) -> str:
         """Internal method to generate code using Claude API."""
@@ -28,8 +30,8 @@ class ClaudeCodeGenerator(BaseCodeGenerator):
             prompt = self.get_base_prompt(agent_info=agent_info, model_type='claude')
             
         response = self.client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=100,
+            model=self.model_name,
+            max_tokens=self.max_tokens,
             messages=[
                 {
                     "role": "user",

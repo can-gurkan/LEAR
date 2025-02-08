@@ -2,6 +2,11 @@
 
 import code_generator_base
 
-get_base_prompt.model_prompt = 'claude_prompt3'
+get_base_prompt.model_prompt = 'groq_prompt2'
 GroqCodeGenerator.temp = 0.65
-ClaudeCodeGenerator.temp = 0.7
+GroqCodeGenerator.model_name = "llama-3.3-70b-versatile"
+
+#get_base_prompt.model_prompt = 'claude_prompt3'
+ClaudeCodeGenerator.temp = 0.4
+ClaudeCodeGenerator.max_tokens = 612
+ClaudeCodeGenerator.model_name = "claude-3-5-sonnet-20241022"

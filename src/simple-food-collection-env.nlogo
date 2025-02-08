@@ -109,12 +109,12 @@ to evolve-agents
       ]
     ]
 
+    update-generation-stats
+
     ask llm-agents [
       set food-collected 0
       set energy 0
     ]
-
-    update-generation-stats
   ]
 end
 
@@ -387,7 +387,7 @@ CHOOSER
 llm-type
 llm-type
 "groq" "claude" "deepseek" "gpt-4o"
-0
+1
 
 SWITCH
 20

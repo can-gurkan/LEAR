@@ -9,7 +9,7 @@ import gin
 
 @gin.configurable
 class GroqCodeGenerator(BaseCodeGenerator):
-    def __init__(self, api_key: str, verifier: NetLogoVerifier, temp=0):
+    def __init__(self, api_key: str, verifier: NetLogoVerifier, temp=0, model_name="llama-3.3-70b-versatile"):
         """Initialize with API key and verifier instance."""
         super().__init__(verifier)
         self.api_key = api_key
@@ -22,6 +22,7 @@ class GroqCodeGenerator(BaseCodeGenerator):
             logging.error(f"Failed to initialize Groq client: {str(e)}")
             raise
         self.temperature = temp
+        self.model_name = model_name
 
     def _generate_code_internal(self, agent_info: list, error_prompt: str = None) -> str:
         """Internal method to generate code using Groq API."""
@@ -33,7 +34,7 @@ class GroqCodeGenerator(BaseCodeGenerator):
             prompt = self.get_base_prompt(agent_info=agent_info, model_type='groq')
             
         response = self.client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=self.model_name,
             response_model=NLogoCode,
             messages=[
                 {
