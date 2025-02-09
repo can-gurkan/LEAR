@@ -6,17 +6,36 @@ import logging
 import gin
 from retry_handler import CodeRetryHandler
 from verify_netlogo_code import NetLogoVerifier
+from logger import NetLogoLogger
+
+
+# To call in NetLogo code for logging purposes
+def output_base_prompt(llm_type):
+
+    prompt_library = LEARPrompts()
+    
+    if llm_type == 'groq':
+        prompt = prompt_library.groq_prompt2
+
+    elif llm_type == 'claude':
+        prompt = prompt_library.claude_prompt2
+
+    return prompt
+
 
 class NLogoCode(BaseModel):
     new_code: str
 
 @gin.register
 class BaseCodeGenerator(ABC):
+
     def __init__(self, verifier: NetLogoVerifier):
         """Initialize with verifier instance."""
         self.verifier = verifier
         self.retry_handler = CodeRetryHandler(verifier)
-        
+
+
+
     def validate_input(self, agent_info: list) -> Tuple[bool, Optional[str]]:
         """Validate the input format and content."""
         if not isinstance(agent_info, list) or len(agent_info) < 2:
@@ -43,7 +62,16 @@ class BaseCodeGenerator(ABC):
         food_input = agent_info[1]
         
         prompt_library = LEARPrompts()
-        prompt = getattr(prompt_library, model_prompt) 
+        
+        if model_type == 'groq':
+            prompt = prompt_library.groq_prompt2
+
+
+
+        elif model_type == 'claude':
+            prompt = prompt_library.claude_prompt2
+
+        
                 
         return prompt.format(rule, food_input)
     

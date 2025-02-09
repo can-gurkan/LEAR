@@ -72,7 +72,7 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
 
         Remember, the goal is to create an efficient movement rule that balances exploration and exploitation, aiming to find food in both the short and long term."""
         
-        self.groq_prompt2 = """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
+        self.groq_prompt3 = """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
 
 INPUT CONTEXT:
 - Current rule: {}
@@ -109,6 +109,64 @@ STRATEGIC GOALS:
 3. Combine different movement patterns
 
 Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
+
+
+        self.groq_prompt2 = """
+
+        # USER (or Task) INSTRUCTIONS:
+Below is all the information you need about the context, constraints, valid/invalid examples, and strategic goals. Use this information to produce ONLY the turtle's movement code, following the NetLogo syntax. The code must be runnable in NetLogo in the context of a turtle. Do not include any commentary or explanation in the output—only the movement code itself.
+---
+
+## INPUT CONTEXT
+
+- *Current rule*: `{}`
+- *Food sensor readings*: `{}`
+- The input list has three values, each one representing the distance to the nearest food in a 20-degree cone region:
+- *Left cone* (first value)
+- *Right cone* (second value)
+- *Front cone* (third value)
+- A value of *0* indicates no food is detected in that cone.
+- Non-zero lower values indicate closer food sources.
+- *Use these readings to guide the turtle's movement.*
+
+---
+
+## CONSTRAINTS
+
+1. *No code that kills or controls other agents.*
+- (e.g., no `die`, no `ask other turtles [...]`, etc.)
+2. *No code that interacts directly with the environment.*
+- (e.g., no `patch` manipulation, no `clear-all`, etc.)
+3. *No code that changes the environment.*
+4. *No code that creates new agents.*
+5. *No code that creates new food sources.*
+6. *No code that changes the rules of the simulation.*
+
+---
+
+## EXAMPLE 1 OF VALID CODE
+
+```
+ifelse item 0 input != 0
+[ rt 15 fd 0.5 ]
+[ rt random 30 lt random 30 fd 5 ]
+```
+*Explanation*: Turns right and goes forward a bit to reach food if the first element of `input` contains a non-zero value; otherwise it moves forward in larger steps while turning randomly to explore.
+
+## EXAMPLE 2 of VALID CODE
+```
+ifelse item 0 input != 0
+[ rt 10 fd 1 if random 100 < 50 [ fd 2 ] ]
+[ rt random 20 lt random 20 fd 4 if random 100 < 30 [ rt 45 fd 2 ] ]
+```
+
+*Explanation*: Moves directly toward food with occasional speed boosts if detected; otherwise, explores with random turns and occasional sharp directional changes
+---
+
+## STRATEGIC GOALS
+*Balance* exploration and food-seeking.
+        
+        """
 
         self.claude_prompt = """You are an expert NetLogo movement code generator. Generate movement code following these precise specifications:
 
