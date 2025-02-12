@@ -2,13 +2,15 @@ extensions [ py ]
 
 globals [
   generation
+  init-prompt
   init-rule
   generation-stats
-  best-rule
+  current-best-value
   best-rule-energy
   error-log
   old-rule
 ]
+
 
 breed [llm-agents llm-agent]
 breed [food-sources food-source]
@@ -29,11 +31,11 @@ to setup-llm-agents
     set color red
     setxy random-xcor random-ycor
     set rule init-rule
-    init-agent-params ;; Init with zero energy
+    setup-new-agent ; Init with zero energy
   ]
 end
 
-to init-agent-params
+to setup-new-agent
   set energy 0
   set food-collected 0
   set lifetime 0
@@ -48,12 +50,17 @@ to spawn-food [num]
   ]
 end
 
+to setup-env
+  spawn-food num-food-sources
+end
+
 to setup
   clear-all
 
   py:setup py:python
   py:run "from mutate_code import mutate_code"
 
+  set init-prompt ""
   set init-rule "lt random 20 rt random 20 fd 1"
 
   set generation-stats []
@@ -61,7 +68,7 @@ to setup
   set best-rule-energy 0
   set use-text-evolution? false  ; Initialize text evolution setting
 
-  spawn-food num-food-sources
+  setup-env
   setup-llm-agents
   reset-ticks
 end
@@ -73,7 +80,11 @@ to go
   ask llm-agents [
     set lifetime lifetime + 1
     set input get-observation
-    run-rule
+    carefully [
+      run rule
+    ] [
+     print error-message
+    ]
     eat-food
   ]
   evolve-agents
@@ -81,33 +92,26 @@ to go
   tick
 end
 
-to run-rule
-  carefully [
-    run rule
-  ] [
-    let error-info (word
-      "ERROR WHILE RUNNING RULE: " rule
-      " | Agent: " who
-      " | Tick: " ticks
-      " | Energy: " energy
-      " | Lifetime: " lifetime
-      " | Food Collected: " food-collected
-      " | Input: " input
-    )
-    print error-info
-    set error-log lput error-info error-log
-  ]
-end
-
 to evolve-agents
   if ticks >= 1 and ticks mod ticks-per-generation = 0 [
-    ask min-one-of llm-agents [energy] [ die ]
-
+    ask min-one-of llm-agents [energy] [
+      die
+    ]
     ask max-one-of llm-agents [energy] [
-      hatch 1 [
-        set parent-rule rule
-        set rule mutate-rule
-        init-agent-params
+      carefully [
+        set old-rule rule
+        hatch 1 [
+          set parent-rule old-rule
+          set rule mutate-rule
+          setup-new-agent
+        ]
+      ] [
+        hatch 1 [
+          set rule [rule] of myself
+          setup-new-agent  ; Use the existing procedure
+          let error-info (list error-message rule ticks)
+          set error-log lput error-info error-log
+        ]
       ]
     ]
 
@@ -115,7 +119,6 @@ to evolve-agents
       set food-collected 0
       set energy 0
     ]
-
     update-generation-stats
   ]
 end
@@ -129,7 +132,7 @@ to update-generation-stats
   let best-agent max-one-of llm-agents [energy]
   if [energy] of best-agent > best-rule-energy [
     set best-rule-energy [energy] of best-agent
-    set best-rule [rule] of best-agent
+    set current-best-value [rule] of best-agent
   ]
 end
 
@@ -143,20 +146,27 @@ to-report mutate-rule
   )
 
   py:set "agent_info" info
-  py:set "llm_type" llm-type
+
+  print "Evolution happening now..."
+  print word "Current World Info: " info
+
   let result rule
 
-  print word "Generation: " generation
   print word "Current Rule: " result
 
   carefully [
-    let new-rule py:runresult "mutate_code(agent_info, llm_type)"
+    print use-text-evolution?
+    let new-rule py:runresult (word "mutate_code(agent_info, 'groq', "false")")
+
+    ; if new-rule != false and new-rule != "" [
+    ;  set result new-rule ; Return original Rule
+    ; ]
     set result new-rule
-    print word "New Rule: " new-rule
+    print word "New Rule Updated: " new-rule
   ] [
     let error-info (list error-message rule ticks)
     set error-log lput error-info error-log
-    print word "Mutation error: " error-message
+    print error-message
   ]
   report result
 end
@@ -173,7 +183,12 @@ end
 
 to replenish-food
   if count food-sources < num-food-sources [
-    spawn-food (num-food-sources - count food-sources)
+    carefully [
+      spawn-food (num-food-sources - count food-sources)
+    ] [
+      let error-info (list error-message "food-spawn" ticks)
+      set error-log lput error-info error-log
+    ]
   ]
 end
 
@@ -183,7 +198,7 @@ to-report get-observation
   let dist 7
   let angle 20
   let obs []
-  ;; obs order is [left-cone right-cone center-cone]
+  ; obs order is [left-cone right-cone center-cone]
   foreach [-20 40 -20] [a ->
     rt a
     set obs lput (get-in-cone dist angle) obs
@@ -206,20 +221,20 @@ to-report mean-energy
 end
 
 to-report get-generation-metrics
-  ;; {{{ TO DO: Add these metrics to logs in python}}}
-  ;; reports [gen best-rule mean-energy max-energy mean-food-collected error-log]
-  let metrics ifelse-value any? llm-agents [
-    (list
+  let result (list 0 0 0 0 0)  ; Default result
+
+  carefully [
+    set result (list
       generation
-      best-rule
-      mean-energy
-      max [energy] of llm-agents
-      mean [food-collected] of llm-agents
-      error-log)
+      ifelse-value any? llm-agents [mean-energy] [0]
+      ifelse-value any? llm-agents [mean [lifetime] of llm-agents] [0] ; {{{ why is this important }}}
+      ifelse-value any? llm-agents [mean [food-collected] of llm-agents] [0]
+      length error-log ; {{{ why length? }}}
+    )
   ] [
-    (list generation "na" 0 0 0 [])
+    ; If error occurs, result stays as default (0 0 0 0 0)
   ]
-  report metrics
+  report result  ; Single report statement directly in to-report
 end
 
 ;;; Plotting
@@ -263,9 +278,9 @@ ticks
 
 BUTTON
 20
-195
+165
 90
-228
+198
 NIL
 setup
 NIL
@@ -280,9 +295,9 @@ NIL
 
 BUTTON
 100
-195
+165
 170
-228
+198
 NIL
 go
 T
@@ -327,9 +342,9 @@ HORIZONTAL
 
 SWITCH
 20
-250
+220
 162
-283
+253
 llm-mutation?
 llm-mutation?
 0
@@ -375,7 +390,7 @@ ticks-per-generation
 ticks-per-generation
 1
 2000
-500.0
+200.0
 1
 1
 NIL
@@ -391,27 +406,6 @@ generation
 17
 1
 11
-
-CHOOSER
-20
-290
-165
-335
-llm-type
-llm-type
-"groq" "claude" "deepseek" "gpt-4o"
-0
-
-SWITCH
-20
-140
-195
-173
-logging?
-logging?
-0
-1
--1000
 
 @#$#@#$#@
 ## WHAT IS IT?
