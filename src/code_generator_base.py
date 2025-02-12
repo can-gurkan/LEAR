@@ -3,17 +3,20 @@ from typing import Tuple, Optional
 from pydantic import BaseModel
 from prompts import LEARPrompts
 import logging
+import gin
 from retry_handler import CodeRetryHandler
 from verify_netlogo_code import NetLogoVerifier
 
 class NLogoCode(BaseModel):
     new_code: str
 
+@gin.register
 class BaseCodeGenerator(ABC):
     def __init__(self, verifier: NetLogoVerifier):
         """Initialize with verifier instance."""
         self.verifier = verifier
         self.retry_handler = CodeRetryHandler(verifier)
+        
     def validate_input(self, agent_info: list) -> Tuple[bool, Optional[str]]:
         """Validate the input format and content."""
         if not isinstance(agent_info, list) or len(agent_info) < 2:
@@ -30,19 +33,17 @@ class BaseCodeGenerator(ABC):
             
         return True, None
 
-    def get_base_prompt(self, agent_info: list, model_type: str = 'groq') -> str:
+    @gin.configurable
+    def get_base_prompt(self, agent_info: list, model_type: str, model_prompt=None) -> str:
         """Construct and return base prompt."""
         
         # Considering only rule and food input for now
+        # TO DO: get rid of food_input
         rule = agent_info[0]
         food_input = agent_info[1]
         
         prompt_library = LEARPrompts()
-        
-        if model_type == 'groq':
-            prompt = prompt_library.groq_prompt2
-        elif model_type == 'claude':
-            prompt = prompt_library.claude_prompt2
+        prompt = getattr(prompt_library, model_prompt) 
                 
         return prompt.format(rule, food_input)
     

@@ -115,11 +115,12 @@ to evolve-agents
       ]
     ]
 
+    update-generation-stats
+
     ask llm-agents [
       set food-collected 0
       set energy 0
     ]
-    update-generation-stats
   ]
 end
 
@@ -406,6 +407,27 @@ generation
 17
 1
 11
+
+CHOOSER
+20
+290
+165
+335
+llm-type
+llm-type
+"groq" "claude" "deepseek" "gpt-4o"
+1
+
+SWITCH
+20
+140
+195
+173
+logging?
+logging?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?

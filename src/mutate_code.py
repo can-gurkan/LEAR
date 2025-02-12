@@ -46,9 +46,9 @@ def get_code_generator(model_type: str = "groq") -> Union[GroqCodeGenerator, Cla
         ValueError: If unsupported model type provided
     """
     if model_type.lower() == "groq":
-        return GroqCodeGenerator(config['GROQ_API_KEY'], verifier)
+        return GroqCodeGenerator(config['GROQ_API_KEY'], verifier, temp=0.65)
     elif model_type.lower() == "claude":
-        return ClaudeCodeGenerator(config["ANTHROPIC_API_KEY"], verifier)
+        return ClaudeCodeGenerator(config["ANTHROPIC_API_KEY"], verifier, temp=0.65)
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
     

@@ -1,6 +1,7 @@
 # config.py
 from dotenv import load_dotenv
 import os
+import gin
 
 def load_config():
     """Load environment variables from .env file"""
@@ -17,6 +18,9 @@ def load_config():
     missing = [key for key, value in required_vars.items() if not value]
     if missing:
         raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
+    
+    # Load configurations from gin file
+    gin.parse_config_file("config/default.gin")
         
     return required_vars
 
