@@ -13,7 +13,7 @@ Key Features:
 - Comprehensive error reporting
 
 Usage:
-    from verify_netlogo_code import NetLogoVerifier
+    from src.verification.verify_netlogo import NetLogoVerifier
     
     verifier = NetLogoVerifier()
     is_safe, message = verifier.is_safe("fd 10 rt 90")

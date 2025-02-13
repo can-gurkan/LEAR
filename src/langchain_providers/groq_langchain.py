@@ -3,8 +3,8 @@ import logging
 from langchain_groq import ChatGroq
 from langchain.chains import LLMChain
 
-from .base import LangchainProviderBase
-from ..verify_netlogo_code import NetLogoVerifier
+from src.langchain_providers.base import LangchainProviderBase
+from src.verification.verify_netlogo import NetLogoVerifier
 
 class LangchainGroqGenerator(LangchainProviderBase):
     """Groq implementation using Langchain."""
@@ -25,7 +25,7 @@ class LangchainGroqGenerator(LangchainProviderBase):
                 temperature=0.65,
                 max_tokens=1000
             )
-            return LLMChain(llm=llm)
+            return llm
             
         except Exception as e:
             logging.error(f"Failed to initialize Groq LLM chain: {str(e)}")

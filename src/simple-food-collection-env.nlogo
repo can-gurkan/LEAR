@@ -2,15 +2,12 @@ extensions [ py ]
 
 globals [
   generation
-  init-prompt
   init-rule
   generation-stats
-  current-best-value
+  best-rule
   best-rule-energy
   error-log
-  old-rule
 ]
-
 
 breed [llm-agents llm-agent]
 breed [food-sources food-source]
@@ -31,11 +28,11 @@ to setup-llm-agents
     set color red
     setxy random-xcor random-ycor
     set rule init-rule
-    setup-new-agent ; Init with zero energy
+    init-agent-params ;; Init with zero energy
   ]
 end
 
-to setup-new-agent
+to init-agent-params
   set energy 0
   set food-collected 0
   set lifetime 0
@@ -50,25 +47,23 @@ to spawn-food [num]
   ]
 end
 
-to setup-env
-  spawn-food num-food-sources
-end
-
 to setup
   clear-all
 
-  py:setup py:python
-  py:run "from mutate_code import mutate_code"
+  py:setup py:python3
+  py:run "import os"
+  py:run "import sys"
+  py:run "from pathlib import Path"
+  py:run "sys.path.append(os.path.dirname(os.path.abspath('.')))"
+  py:run "from src.mutation.mutate_code import mutate_code"
 
-  set init-prompt ""
   set init-rule "lt random 20 rt random 20 fd 1"
 
   set generation-stats []
   set error-log []
   set best-rule-energy 0
-  set use-text-evolution? false  ; Initialize text evolution setting
 
-  setup-env
+  spawn-food num-food-sources
   setup-llm-agents
   reset-ticks
 end
@@ -80,11 +75,7 @@ to go
   ask llm-agents [
     set lifetime lifetime + 1
     set input get-observation
-    carefully [
-      run rule
-    ] [
-     print error-message
-    ]
+    run-rule
     eat-food
   ]
   evolve-agents
@@ -92,26 +83,33 @@ to go
   tick
 end
 
+to run-rule
+  carefully [
+    run rule
+  ] [
+    let error-info (word
+      "ERROR WHILE RUNNING RULE: " rule
+      " | Agent: " who
+      " | Tick: " ticks
+      " | Energy: " energy
+      " | Lifetime: " lifetime
+      " | Food Collected: " food-collected
+      " | Input: " input
+    )
+    print error-info
+    set error-log lput error-info error-log
+  ]
+end
+
 to evolve-agents
   if ticks >= 1 and ticks mod ticks-per-generation = 0 [
-    ask min-one-of llm-agents [energy] [
-      die
-    ]
+    ask min-one-of llm-agents [energy] [ die ]
+
     ask max-one-of llm-agents [energy] [
-      carefully [
-        set old-rule rule
-        hatch 1 [
-          set parent-rule old-rule
-          set rule mutate-rule
-          setup-new-agent
-        ]
-      ] [
-        hatch 1 [
-          set rule [rule] of myself
-          setup-new-agent  ; Use the existing procedure
-          let error-info (list error-message rule ticks)
-          set error-log lput error-info error-log
-        ]
+      hatch 1 [
+        set parent-rule rule
+        set rule mutate-rule
+        init-agent-params
       ]
     ]
 
@@ -133,7 +131,7 @@ to update-generation-stats
   let best-agent max-one-of llm-agents [energy]
   if [energy] of best-agent > best-rule-energy [
     set best-rule-energy [energy] of best-agent
-    set current-best-value [rule] of best-agent
+    set best-rule [rule] of best-agent
   ]
 end
 
@@ -147,27 +145,21 @@ to-report mutate-rule
   )
 
   py:set "agent_info" info
-
-  print "Evolution happening now..."
-  print word "Current World Info: " info
-
+  py:set "llm_type" llm-type
+  py:set "text_based_evolution" text-based-evolution
   let result rule
 
+  print word "Generation: " generation
   print word "Current Rule: " result
 
   carefully [
-    print use-text-evolution?
-    let new-rule py:runresult (word "mutate_code(agent_info, 'groq', "false")")
-
-    ; if new-rule != false and new-rule != "" [
-    ;  set result new-rule ; Return original Rule
-    ; ]
+    let new-rule py:runresult "mutate_code(agent_info=agent_info, model_type=llm_type, use_text_evolution=text_based_evolution)"
     set result new-rule
-    print word "New Rule Updated: " new-rule
+    print word "New Rule: " new-rule
   ] [
     let error-info (list error-message rule ticks)
     set error-log lput error-info error-log
-    print error-message
+    print word "Mutation error: " error-message
   ]
   report result
 end
@@ -184,12 +176,7 @@ end
 
 to replenish-food
   if count food-sources < num-food-sources [
-    carefully [
-      spawn-food (num-food-sources - count food-sources)
-    ] [
-      let error-info (list error-message "food-spawn" ticks)
-      set error-log lput error-info error-log
-    ]
+    spawn-food (num-food-sources - count food-sources)
   ]
 end
 
@@ -199,7 +186,7 @@ to-report get-observation
   let dist 7
   let angle 20
   let obs []
-  ; obs order is [left-cone right-cone center-cone]
+  ;; obs order is [left-cone right-cone center-cone]
   foreach [-20 40 -20] [a ->
     rt a
     set obs lput (get-in-cone dist angle) obs
@@ -222,20 +209,20 @@ to-report mean-energy
 end
 
 to-report get-generation-metrics
-  let result (list 0 0 0 0 0)  ; Default result
-
-  carefully [
-    set result (list
+  ;; {{{ TO DO: Add these metrics to logs in python}}}
+  ;; reports [gen best-rule mean-energy max-energy mean-food-collected error-log]
+  let metrics ifelse-value any? llm-agents [
+    (list
       generation
-      ifelse-value any? llm-agents [mean-energy] [0]
-      ifelse-value any? llm-agents [mean [lifetime] of llm-agents] [0] ; {{{ why is this important }}}
-      ifelse-value any? llm-agents [mean [food-collected] of llm-agents] [0]
-      length error-log ; {{{ why length? }}}
-    )
+      best-rule
+      mean-energy
+      max [energy] of llm-agents
+      mean [food-collected] of llm-agents
+      error-log)
   ] [
-    ; If error occurs, result stays as default (0 0 0 0 0)
+    (list generation "na" 0 0 0 [])
   ]
-  report result  ; Single report statement directly in to-report
+  report metrics
 end
 
 ;;; Plotting
@@ -279,9 +266,9 @@ ticks
 
 BUTTON
 20
-165
+195
 90
-198
+228
 NIL
 setup
 NIL
@@ -296,9 +283,9 @@ NIL
 
 BUTTON
 100
-165
+195
 170
-198
+228
 NIL
 go
 T
@@ -343,23 +330,12 @@ HORIZONTAL
 
 SWITCH
 20
-220
+250
 162
-253
+283
 llm-mutation?
 llm-mutation?
 0
-1
--1000
-
-SWITCH
-20
-260
-162
-293
-use-text-evolution?
-use-text-evolution?
-1
 1
 -1000
 
@@ -391,7 +367,7 @@ ticks-per-generation
 ticks-per-generation
 1
 2000
-200.0
+500.0
 1
 1
 NIL
@@ -425,6 +401,17 @@ SWITCH
 173
 logging?
 logging?
+0
+1
+-1000
+
+SWITCH
+5
+355
+192
+388
+text-based-evolution
+text-based-evolution
 0
 1
 -1000

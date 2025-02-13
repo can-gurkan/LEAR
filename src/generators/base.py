@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Tuple, Optional
 from pydantic import BaseModel
-from prompts import LEARPrompts
+
 import logging
 import gin
-from retry_handler import CodeRetryHandler
-from verify_netlogo_code import NetLogoVerifier
+
+from src.utils.prompts import LEARPrompts
+from src.utils.retry import CodeRetryHandler
+from src.verification.verify_netlogo import NetLogoVerifier
 
 class NLogoCode(BaseModel):
     new_code: str

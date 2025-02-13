@@ -2,16 +2,14 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain.chains import LLMChain
 from typing import Optional, Union, Tuple
-from logging_config import setup_logging
+from src.utils.logging import setup_logging
+from src.utils.prompts import LEARPrompts
 
-from code_generator_base import BaseCodeGenerator, NLogoCode
-from text_based_evolution import TextBasedEvolution
-from verify_netlogo_code import NetLogoVerifier
-from langchain_providers.base import LangchainProviderBase
-# from langchain_providers.claude_langchain import LangchainClaudeGenerator
-# from langchain_providers.groq_langchain import LangchainGroqGenerator
-# from langchain_providers.openai_langchain import LangchainOpenAIGenerator
-# from langchain_providers.deepseek_langchain import LangchainDeepseekGenerator
+from src.generators.base import BaseCodeGenerator
+from src.text_based_evolution import TextBasedEvolution
+from src.verification.verify_netlogo import NetLogoVerifier
+from src.langchain_providers.base import LangchainProviderBase
+
 
 class LangChainCodeGenerator(BaseCodeGenerator):
     def __init__(self, provider: Union[LLMChain, LangchainProviderBase], verifier: NetLogoVerifier):
@@ -25,6 +23,7 @@ class LangChainCodeGenerator(BaseCodeGenerator):
         self.provider = provider
         self.thought_log = []  # For future agentic capabilities
         self.logger = setup_logging()
+        self.prompts = LEARPrompts()
 
     def _build_chain_of_thought_prompt(self, agent_info: list, evolution_description: Optional[str] = None) -> ChatPromptTemplate:
         """Construct chain-of-thought prompt template with optional evolution description."""
@@ -33,39 +32,14 @@ class LangChainCodeGenerator(BaseCodeGenerator):
         if evolution_description:
             
             return ChatPromptTemplate.from_messages([
-                ("system", "You are a NetLogo code evolution expert. Think step-by-step."),
-                ("user", f"""Current code block to evolve:
-                ```netlogo
-                {agent_info[0]}
-                ```
-
-                Environment Analysis:
-                {evolution_description}
-
-                Analysis steps:
-                1. Consider the environment analysis
-                2. Identify needed adaptations
-                3. Generate optimized NetLogo code
-                4. Validate syntax and efficiency""")
+                ("system", self.prompts.langchain_system_message),
+                ("user", self.prompts.langchain_user_message_evolution.format(code=agent_info[0], evolution_description=evolution_description))
             ])
         else:
             base_prompt = self.get_base_prompt(agent_info)
             return ChatPromptTemplate.from_messages([
-                ("system", "You are a NetLogo code evolution expert. Think step-by-step."),
-                ("user", f"""{base_prompt}
-
-                Current code block to evolve:
-                ```netlogo
-                {agent_info[0]}
-                ```
-
-                Food distance inputs: {agent_info[1]}
-
-                Analysis steps:
-                1. Identify patterns in existing code
-                2. Determine needed modifications based on food inputs
-                3. Propose updated code with clear explanations
-                4. Validate syntax before final answer""")
+                ("system", self.prompts.langchain_system_message),
+                ("user", self.prompts.langchain_user_message.format(base_prompt=base_prompt, code=agent_info[0], inputs=agent_info[1]))
             ])
 
     def _generate_code_internal(self, agent_info: list, error_prompt: Optional[str] = None, use_text_evolution: bool = False) -> str:
@@ -79,6 +53,7 @@ class LangChainCodeGenerator(BaseCodeGenerator):
                 if use_text_evolution:
                     text_evolution = TextBasedEvolution()
                     evolution_description = text_evolution.generate_evolution_description(agent_info)
+                    
                 prompt = self._build_chain_of_thought_prompt(agent_info, evolution_description)
                 
                 

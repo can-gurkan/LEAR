@@ -1,6 +1,6 @@
 from typing import Callable
 import logging
-from verify_netlogo_code import NetLogoVerifier
+from src.verification.verify_netlogo import NetLogoVerifier
 
 class CodeRetryHandler:
     def __init__(self, verifier: NetLogoVerifier, max_attempts: int = 5):
@@ -33,7 +33,8 @@ class CodeRetryHandler:
         self,
         original_code: str,
         generate_fn: Callable,
-        agent_info: list = None
+        agent_info: list = None,
+        use_text_evolution: bool = False
     ) -> str:
         """Execute code generation with retry logic.
         
@@ -52,14 +53,14 @@ class CodeRetryHandler:
             try:
                 # Generate new code if first attempt or retry with error context
                 if current_code is None:
-                    current_code = generate_fn(agent_info)
+                    current_code = generate_fn(agent_info=agent_info, use_text_evolution=use_text_evolution)
                 else:
                     # Retry with error context
                     error_prompt = self.error_prompt.format(
                         code=current_code,
                         error=error_message
                     )
-                    current_code = generate_fn(agent_info, error_prompt)
+                    current_code = generate_fn(agent_info=agent_info, use_text_evolution=use_text_evolution, error_prompt=error_prompt)
 
                 # Verify the generated/fixed code
                 is_safe, error_message = self.verifier.is_safe(current_code)

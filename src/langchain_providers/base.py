@@ -7,9 +7,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain.chains import LLMChain
 
-from ..code_generator_base import BaseCodeGenerator
-from ..verify_netlogo_code import NetLogoVerifier
-from ..prompts import LEARPrompts
+
+from src.generators.base import BaseCodeGenerator
+from src.verification.verify_netlogo import NetLogoVerifier
+from src.utils.prompts import LEARPrompts
 
 # Load environment variables
 load_dotenv()

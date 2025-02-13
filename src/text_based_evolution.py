@@ -1,7 +1,9 @@
 from typing import List, Dict, Optional
 from dataclasses import dataclass
-from .prompts import LEARPrompts
+
 import logging
+
+from src.utils.prompts import LEARPrompts
 
 @dataclass
 class EnvironmentContext:
@@ -19,6 +21,7 @@ class TextBasedEvolution:
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.prompts = LEARPrompts()
     
     def _analyze_food_distribution(self, distances: List[float]) -> str:
         """Analyze food distribution pattern in the agent's view cones"""
@@ -27,9 +30,9 @@ class TextBasedEvolution:
         
         for direction, distance in zip(directions, distances):
             if distance == 0:
-                descriptions.append(f"no food in {direction} direction")
+                descriptions.append(self.prompts.evolution_food_distribution_none.format(direction=direction))
             else:
-                descriptions.append(f"food at distance {distance} in {direction} direction")
+                descriptions.append(self.prompts.evolution_food_distribution.format(distance=distance, direction=direction))
                 
         return ", ".join(descriptions)
     
@@ -37,13 +40,12 @@ class TextBasedEvolution:
         """Generate performance analysis description"""
         efficiency = context.food_collected / max(1, context.lifetime)
         
-        performance = []
-        performance.append(f"Current energy level: {context.agent_energy}")
-        performance.append(f"Total food collected: {context.food_collected}")
-        performance.append(f"Agent lifetime: {context.lifetime} ticks")
-        performance.append(f"Food collection efficiency: {efficiency:.2f} items per tick")
-        
-        return ". ".join(performance)
+        return self.prompts.evolution_performance.format(
+            energy=context.agent_energy,
+            food=context.food_collected,
+            lifetime=context.lifetime,
+            efficiency=efficiency
+        )
     
     def _analyze_movement_pattern(self, rule: str) -> str:
         """Analyze current movement rule pattern"""
@@ -55,13 +57,13 @@ class TextBasedEvolution:
             value = components[i + 1] if i + 1 < len(components) else ""
             
             if command == "fd":
-                pattern.append(f"moves forward {value}")
+                pattern.append(self.prompts.evolution_movement_pattern.format(direction="forward", value=value))
             elif command == "rt":
-                pattern.append(f"turns right {value}")
+                pattern.append(self.prompts.evolution_movement_pattern.format(direction="right", value=value))
             elif command == "lt":
-                pattern.append(f"turns left {value}")
+                pattern.append(self.prompts.evolution_movement_pattern.format(direction="left", value=value))
                 
-        return ", ".join(pattern)
+        return ", ".join(pattern) if pattern else self.prompts.evolution_movement_pattern_none
     
     def generate_evolution_description(self, agent_info: list) -> str:
         """Generate a natural language description of the desired evolution"""
@@ -76,7 +78,7 @@ class TextBasedEvolution:
                 food_collected=0,  # These would need to be added to agent_info
                 lifetime=0
             )
-            
+                        
             # Build comprehensive description
             description_parts = [
                 f"Current Movement Pattern: Agent {self._analyze_movement_pattern(context.current_rule)}",
@@ -93,8 +95,7 @@ class TextBasedEvolution:
             
             # Add evolution guidance
             # Add evolution goals from centralized prompts
-            prompt_library = LEARPrompts()
-            description += "\n\n" + prompt_library.evolution_goals
+            description += "\n\n" + self.prompts.evolution_goals_prompt
             
             return description
             

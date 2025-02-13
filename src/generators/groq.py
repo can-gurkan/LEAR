@@ -1,49 +1,58 @@
-from anthropic import Anthropic
+import instructor
+from groq import Groq
 import logging
-from code_generator_base import BaseCodeGenerator
-from verify_netlogo_code import NetLogoVerifier
+from src.generators.base import BaseCodeGenerator, NLogoCode
+from src.verification.verify_netlogo import NetLogoVerifier
+import traceback
 import gin
-# from langchain_anthropic import ChatAnthropic
+# from langchain_groq import ChatGroq
 
 @gin.configurable
-class ClaudeCodeGenerator(BaseCodeGenerator):
-    def __init__(self, api_key: str, verifier: NetLogoVerifier, temp=0, max_tokens=1024, model_name="claude-3-5-sonnet-20241022"):
+class GroqCodeGenerator(BaseCodeGenerator):
+    def __init__(self, api_key: str, verifier: NetLogoVerifier, temp=0, model_name="llama-3.3-70b-versatile"):
         """Initialize with API key and verifier instance."""
         super().__init__(verifier)
         self.api_key = api_key
         try:
-            self.client = Anthropic(api_key=api_key)
+            self.client = instructor.from_groq(
+                Groq(api_key=api_key), 
+                mode=instructor.Mode.JSON
+            )
         except Exception as e:
-            logging.error(f"Failed to initialize Claude client: {str(e)}")
+            logging.error(f"Failed to initialize Groq client: {str(e)}")
             raise
         self.temperature = temp
-        self.max_tokens = max_tokens
         self.model_name = model_name
 
     def _generate_code_internal(self, agent_info: list, error_prompt: str = None) -> str:
-        """Internal method to generate code using Claude API."""
+        """Internal method to generate code using Groq API."""
         if error_prompt:
             # Use error prompt for retry attempts
             prompt = error_prompt
         else:
             # Use base prompt for initial generation
-            prompt = self.get_base_prompt(agent_info=agent_info, model_type='claude')
+            prompt = self.get_base_prompt(agent_info=agent_info, model_type='groq')
             
-        response = self.client.messages.create(
+        response = self.client.chat.completions.create(
             model=self.model_name,
-            max_tokens=self.max_tokens,
+            response_model=NLogoCode,
             messages=[
+                {
+                    "role": "system", 
+                    "content": """You are an expert in evolving NetLogo agent behaviors.
+                    Focus on creating efficient, survival-optimized netlogo code."""
+                },
                 {
                     "role": "user",
                     "content": prompt
-                },
+                }
             ],
             temperature=self.temperature,
         )
-        return response.content[0].text.strip()
+        return response.new_code.strip()
 
     def generate_code(self, agent_info: list) -> str:
-        """Generate new NetLogo code using Claude API with retry logic."""
+        """Generate new NetLogo code using Groq API with retry logic."""
         try:
             # Validate input
             is_valid, error_msg = self.validate_input(agent_info)
@@ -62,5 +71,5 @@ class ClaudeCodeGenerator(BaseCodeGenerator):
             )
             
         except Exception as e:
-            logging.error(f"Error during code generation: {str(e)}")
+            logging.error(f"Error during code generation: {traceback.format_exc()}")
             return agent_info[0]

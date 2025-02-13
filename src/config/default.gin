@@ -1,6 +1,6 @@
 # Default parameters
 
-import code_generator_base
+from src.generators import base
 
 get_base_prompt.model_prompt = 'groq_prompt2'
 GroqCodeGenerator.temp = 0.65

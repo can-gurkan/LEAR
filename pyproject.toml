@@ -1,7 +1,16 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "lear"
 version = "0.1.0"
-description = "Add your description here"
+description = "LEAR Project"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["find:"]
+
 authors = [
     { name = "Can Gurkan", email = "cangurkan@me.com" }
 ]
