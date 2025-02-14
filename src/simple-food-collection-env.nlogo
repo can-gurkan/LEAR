@@ -51,7 +51,7 @@ end
 to setup
   clear-all
 
-  py:setup "/Users/rudydanda/LEAR/.venv/bin/python"
+  py:setup "file_path_to_LEAR_project"
 
   if logging? [
 
@@ -456,7 +456,7 @@ CHOOSER
 llm-type
 llm-type
 "groq" "claude" "deepseek" "gpt-4o"
-1
+0
 
 SWITCH
 20
