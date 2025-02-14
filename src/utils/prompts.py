@@ -9,12 +9,41 @@ class LEARPrompts:
         self.langchain_cot_system = "You are a NetLogo expert."
         self.langchain_cot_template = """Evolve code:\n{code}\n\nInputs: {inputs}"""
 
-        self.evolution_food_distribution = "{direction}: {distance}"
-        self.evolution_food_distribution_none = "{direction}: no food"
         self.evolution_performance = "Energy: {energy}, Food: {food}, Lifetime: {lifetime}, Efficiency: {efficiency:.2f}"
         self.evolution_movement_pattern = "moves {direction} {value}"
         self.evolution_movement_pattern_none = "no movement"
         self.evolution_goals_prompt = "Optimize movement for food, balance exploration, keep commands simple."
+
+        # Code analysis prompts
+        self.code_analysis_system_message = """You are a NetLogo expert specializing in analyzing agent behavior code. 
+Provide clear, natural language descriptions of NetLogo code patterns, explaining what the code does in simple terms."""
+
+        self.code_analysis_user_message = """Analyze this NetLogo code and describe what it does:
+{code}
+
+Focus on:
+1. Movement patterns and conditions
+2. Decision-making logic
+3. Use of variables and reporters
+4. Overall behavior strategy
+
+Provide a clear, concise description that a non-programmer could understand."""
+
+        # LLM-based explanation prompts
+        self.explanation_system_message = """You are a NetLogo expert analyzing agent behavior. Provide clear, concise explanations of agent movement patterns and their effectiveness in collecting food."""
+        
+        self.explanation_user_message = """Analyze the agent's behavior and environment:
+
+Current Movement: {movement_pattern}
+Performance: {performance_metrics}
+Previous Movement (if any): {parent_pattern}
+
+Explain:
+1. How effective is the current movement pattern?
+2. How well does it respond to the environment?
+3. What improvements could make it more effective?
+
+Keep the explanation concise and focused on behavior analysis."""
 
         self.langchain_system_message = "You are a NetLogo expert."
         self.langchain_user_message_evolution = """Evolve code:\n{code}\n\nAnalysis: {evolution_description}"""

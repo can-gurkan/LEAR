@@ -6,7 +6,7 @@ from src.utils.logging import setup_logging
 from src.utils.prompts import LEARPrompts
 
 from src.generators.base import BaseCodeGenerator
-from src.text_based_evolution import TextBasedEvolution
+from src.mutation.text_based_evolution import TextBasedEvolution
 from src.verification.verify_netlogo import NetLogoVerifier
 from src.langchain_providers.base import LangchainProviderBase
 
@@ -51,7 +51,7 @@ class LangChainCodeGenerator(BaseCodeGenerator):
             else:
                 evolution_description = None
                 if use_text_evolution:
-                    text_evolution = TextBasedEvolution()
+                    text_evolution = TextBasedEvolution(self.provider if isinstance(self.provider, LangchainProviderBase) else None)
                     evolution_description = text_evolution.generate_evolution_description(agent_info)
                     
                 prompt = self._build_chain_of_thought_prompt(agent_info, evolution_description)
