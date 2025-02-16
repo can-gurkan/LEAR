@@ -55,6 +55,29 @@ to setup
   py:run "import sys"
   py:run "from pathlib import Path"
   py:run "sys.path.append(os.path.dirname(os.path.abspath('.')))"
+
+  if logging? [
+
+    py:set "llm_type" llm-type
+    py:set "num_llm_agents" num-llm-agents
+    py:set "num_food_sources" num-food-sources
+    py:set "ticks_per_generation" ticks-per-generation
+
+    py:run "from src.generators.base import output_base_prompt"
+    let base_prompt py:runresult "output_base_prompt(llm_type)"
+    py:set "base_prompt" base_prompt
+
+    ;; Initialize a new logger instance (ensures new log file per setup)
+    py:run "from src.utils.sim_logger import initialize_logger"
+    py:run "logger = initialize_logger()"
+
+    ;; Log the simulation parameters
+    py:run "logger.log_initial_parameters(f'num_agents={num_llm_agents}, num_food_sources={num_food_sources}, ticks_per_generation={ticks_per_generation}, llm_type={llm_type}')"
+    py:run "logger.log_base_prompt(base_prompt)"
+
+  ]
+
+
   py:run "from src.mutation.mutate_code import mutate_code"
 
   set init-rule "lt random 20 rt random 20 fd 1"
@@ -135,6 +158,41 @@ to update-generation-stats
   ]
 end
 
+
+;; metric logging helper
+to log-metrics [cur_rule mutated_rule]
+
+  let metrics ifelse-value any? llm-agents [
+    (list
+      generation
+      best-rule
+      mean-energy
+      max [energy] of llm-agents
+      mean [food-collected] of llm-agents
+      error-log)
+  ]
+
+  [
+    (list generation "na" 0 0 0 [])
+  ]
+
+  py:set "metrics" metrics
+  py:set "current_rule" rule
+  py:set "mutated_rule" mutated_rule
+
+
+
+  if logging?[
+    ;; Log generation results using the same logger instance
+    py:run "from src.utils.sim_logger import get_logger"
+    py:run "logger = get_logger()"
+    py:run "logger.log_generation(metrics[0], metrics[1], metrics[2], metrics[3], metrics[4], metrics[5], current_rule, mutated_rule)"
+    ]
+
+
+end
+
+
 to-report mutate-rule
   let info (list
     rule
@@ -154,6 +212,9 @@ to-report mutate-rule
 
   carefully [
     let new-rule py:runresult "mutate_code(agent_info=agent_info, model_type=llm_type, use_text_evolution=text_based_evolution)"
+
+    log-metrics rule new-rule ;; add metrics to logger file
+
     set result new-rule
     print word "New Rule: " new-rule
   ] [

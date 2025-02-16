@@ -20,7 +20,9 @@ def load_config():
         raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
     
     # Load configurations from gin file
-    gin.parse_config_file("config/default.gin")
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(current_dir, "..", "config", "default.gin")
+    gin.parse_config_file(config_path)
         
     return required_vars
 
