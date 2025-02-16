@@ -50,7 +50,7 @@ end
 to setup
   clear-all
 
-  py:setup py:python3
+  py:setup py:python
   py:run "import os"
   py:run "import sys"
   py:run "from pathlib import Path"
@@ -392,7 +392,7 @@ CHOOSER
 llm-type
 llm-type
 "groq" "claude" "deepseek" "gpt-4o"
-1
+0
 
 SWITCH
 20
@@ -412,7 +412,7 @@ SWITCH
 388
 text-based-evolution
 text-based-evolution
-0
+1
 1
 -1000
 

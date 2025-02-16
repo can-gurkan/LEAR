@@ -15,7 +15,7 @@ class GroqCodeGenerator(BaseCodeGenerator):
         self.api_key = api_key
         try:
             self.client = instructor.from_groq(
-                Groq(api_key=api_key), 
+                Groq(api_key=self.api_key), 
                 mode=instructor.Mode.JSON
             )
         except Exception as e:
@@ -24,7 +24,7 @@ class GroqCodeGenerator(BaseCodeGenerator):
         self.temperature = temp
         self.model_name = model_name
 
-    def _generate_code_internal(self, agent_info: list, error_prompt: str = None) -> str:
+    def _generate_code_internal(self, agent_info: list, error_prompt: str = None, use_text_evolution=False) -> str:
         """Internal method to generate code using Groq API."""
         if error_prompt:
             # Use error prompt for retry attempts
