@@ -50,8 +50,12 @@ end
 to setup
   clear-all
 
-  py:setup py:python
-  py:run "from mutate_code import mutate_code"
+  py:setup py:python3
+  py:run "import os"
+  py:run "import sys"
+  py:run "from pathlib import Path"
+  py:run "sys.path.append(os.path.dirname(os.path.abspath('.')))"
+  py:run "from src.mutation.mutate_code import mutate_code"
 
   set init-rule "lt random 20 rt random 20 fd 1"
 
@@ -142,13 +146,14 @@ to-report mutate-rule
 
   py:set "agent_info" info
   py:set "llm_type" llm-type
+  py:set "text_based_evolution" text-based-evolution
   let result rule
 
   print word "Generation: " generation
   print word "Current Rule: " result
 
   carefully [
-    let new-rule py:runresult "mutate_code(agent_info, llm_type)"
+    let new-rule py:runresult "mutate_code(agent_info=agent_info, model_type=llm_type, use_text_evolution=text_based_evolution)"
     set result new-rule
     print word "New Rule: " new-rule
   ] [
@@ -396,6 +401,17 @@ SWITCH
 173
 logging?
 logging?
+0
+1
+-1000
+
+SWITCH
+5
+355
+192
+388
+text-based-evolution
+text-based-evolution
 0
 1
 -1000
