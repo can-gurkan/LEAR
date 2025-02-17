@@ -1,7 +1,7 @@
 import logging
 import os
 
-def setup_logging(log_file_path='LEAR/Logs/app.log', level=logging.DEBUG):
+def setup_logging(log_file_path='../Logs/debug.log', level=logging.DEBUG):
     """Sets up logging configuration."""
 
     # Create log directory if it doesn't exist

@@ -85,7 +85,7 @@ def mutate_code(agent_info: list, model_type: str = "groq", use_text_evolution: 
         Evolved NetLogo code as string
     """
     try:
-        logger.info(f"Starting code generation with model type: {model_type}")
+        #logger.info(f"Starting code generation with model type: {model_type}")
         if use_text_evolution:
             provider = get_langchain_provider(model_type)
             langchain_generator = LangChainCodeGenerator(provider, verifier)

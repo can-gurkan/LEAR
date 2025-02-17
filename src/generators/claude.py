@@ -19,7 +19,7 @@ class ClaudeCodeGenerator(BaseCodeGenerator):
         self.max_tokens = max_tokens
         self.model_name = model_name
 
-    def _generate_code_internal(self, agent_info: list, error_prompt: str = None) -> str:
+    def _generate_code_internal(self, agent_info: list, error_prompt: str = None, use_text_evolution=False) -> str:
         """Internal method to generate code using Claude API."""
         if error_prompt:
             # Use error prompt for retry attempts

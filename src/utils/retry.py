@@ -1,7 +1,9 @@
 from typing import Callable
 import logging
+import gin
 from src.verification.verify_netlogo import NetLogoVerifier
 
+@gin.register
 class CodeRetryHandler:
     def __init__(self, verifier: NetLogoVerifier, max_attempts: int = 5):
         """Initialize the retry handler.
