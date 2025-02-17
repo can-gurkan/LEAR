@@ -173,7 +173,7 @@ to-report mutate-rule
   py:set "text_based_evolution" text-based-evolution
   let result rule
 
-  print word "Generation: " generation
+  print word "\nGeneration: " generation
   print word "Current Rule: " result
 
   carefully [
@@ -425,9 +425,9 @@ generation
 
 CHOOSER
 20
-290
+330
 165
-335
+375
 llm-type
 llm-type
 "groq" "claude" "deepseek" "gpt-4o"
@@ -445,10 +445,10 @@ logging?
 -1000
 
 SWITCH
-5
-355
-192
-388
+10
+290
+180
+323
 text-based-evolution
 text-based-evolution
 1

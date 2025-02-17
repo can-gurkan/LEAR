@@ -2,6 +2,8 @@
 
 from src.generators import base
 
+CodeRetryHandler.max_attempts = 5
+
 get_base_prompt.model_prompt = 'groq_prompt2'
 GroqCodeGenerator.temp = 0.65
 GroqCodeGenerator.model_name = "llama-3.3-70b-versatile"

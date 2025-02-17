@@ -845,8 +845,9 @@ class NetLogoVerifier:
         if not has_movement:
             return False, "No movement commands found"
         
+        #'3 TO DO: Add max length to config
         # Code shouldn't be too long (arbitrary limit)
-        if len(code) > 1000:  # Increased limit to accommodate control structures
+        if len(code) > 10000:  # Increased limit to accommodate control structures
             return False, "Code too long"
             
         # Check for potential infinite loops
