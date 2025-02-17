@@ -9,6 +9,19 @@ from src.utils.prompts import LEARPrompts
 from src.utils.retry import CodeRetryHandler
 from src.verification.verify_netlogo import NetLogoVerifier
 
+# To call in NetLogo code for logging purposes
+def output_base_prompt(llm_type):
+
+    prompt_library = LEARPrompts()
+    
+    if llm_type == 'groq':
+        prompt = prompt_library.groq_prompt2
+
+    elif llm_type == 'claude':
+        prompt = prompt_library.claude_prompt2
+
+    return prompt
+
 class NLogoCode(BaseModel):
     new_code: str
 
