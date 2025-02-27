@@ -1,4 +1,4 @@
-extensions [ py ]
+extensions [ py table ]
 
 globals [
   generation
@@ -48,10 +48,15 @@ to spawn-food [num]
 end
 
 to setup-logger
-  py:set "llm_type" llm-type
-  py:set "num_llm_agents" num-llm-agents
-  py:set "num_food_sources" num-food-sources
-  py:set "ticks_per_generation" ticks-per-generation
+
+  let initial_params (list
+  (list "llm-type" llm-type)
+  (list "num-llm-agents" num-llm-agents)
+  (list "num-food-sources" num-food-sources)
+  (list "ticks-per-generation" ticks-per-generation)
+)
+
+  py:set "initial_params" initial_params
 
   py:run "from src.mutation.mutate_code import get_code_generator"
   py:set "llm_type" llm-type
@@ -61,11 +66,12 @@ to setup-logger
   py:set "base_prompt" base-prompt
 
   ;; Initialize a new logger instance (ensures new log file per setup)
+  py:set "experiment_name" experiment-name
   py:run "from src.utils.sim_logger import initialize_logger"
-  py:run "logger = initialize_logger()"
+  py:run "logger = initialize_logger(experiment_name)"
 
   ;; Log the simulation parameters
-  py:run "logger.log_initial_parameters(f'num_agents={num_llm_agents}, num_food_sources={num_food_sources}, ticks_per_generation={ticks_per_generation}, llm_type={llm_type}')"
+  py:run "logger.log_initial_parameters(initial_params)"
   py:run "logger.log_base_prompt(base_prompt)"
 end
 
@@ -77,6 +83,7 @@ to setup
   py:run "import sys"
   py:run "from pathlib import Path"
   py:run "sys.path.append(os.path.dirname(os.path.abspath('.')))"
+
   py:run "from src.mutation.mutate_code import mutate_code"
 
   set init-rule "lt random 20 rt random 20 fd 1"
@@ -125,16 +132,87 @@ to run-rule
   ]
 end
 
+to-report create-agent-dict [name agent-list]
+
+  let agents-sub-dict table:make
+
+  ;; Iterate through each agent in agents-list
+  foreach agent-list [agent-data ->
+    let agent-id item 1 (item 0 agent-data) ;; Extract the agent ID
+    let agent-key word "Agent " agent-id
+    table:put agents-sub-dict agent-key agent-data ;; Store agent data in dictionary as (agent-key : agent-data)
+  ]
+
+  ;; create the super dictionary (with name as key and sub dict as value) to report
+  let agents-super-dict table:make
+  table:put agents-super-dict name agents-sub-dict
+
+  report agents-super-dict
+
+end
+
+
 to evolve-agents
   if ticks >= 1 and ticks mod ticks-per-generation = 0 [
-    ask min-one-of llm-agents [energy] [ die ]
 
-    ask max-one-of llm-agents [energy] [
+    let worst-energy min [energy] of llm-agents
+    let worst-agents llm-agents with [energy = worst-energy] ;; agents with worst energy
+
+
+    let worst-agents-list [(list
+      (list "ID" who)
+      (list "Energy" energy)
+      (list "Parent Rule" parent-rule)
+      (list "Current Rule" rule)
+    )] of worst-agents ;; list of lists of worst-agent metrics (in key-value pairs)
+
+    let worst-agents-dict (create-agent-dict "Killed Agents" worst-agents-list) ;; create our worst-agents data dictionary
+
+    ask worst-agents [die] ;; kill off worst agents
+
+
+    let best-energy max [energy] of llm-agents ;; get best energy of agents
+    let best-agents llm-agents with [energy = best-energy] ;; get agents with best energy
+
+
+    let best-agents-list []
+    let new-agents-list []
+
+    ask best-agents[
+      let parent-id who ;; store parent id before hatching
+      let child-id []
+      let parent-energy energy
+      let parent-parent-rule parent-rule
+      let parent-current-rule rule
+
+
+
+
       hatch 1 [
         set parent-rule rule
         set rule mutate-rule
         init-agent-params
+
+
+        set child-id lput who child-id
+
+        set new-agents-list lput (list
+          (list "ID" who)
+          (list "Parent ID" parent-id)
+          (list "Parent Rule" parent-rule)
+          (list "Mutated Rule" rule)
+        ) new-agents-list
+
+
       ]
+
+      set best-agents-list lput (list
+          (list "ID" parent-id)
+          (list "Child ID(s)" child-id)
+          (list "Energy" parent-energy)
+          (list "Parent Rule" parent-parent-rule)
+          (list "Current Rule" parent-current-rule)
+        ) best-agents-list
     ]
 
     update-generation-stats
@@ -143,6 +221,14 @@ to evolve-agents
       set food-collected 0
       set energy 0
     ]
+
+
+
+    let best-agents-dict (create-agent-dict "Mutated Agents" best-agents-list) ;; create mutated agents data dictionary
+
+    let new-agents-dict (create-agent-dict "New Agents" new-agents-list) ;; create hatched agents data dictionary
+
+    log-metrics (list best-agents-dict new-agents-dict worst-agents-dict) ;; log the metrics (from best-agents, new-agents, and worst-agents)
   ]
 end
 
@@ -152,11 +238,13 @@ to update-generation-stats
   let gen-info (list ticks gen-energy)
   set generation-stats lput gen-info generation-stats
 
-  let best-agent max-one-of llm-agents [energy]
-  if [energy] of best-agent > best-rule-energy [
-    set best-rule-energy [energy] of best-agent
-    set best-rule [rule] of best-agent
-  ]
+
+  let best-energy max [energy] of llm-agents
+  if best-energy > best-rule-energy [
+  set best-rule-energy best-energy
+  set best-rule [rule] of llm-agents with [energy = best-energy]
+  set best-rule sentence [] best-rule ;; Ensures it's a flat list
+]
 end
 
 to-report mutate-rule
@@ -171,6 +259,7 @@ to-report mutate-rule
   py:set "agent_info" info
   py:set "llm_type" llm-type
   py:set "text_based_evolution" text-based-evolution
+
   let result rule
 
   print word "\nGeneration: " generation
@@ -180,7 +269,7 @@ to-report mutate-rule
     let new-rule py:runresult "mutate_code(agent_info=agent_info, model_type=llm_type, use_text_evolution=text_based_evolution)"
     set result new-rule
     print word "New Rule: " new-rule
-    log-metrics rule new-rule ;; add metrics to logger file
+    ;;log-metrics rule new-rule ;; add metrics to logger file
   ] [
     let error-info (list error-message rule ticks)
     set error-log lput error-info error-log
@@ -237,30 +326,34 @@ to-report get-generation-metrics
   ;; reports [gen best-rule mean-energy max-energy mean-food-collected error-log]
   let metrics ifelse-value any? llm-agents [
     (list
-      generation
-      best-rule
-      mean-energy
-      max [energy] of llm-agents
-      mean [food-collected] of llm-agents
-      error-log)
+      (list "generation" generation)
+      (list "best rule(s)" best-rule)
+      (list "mean energy" mean-energy)
+      (list "best energy" max [energy] of llm-agents)
+      (list "mean food" mean [food-collected] of llm-agents)
+      (list "error log" error-log)
+    )
   ] [
-    (list generation "na" 0 0 0 [])
+    (list generation [] 0 0 0 [])
   ]
   report metrics
 end
 
 ;; metric logging helper
-to log-metrics [cur-rule mutated-rule]
+to log-metrics [agents-tables]
   if logging?[
     let metrics get-generation-metrics
+
+    let agents-json map [ t -> table:to-json t ] agents-tables
+
     py:set "metrics" metrics
-    py:set "current_rule" cur-rule
-    py:set "mutated_rule" mutated-rule
+    py:set "agent_data" agents-json
+
 
     ;; Log generation results using the same logger instance
     py:run "from src.utils.sim_logger import get_logger"
     py:run "logger = get_logger()"
-    py:run "logger.log_generation(*metrics, current_rule, mutated_rule)"
+    py:run "logger.log_generation([dict(metrics), agent_data[0], agent_data[1], agent_data[2]])"
   ]
 end
 
@@ -454,6 +547,17 @@ text-based-evolution
 1
 1
 -1000
+
+INPUTBOX
+5
+380
+180
+440
+experiment-name
+demo
+1
+0
+String
 
 @#$#@#$#@
 ## WHAT IS IT?

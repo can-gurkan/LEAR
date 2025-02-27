@@ -2,15 +2,16 @@ import os
 import datetime
 import logging
 import json
+from collections import ChainMap
 
 _logger_instance = None  # Global variable to hold the logger instance
 
-def initialize_logger():
+def initialize_logger(experiment_name):
     """Reinitialize the logger (called every time NetLogo setup runs)."""
 
     global _logger_instance
 
-    _logger_instance = NetLogoLogger()  # Create a new logger instance
+    _logger_instance = NetLogoLogger(experiment_name)  # Create a new logger instance
     
     return _logger_instance
 
@@ -24,14 +25,19 @@ def get_logger():
     return _logger_instance
 
 class NetLogoLogger:
-    def __init__(self, base_log_directory="../Logs"):
+    def __init__(self, experiment_name, base_log_directory="LEAR/Logs"):
         """Initialize a new logger instance."""
         self.base_log_directory = base_log_directory
 
         # Create a new folder with timestamp
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.log_directory = os.path.join(self.base_log_directory, timestamp)
-        os.makedirs(self.log_directory, exist_ok=True)
+        self.log_directory = os.path.join(self.base_log_directory, experiment_name, timestamp)
+
+        try:
+            os.makedirs(self.log_directory, exist_ok=True)
+            print(f"Log directory created at: {self.log_directory}")  # Debugging statement
+        except Exception as e:
+            print(f"Failed to create log directory: {e}")  # Prints error if directory creation fails
 
         # Define log file path
         self.log_file = os.path.join(self.log_directory, "simulation.log")
@@ -52,28 +58,28 @@ class NetLogoLogger:
 
     def log_initial_parameters(self, params):
         """Log simulation parameters at the start."""
-        self.logger.info(f"Simulation Parameters: {params}")
+
+        params_dict = dict(params)
+        self.logger.info(f"Simulation Parameters: {params_dict}")
 
     def log_base_prompt(self, prompt):
         """Log the LLM base prompt."""
         self.logger.info(f"Base Prompt: {prompt}")
 
-    def log_generation(self, generation, best_rule, mean_energy, best_energy, mean_food_collected, error_log, current_rule, mutated_rule):
+    def log_generation(self, data):
         ## TO DO: Modify this so that which parameters are logged can be controlled by the user so that it is nlogo model agnostic
         ## TO DO: Modify so that this works even if multiple agents are being evolved per generation
         """Log per-generation evolution stats."""
 
-        # Append to json data
-        self.generation_data.append({
-            "generation": generation,
-            "best_rule": best_rule,
-            "mean_energy": mean_energy,
-            "best_energy": best_energy,
-            "mean_food_collected": mean_food_collected,
-            "error_log": error_log,
-            "current_rule": current_rule,
-            "mutated_rule": mutated_rule
-        })
+        master_dict = {}
+
+        for table in data:
+            if isinstance(table, str):  # Check if table is a string (in JSON format)
+                table = json.loads(table)  # Convert JSON string to dictionary
+
+            master_dict |= table  # merge dictionaries
+
+        self.generation_data.append(master_dict)
 
         # Save to json file
         with open(self.json_file, "w") as f:
