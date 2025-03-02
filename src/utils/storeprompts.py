@@ -69,8 +69,6 @@ Here is the pseudocode you will be working with:
 Please follow these guidelines when generating the NetLogo code:
 
 1. Use NetLogo language primitives.
-2. Do not create variables that are not present in the pseudocode.
-3. Do not infer variable names from the pseudocode or generate random code.
 4. Generate only movement code.
 5. Adhere to the following constraints:
    a. Do not include code to kill or control any other agents.

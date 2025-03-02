@@ -153,32 +153,8 @@ class TextBasedEvolution:
             # Use appropriate prompt from the prompts dictionary
             # Choose a appropriate prompt for pseudocode generation
             system_prompt = prompts["langchain"]["cot_system"]
-            user_prompt = prompts["text_evolution"]["pseudo_gen_prompt"].format(initial_pseudocode, agent_info[0])
-            
-            # Create a template for pseudocode generation
-            # user_prompt = f"""
-            # You are creating pseudocode for NetLogo agent movement. 
-            
-            # Current pseudocode: {initial_pseudocode}
-            
-            # Original NetLogo code: {original_code}
-            
-            # Agent information:
-            # - Current rule: {agent_info[0]}
-            # - Food distances: {agent_info[1]}
-            
-            # {prompts["evolution_goals"]}
-            
-            # Generate ONLY pseudocode that describes the improved agent movement strategy.
-            # The pseudocode should be clear, concise, and focused on the movement logic and must be enclosed in triple backticks.
-            # Example pseudocode:
-            # ```
-            # move forward with value 1
-            # turn right with value 90
-            # turn left with value 45
-            # ```
-            # Please provide the pseudocode in the same format.
-            # """
+            user_prompt = prompts["text_evolution"]["pseudo_gen_prompt"].format(initial_pseudocode)
+        
             
             prompt = ChatPromptTemplate.from_messages([
                 ("system", system_prompt),
