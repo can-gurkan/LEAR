@@ -1,14 +1,36 @@
 # Default parameters
 
+# Import necessary modules
 from src.generators import base
+from src.graph_providers import unified_provider
+from src.graph_providers import base as graph_base
+from src.netlogo_code_generator import nodes
 
+# Retry configuration
 CodeRetryHandler.max_attempts = 5
+GraphProviderBase.retry_max_attempts = 5
 
-get_base_prompt.model_prompt = 'groq_prompt2'
-GroqCodeGenerator.temp = 0.65
-GroqCodeGenerator.model_name = "llama-3.3-70b-versatile"
+# Default model selection
+create_graph_provider.model_name = "groq"
 
-#get_base_prompt.model_prompt = 'claude_prompt3'
-ClaudeCodeGenerator.temp = 0.4
-ClaudeCodeGenerator.max_tokens = 612
-ClaudeCodeGenerator.model_name = "claude-3-5-sonnet-20241022"
+# Model-specific configurations
+GraphUnifiedProvider.temperature = 0.65
+GraphUnifiedProvider.max_tokens = 500
+
+# Model-specific name configurations
+GraphUnifiedProvider.groq_model_name = "llama-3.3-70b-versatile"
+GraphUnifiedProvider.claude_model_name = "claude-3-5-sonnet-20241022"
+GraphUnifiedProvider.openai_model_name = "gpt-4o"
+GraphUnifiedProvider.deepseek_model_name = "deepseek-chat"
+
+# Prompt configuration
+get_base_prompt.model_prompt = 'prompt2'
+get_base_prompt.model_type = 'groq'
+
+
+# Legacy configurations (commented out)
+# GroqCodeGenerator.temp = 0.65
+# GroqCodeGenerator.model_name = "llama-3.3-70b-versatile"
+# ClaudeCodeGenerator.temp = 0.4
+# ClaudeCodeGenerator.max_tokens = 612
+# ClaudeCodeGenerator.model_name = "claude-3-5-sonnet-20241022"
