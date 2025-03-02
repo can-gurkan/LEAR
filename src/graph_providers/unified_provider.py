@@ -31,7 +31,7 @@ class GraphUnifiedProvider(GraphProviderBase):
     # Model name parameters defined at init level to make them configurable
     def __init__(self, model_name: str, verifier: NetLogoVerifier, 
                  temperature: float = 0.7, max_tokens: int = 1000,
-                 claude_model_name: str = "claude-3-sonnet-20240229",
+                 claude_model_name: str = "claude-3-5-sonnet-20240229",
                  deepseek_model_name: str = "deepseek-chat",
                  groq_model_name: str = "llama-3.3-70b-versatile",
                  openai_model_name: str = "gpt-4o"):

@@ -30,6 +30,7 @@ def evolve_pseudocode(
     Returns:
         Updated generation state with modified pseudocode
     """
+    logger.info(f"NODE: evolve_pseudocode")
     use_text_evolution = state.get("use_text_evolution", False)
     logger.info(f"Evolving pseudocode, use_text_evolution: {use_text_evolution}")
 
@@ -72,7 +73,7 @@ def generate_code(
     # Generate code using provider
     # logger.info(f"Agent info: {state['agent_info']}")
     # logger.info(f"Modified pseudocode: {state['modified_pseudocode']}")
-    logger.info(f"NODE: Generate Code")
+    logger.info(f"NODE: generate_code")
     
     new_code = provider.generate_code_with_model(
         state["agent_info"],
@@ -98,6 +99,7 @@ def verify_code(
     Returns:
         Updated generation state with verification results
     """
+    logger.info(f"NODE: verify_code")
     logger.info(f"Code to verify: {state['current_code']}")
     is_safe, error_message = verifier.is_safe(state["current_code"])
     logger.info(f"Verification result: is_safe={is_safe}, error_message={error_message}")

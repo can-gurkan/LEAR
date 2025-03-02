@@ -62,10 +62,12 @@ class GraphProviderBase(BaseCodeGenerator):
         """Build the prompt based on the given information."""
         if error_message:
             # Use error prompt for retry attempts
-            return self.retry_handler.error_prompt.format(
-                code=agent_info[0],
-                error=error_message
-            )
+            # return self.retry_handler.error_prompt.format(
+            #     code=agent_info[0],
+            #     error=error_message
+            # )
+            return prompts["retry_prompts"]["generate_code_with_error"].format(agent_info[0], error_message)
+        
         elif evolution_description:
             # Use evolution description for text-based evolution
             # return f"This is the evolution description: {evolution_description} Here is the code: {agent_info[0]}. Generate new code based on the above description."
@@ -75,6 +77,7 @@ class GraphProviderBase(BaseCodeGenerator):
         else:
             # Use standard prompt
             base_prompt = self.get_base_prompt(agent_info[0])
+            # print(base_prompt)
             return base_prompt
 
     @abstractmethod

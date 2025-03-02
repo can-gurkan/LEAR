@@ -33,9 +33,9 @@ def get_graph_provider(model_type: str):
 
 def mutate_code(agent_info: list, model_type: str = "groq", use_text_evolution: bool = False) -> str:
     """Generate evolved NetLogo code using graph-based evolution."""
-    # logger.info(f"Starting code generation with model type: {model_type}, use_text_evolution: {use_text_evolution}")
+    logger.info(f"Starting code generation with model type: {model_type}, use_text_evolution: {use_text_evolution}")
 
-    print(f"Agent info: {agent_info}")
+    # print(f"Agent info: {agent_info}")
     
     # Extract initial_pseudocode from agent_info if available
     initial_pseudocode = ""
