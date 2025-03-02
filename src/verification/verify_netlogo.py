@@ -82,7 +82,7 @@ class NetLogoVerifier:
             'fd', 'forward',
             'rt', 'right',
             'lt', 'left',
-            #'if', 'ifelse',
+            'if', 'ifelse',
             'set', 'let'  # Added variable assignment
         }
         
@@ -94,8 +94,13 @@ class NetLogoVerifier:
             'item',
             'count',  # Added list operations
             'length',
-            'position'
+            'position',
+            'any?',
+            'in-radius'
         }
+        
+        # NetLogo agent sets and patch variables can be dynamically named
+        # We'll handle these in the validation logic rather than listing them all
         
         self.dangerous_primitives = {
             'die', 'kill', 'create', 'hatch', 'sprout',
@@ -317,15 +322,16 @@ class NetLogoVerifier:
         tokens (List): the tokens comprising the statement structure
 
         -----Returns-----
-        results (Tuple[bool, str, int]): first element is whether statement is valid (True/False), second is associated message
+        results (Tuple[bool, str]): first element is whether statement is valid (True/False), second is associated message
         '''
         # Handle regular commands
         i = 0
         while i < len(tokens):
-            if token in self.allowed_commands:
+            current_token = tokens[i].lower()
+            if current_token in self.allowed_commands:
                 # Check if we have at least one more token
                 if i + 1 >= len(tokens):
-                    return False, f"Command '{token}' needs a value"
+                    return False, f"Command '{current_token}' needs a value"
 
                 # Check for random keyword
                 if tokens[i + 1].lower() in self.allowed_reporters:
@@ -340,10 +346,12 @@ class NetLogoVerifier:
                     # Normal numeric value check
                     next_token = tokens[i + 1]
                     if not self._is_valid_numeric_expression(next_token):
-                        return False, f"Invalid value for command '{token}': {next_token}"
+                        return False, f"Invalid value for command '{current_token}': {next_token}"
                     i += 2  # Skip command and its value
+            else:
+                i += 1
 
-        return True
+        return True, ""
 
     # Recursive Helper Function that validates if, ifelse, and ifelse-value statements
     def _validate_if_statements(self, tokens) -> Tuple[bool, str, int]:

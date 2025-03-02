@@ -58,13 +58,13 @@ class NetLogoLogger:
         """Log the LLM base prompt."""
         self.logger.info(f"Base Prompt: {prompt}")
 
-    def log_generation(self, generation, best_rule, mean_energy, best_energy, mean_food_collected, error_log, current_rule, mutated_rule):
+    def log_generation(self, generation, best_rule, mean_energy, best_energy, mean_food_collected, error_log, current_rule, mutated_rule, initial_pseudocode=None, modified_pseudocode=None):
         ## TO DO: Modify this so that which parameters are logged can be controlled by the user so that it is nlogo model agnostic
         ## TO DO: Modify so that this works even if multiple agents are being evolved per generation
         """Log per-generation evolution stats."""
 
         # Append to json data
-        self.generation_data.append({
+        generation_entry = {
             "generation": generation,
             "best_rule": best_rule,
             "mean_energy": mean_energy,
@@ -73,7 +73,16 @@ class NetLogoLogger:
             "error_log": error_log,
             "current_rule": current_rule,
             "mutated_rule": mutated_rule
-        })
+        }
+        
+        # Add pseudocode entries if provided
+        if initial_pseudocode is not None:
+            generation_entry["initial_pseudocode"] = initial_pseudocode
+        
+        if modified_pseudocode is not None:
+            generation_entry["modified_pseudocode"] = modified_pseudocode
+            
+        self.generation_data.append(generation_entry)
 
         # Save to json file
         with open(self.json_file, "w") as f:

@@ -1,13 +1,6 @@
-from src.langchain_providers.base import LangchainProviderBase
-from src.langchain_providers.claude_langchain import LangchainClaudeGenerator
-from src.langchain_providers.deepseek_langchain import LangchainDeepseekGenerator
-from src.langchain_providers.groq_langchain import LangchainGroqGenerator
-from src.langchain_providers.openai_langchain import LangchainOpenAIGenerator
+from src.langchain_providers.unified_provider import LangchainUnifiedGenerator, create_langchain_provider
 
 __all__ = [
-    'LangchainProviderBase',
-    'LangchainClaudeGenerator',
-    'LangchainGroqGenerator', 
-    'LangchainOpenAIGenerator',
-    'LangchainDeepseekGenerator'
+    'LangchainUnifiedGenerator',
+    'create_langchain_provider'
 ]

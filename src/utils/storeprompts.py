@@ -1,17 +1,101 @@
-class LEARPrompts:
-    """Collection of prompts used throughout the LEAR system"""
-    
-    def __init__(self):
-        # Evolution goals used in text-based evolution
-        self.evolution_goals = """Evolution Goals:
+"""Collection of prompts used throughout the LEAR system"""
+
+prompts = {
+    # Evolution goals used in text-based evolution
+    "evolution_goals": """Evolution Goals:
 1. Optimize movement for efficient food collection
 2. Balance exploration and exploitation
 3. Maintain simple, efficient NetLogo commands
-4. Consider both immediate food sources and long-term survival"""
+4. Consider both immediate food sources and long-term survival""",
 
-        # Chain of thought prompt for langchain providers
-        self.langchain_cot_system = "You are a NetLogo code evolution expert. Think step-by-step."
-        self.langchain_cot_template = """{}
+
+
+    # Text based evolution prompts
+    "text_evolution": {
+      "pseudo_gen_prompt": """You are an AI assistant tasked with improving the movement code for a turtle agent in NetLogo. Your goal is to create new pseudocode with slight modifications using paradigms of genetic programming. The improved code should help the agent collect as much food as possible while adhering to specific constraints and strategic goals. Consider the following evolution goals:
+      
+Evolution Goals:
+1. Optimize movement for efficient food collection
+2. Balance exploration and exploitation
+3. Maintain simple, efficient NetLogo commands
+4. Consider both immediate food sources and long-term survival
+
+You will be given two inputs:
+
+Initial Pseudocode:
+<initial_pseudocode>
+{}
+</initial_pseudocode>
+
+
+To improve the pseudocode, follow these guidelines:
+1. Analyze the initial pseudocode to understand the existing movement strategy.
+2. Consider ways to balance exploration and food-seeking behavior.
+3. Combine different movement patterns to create a more effective strategy.
+4. Ensure that the new pseudocode adheres to the given constraints and strategic goals.
+
+Your output should be ONLY the improved pseudocode for the agent's movement strategy. Present your pseudocode enclosed in triple backticks, following this format:
+
+```
+[Your improved pseudocode here]
+```
+
+The pseudocode should be clear, concise, and focused solely on the movement logic. Use simple, straightforward language to describe the actions, such as "move forward", "turn right", "turn left", etc.
+
+Remember the following constraints:
+1. Do not include code to kill or control any other agents
+2. Do not include code to interact with the environment
+3. Do not include code to change the environment
+4. Do not include code to create new agents
+5. Do not include code to create new food sources
+6. Do not include code to change the rules of the simulation
+
+Keep in mind the strategic goals:
+1. Balance exploration and food-seeking behavior
+2. Respond to sensor readings intelligently (if applicable)
+3. Combine different movement patterns
+
+Provide only the improved pseudocode as your response, without any additional explanations or justifications.""",
+
+
+    "code_gen_prompt": """You are tasked with converting pseudocode into well-structured NetLogo code for agent movement. Your goal is to generate only the movement code based on the provided pseudocode, adhering to specific constraints and requirements.
+
+Here is the pseudocode you will be working with:
+
+<pseudocode>
+{}
+</pseudocode>
+
+Please follow these guidelines when generating the NetLogo code:
+
+1. Use NetLogo language primitives.
+2. Do not create variables that are not present in the pseudocode.
+3. Do not infer variable names from the pseudocode or generate random code.
+4. Generate only movement code.
+5. Adhere to the following constraints:
+   a. Do not include code to kill or control any other agents.
+   b. Do not include code to interact with the environment.
+   c. Do not include code to change the environment.
+   d. Do not include code to create new agents.
+   e. Do not include code to create new food sources.
+   f. Do not include code to change the rules of the simulation.
+
+Your task is to carefully analyze the provided pseudocode and translate it into NetLogo code that represents the agent's movement strategy. Focus solely on the movement aspects described in the pseudocode.
+
+Present your generated NetLogo code enclosed in triple backticks, following this format:
+
+```
+[Your generated NetLogo code here]
+```
+
+Ensure that your code accurately reflects the movement strategy described in the pseudocode while adhering to NetLogo syntax and the specified constraints. Do not add any explanations or comments outside the code block."""
+},
+
+
+    # Chain of thought prompts for langchain providers
+    "langchain": {
+        "cot_system": "You are a NetLogo code evolution expert. Think step-by-step.",
+        "cot_template": """{}
             
 Current code block to evolve:
 ```netlogo
@@ -24,9 +108,11 @@ Analysis steps:
 1. Identify patterns in existing code
 2. Determine needed modifications based on food inputs
 3. Propose updated code with clear explanations
-4. Validate syntax before final answer"""
-
-        self.groq_prompt = """You are an expert NetLogo movement code generator. Generate movement code following these precise specifications:
+4. Validate syntax before final answer""",
+    },
+    # Groq prompts
+    "groq": {
+        "prompt": """You are an expert NetLogo movement code generator. Generate movement code following these precise specifications:
 
 VALID COMMANDS AND SYNTAX:
 - Movement: fd/forward, rt/right, lt/left
@@ -73,9 +159,9 @@ STRATEGIC GOALS:
 3. Respond to sensor readings intelligently
 4. Combine different movement patterns
 
-Generate ONLY the movement code with no explanations or comments. Code must be runnable in NetLogo."""
+Generate ONLY the movement code with no explanations or comments. Code must be runnable in NetLogo.""",
 
-        self.groq_prompt1 = """Modify the given NetLogo movement rule according to the following guidelines:
+        "prompt1": """Modify the given NetLogo movement rule according to the following guidelines:
 
         1. Use only existing variables and data types; do not define new variables.
         2. Use only fd, rt, and lt for movement; exclude other NetLogo commands.
@@ -96,18 +182,13 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
         rule: {} 
         input: {}
 
-        Remember, the goal is to create an efficient movement rule that balances exploration and exploitation, aiming to find food in both the short and long term."""
+        Remember, the goal is to create an efficient movement rule that balances exploration and exploitation, aiming to find food in both the short and long term.""",
         
-        self.groq_prompt2 = """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
+        "prompt2": """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
 
 INPUT CONTEXT:
 - Current rule: {}
-- Food sensor readings: {}
-  - Input list contains three values representing distances to food in three cone regions of 20 degrees each
-  - The first item in the input list is the distance to the nearest food in the left cone, the second is the right cone, and the third is the front cone
-  - Each value encodes the distance to nearest food source where a value of 0 indicates no food
-  - Non-zero lower values indicate closer food
-  - Use these to inform movement strategy
+
 
 CONSTRAINTS:
 1. Do not include code to kill or control any other agents
@@ -134,9 +215,11 @@ STRATEGIC GOALS:
 2. Respond to sensor readings intelligently
 3. Combine different movement patterns
 
-Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
-
-        self.claude_prompt = """You are an expert NetLogo movement code generator. Generate movement code following these precise specifications:
+Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle.""",
+    },
+    # Claude prompts
+    "claude": {
+        "prompt": """You are an expert NetLogo movement code generator. Generate movement code following these precise specifications:
 
 VALID COMMANDS AND SYNTAX:
 - Movement: fd/forward, rt/right, lt/left
@@ -184,9 +267,8 @@ STRATEGIC GOALS:
 3. Respond to sensor readings intelligently
 4. Combine different movement patterns
 
-Generate ONLY the movement code with no explanations or comments. Code must be runnable in NetLogo."""
-        
-        self.claude_prompt1 = """Modify the given NetLogo movement rule according to the following guidelines:
+Generate ONLY the movement code with no explanations or comments. Code must be runnable in NetLogo.""",
+        "prompt1": """Modify the given NetLogo movement rule according to the following guidelines:
 
         1. Use only fd, rt, or lt commands with numbers or 'random N'
         2. Keep expressions simple - avoid complex arithmetic
@@ -205,11 +287,8 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
         - lt 45 fd 2
         - rt random-float 90 fd 1
         
-        Return ONLY the modified NetLogo code with no explanations."""
-        
-        
-        
-        self.claude_prompt2 = """You are an expert NetLogo agent movement behavior generator. Your task is to create sophisticated movement patterns that balance efficiency with complexity. Generate code that follows these specifications while pushing the boundaries of complexity:
+        Return ONLY the modified NetLogo code with no explanations.""",
+        "prompt2": """You are an expert NetLogo agent movement behavior generator. Your task is to create sophisticated movement patterns that balance efficiency with complexity. Generate code that follows these specifications while pushing the boundaries of complexity:
 
         CORE COMMANDS AND FUNCTIONS:
         Movement Commands: fd/forward, rt/right, lt/left
@@ -256,9 +335,8 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
 
         You are encouraged to be creative and generate complex patterns that go beyond basic movement rules. Focus on creating sophisticated behaviors that could lead to emergent patterns in the simulation.
 
-        Return ONLY the NetLogo code with no explanations. Make it mathematically interesting and behaviorally complex while ensuring it remains valid NetLogo syntax."""
-
-        self.claude_prompt3 = """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
+        Return ONLY the NetLogo code with no explanations. Make it mathematically interesting and behaviorally complex while ensuring it remains valid NetLogo syntax.""",
+        "prompt3": """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
 
 INPUT CONTEXT:
 - Current rule: {}
@@ -294,4 +372,6 @@ STRATEGIC GOALS:
 2. Respond to sensor readings intelligently
 3. Combine different movement patterns
 
-Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
+Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle.""",
+    },
+}

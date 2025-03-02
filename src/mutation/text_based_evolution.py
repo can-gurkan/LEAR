@@ -4,8 +4,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 import logging
+import re
 
-from src.utils.prompts import LEARPrompts
+from src.utils.storeprompts import prompts
 from src.langchain_providers.base import LangchainProviderBase
 
 @dataclass
@@ -24,14 +25,13 @@ class TextBasedEvolution:
     
     def __init__(self, provider: Optional[LangchainProviderBase] = None):
         self.logger = logging.getLogger(__name__)
-        self.prompts = LEARPrompts()
         self.provider = provider
     
     def _analyze_performance(self, context: EnvironmentContext) -> str:
         """Generate performance analysis description"""
         efficiency = context.food_collected / max(1, context.lifetime)
         
-        return self.prompts.evolution_performance.format(
+        return prompts["evolution_goals"].format(
             energy=context.agent_energy,
             food=context.food_collected,
             lifetime=context.lifetime,
@@ -41,13 +41,13 @@ class TextBasedEvolution:
     def _analyze_movement_pattern(self, rule: str) -> str:
         """Analyze current movement rule pattern using LLM if available, with basic pattern matching as fallback"""
         if not rule:
-            return self.prompts.evolution_movement_pattern_none
+            return "No movement pattern"
             
         if self.provider:
             try:
                 prompt = ChatPromptTemplate.from_messages([
-                    ("system", self.prompts.code_analysis_system_message),
-                    ("user", self.prompts.code_analysis_user_message.format(code=rule))
+                    ("system", prompts["langchain"]["cot_system"]),
+                    ("user", prompts["langchain"]["cot_template"].format(code=rule, base_prompt="", inputs=""))
                 ])
                 
                 chain = prompt | self.provider.initialize_llm() | StrOutputParser()
@@ -67,13 +67,13 @@ class TextBasedEvolution:
             value = components[i + 1] if i + 1 < len(components) else ""
             
             if command == "fd":
-                pattern.append(self.prompts.evolution_movement_pattern.format(direction="forward", value=value))
+                pattern.append("Moving forward with value {value}".format(direction="forward", value=value))
             elif command == "rt":
-                pattern.append(self.prompts.evolution_movement_pattern.format(direction="right", value=value))
+                pattern.append("Turning right with value {value}".format(direction="right", value=value))
             elif command == "lt":
-                pattern.append(self.prompts.evolution_movement_pattern.format(direction="left", value=value))
+                pattern.append("Turning left with value {value}".format(direction="left", value=value))
                 
-        return ", ".join(pattern) if pattern else self.prompts.evolution_movement_pattern_none
+        return ", ".join(pattern) if pattern else "No movement pattern"
     
     def _generate_llm_explanation(self, movement_pattern: str, performance_metrics: str, parent_pattern: Optional[str] = None) -> str:
         """Generate explanation using LLM"""
@@ -83,11 +83,11 @@ class TextBasedEvolution:
             
         try:
             prompt = ChatPromptTemplate.from_messages([
-                ("system", self.prompts.explanation_system_message),
-                ("user", self.prompts.explanation_user_message.format(
+                ("system", prompts["langchain"]["cot_system"]),
+                ("user", prompts["langchain"]["cot_template"].format(
                     movement_pattern=movement_pattern,
                     performance_metrics=performance_metrics,
-                    parent_pattern=parent_pattern if parent_pattern else "None"
+                    parent_pattern=parent_pattern if parent_pattern else "None", base_prompt="", code="", inputs=""
                 ))
             ])
             
@@ -125,10 +125,82 @@ class TextBasedEvolution:
             )
             
             # Add evolution guidance
-            description += "\n\n" + self.prompts.evolution_goals_prompt
+            description += "\n\n" + prompts["evolution_goals"]
             
             return description
             
         except Exception as e:
             self.logger.error(f"Error generating evolution description: {str(e)}")
             return f"Basic agent with rule: {agent_info[0]}"
+            
+    def generate_pseudocode(self, agent_info: list, initial_pseudocode: str, original_code: str) -> str:
+        """
+        Generate pseudocode for NetLogo code evolution using prompts from the prompt dictionary.
+        
+        Args:
+            agent_info: List containing agent state and environment information
+            initial_pseudocode: The initial pseudocode to guide evolution
+            original_code: The original NetLogo code
+            
+        Returns:
+            Modified pseudocode
+        """
+        if not self.provider:
+            self.logger.warning("No LLM provider available, using initial pseudocode")
+            return initial_pseudocode
+            
+        try:
+            # Use appropriate prompt from the prompts dictionary
+            # Choose a appropriate prompt for pseudocode generation
+            system_prompt = prompts["langchain"]["cot_system"]
+            user_prompt = prompts["text_evolution"]["pseudo_gen_prompt"].format(initial_pseudocode, agent_info[0])
+            
+            # Create a template for pseudocode generation
+            # user_prompt = f"""
+            # You are creating pseudocode for NetLogo agent movement. 
+            
+            # Current pseudocode: {initial_pseudocode}
+            
+            # Original NetLogo code: {original_code}
+            
+            # Agent information:
+            # - Current rule: {agent_info[0]}
+            # - Food distances: {agent_info[1]}
+            
+            # {prompts["evolution_goals"]}
+            
+            # Generate ONLY pseudocode that describes the improved agent movement strategy.
+            # The pseudocode should be clear, concise, and focused on the movement logic and must be enclosed in triple backticks.
+            # Example pseudocode:
+            # ```
+            # move forward with value 1
+            # turn right with value 90
+            # turn left with value 45
+            # ```
+            # Please provide the pseudocode in the same format.
+            # """
+            
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", system_prompt),
+                ("user", user_prompt)
+            ])
+            
+            chain = prompt | self.provider.initialize_model() | StrOutputParser()
+            pseudocode_response = chain.invoke({"input": ""})
+            
+            if pseudocode_response:
+                # Parse the response to extract the pseudocode - re to extract content within triple backticks
+                
+                match = re.search(r'```(.*?)```', pseudocode_response, re.DOTALL)
+                if match:
+                    pseudocode_response = match.group(1).strip()
+                else:
+                    self.logger.warning("No pseudocode found in response, using initial pseudocode.")
+                    return initial_pseudocode
+                
+                        
+            return pseudocode_response
+            
+        except Exception as e:
+            self.logger.error(f"Error generating pseudocode: {str(e)}")
+            return initial_pseudocode
