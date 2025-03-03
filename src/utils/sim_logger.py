@@ -25,7 +25,7 @@ def get_logger():
     return _logger_instance
 
 class NetLogoLogger:
-    def __init__(self, experiment_name, base_log_directory="LEAR/Logs"):
+    def __init__(self, experiment_name, base_log_directory="../Logs"):
         """Initialize a new logger instance."""
         self.base_log_directory = base_log_directory
 
@@ -48,7 +48,7 @@ class NetLogoLogger:
         self.logger.setLevel(logging.INFO)
 
         file_handler = logging.FileHandler(self.log_file)
-        formatter = logging.Formatter("%(asctime)s - %(message)s")
+        formatter = logging.Formatter("%(message)s")
         file_handler.setFormatter(formatter)
 
         self.logger.addHandler(file_handler)
@@ -67,8 +67,6 @@ class NetLogoLogger:
         self.logger.info(f"Base Prompt: {prompt}")
 
     def log_generation(self, data):
-        ## TO DO: Modify this so that which parameters are logged can be controlled by the user so that it is nlogo model agnostic
-        ## TO DO: Modify so that this works even if multiple agents are being evolved per generation
         """Log per-generation evolution stats."""
 
         master_dict = {}
