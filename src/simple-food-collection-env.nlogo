@@ -7,6 +7,8 @@ globals [
   best-rule
   best-rule-energy
   error-log
+  initial-pseudocode
+  modified-pseudocode
 ]
 
 breed [llm-agents llm-agent]
@@ -53,12 +55,7 @@ to setup-logger
   py:set "num_food_sources" num-food-sources
   py:set "ticks_per_generation" ticks-per-generation
 
-  py:run "from src.mutation.mutate_code import get_code_generator"
-  py:set "llm_type" llm-type
-  ;;; {{{TO DO: Change later so that get_base prompt doesn't require agent_info and maybe llm_type}}}
-  py:set "agent_info" [0 0 0 0 0]
-  let base-prompt py:runresult "get_code_generator(llm_type).get_base_prompt(agent_info,llm_type)"
-  py:set "base_prompt" base-prompt
+
 
   ;; Initialize a new logger instance (ensures new log file per setup)
   py:run "from src.utils.sim_logger import initialize_logger"
@@ -66,7 +63,7 @@ to setup-logger
 
   ;; Log the simulation parameters
   py:run "logger.log_initial_parameters(f'num_agents={num_llm_agents}, num_food_sources={num_food_sources}, ticks_per_generation={ticks_per_generation}, llm_type={llm_type}')"
-  py:run "logger.log_base_prompt(base_prompt)"
+
 end
 
 to setup
@@ -76,13 +73,22 @@ to setup
   py:run "import os"
   py:run "import sys"
   py:run "from pathlib import Path"
-  py:run "sys.path.append(os.path.dirname(os.path.abspath('.')))"
+
+  py:run "current_dir = os.path.abspath('.')"
+  py:run "project_root = os.path.dirname(current_dir)"  ;; Go up one directory
+  py:run "if project_root not in sys.path: sys.path.insert(0, project_root)"
+  py:run "print(f'Added to Python path: {project_root}')"
+
+
   py:run "from src.mutation.mutate_code import mutate_code"
 
   set init-rule "lt random 20 rt random 20 fd 1"
   set generation-stats []
   set error-log []
   set best-rule-energy 0
+
+  set initial-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
+  set modified-pseudocode ""
 
   spawn-food num-food-sources
   setup-llm-agents
@@ -166,12 +172,19 @@ to-report mutate-rule
     parent-rule
     energy
     ticks
+    food-collected
+    lifetime
+    initial-pseudocode
+    modified-pseudocode
   )
 
   py:set "agent_info" info
   py:set "llm_type" llm-type
   py:set "text_based_evolution" text-based-evolution
+  py:set "initial_pseudocode" initial-pseudocode
+
   let result rule
+
 
   print word "\nGeneration: " generation
   print word "Current Rule: " result
@@ -180,11 +193,18 @@ to-report mutate-rule
     let new-rule py:runresult "mutate_code(agent_info=agent_info, model_type=llm_type, use_text_evolution=text_based_evolution)"
     set result new-rule
     print word "New Rule: " new-rule
-    log-metrics rule new-rule ;; add metrics to logger file
+
+    ;; Try to get the modified pseudocode if available
+    py:run "from src.netlogo_code_generator.state import GenerationState"
+    py:run "modified_pseudocode = getattr(GenerationState, 'modified_pseudocode', None)"
+    set modified-pseudocode py:runresult "modified_pseudocode if modified_pseudocode is not None else ''"
+
+    log-metrics rule new-rule initial-pseudocode modified-pseudocode ;; add metrics to logger file
   ] [
     let error-info (list error-message rule ticks)
     set error-log lput error-info error-log
     print word "Mutation error: " error-message
+    print error-message
   ]
   report result
 end
@@ -250,17 +270,19 @@ to-report get-generation-metrics
 end
 
 ;; metric logging helper
-to log-metrics [cur-rule mutated-rule]
+to log-metrics [cur-rule mutated-rule ip mp]
   if logging?[
     let metrics get-generation-metrics
     py:set "metrics" metrics
     py:set "current_rule" cur-rule
     py:set "mutated_rule" mutated-rule
+    py:set "initial_pseudocode" ip
+    py:set "modified_pseudocode" mp
 
     ;; Log generation results using the same logger instance
     py:run "from src.utils.sim_logger import get_logger"
     py:run "logger = get_logger()"
-    py:run "logger.log_generation(*metrics, current_rule, mutated_rule)"
+    py:run "logger.log_generation(*metrics, current_rule, mutated_rule, initial_pseudocode, modified_pseudocode)"
   ]
 end
 
@@ -406,7 +428,7 @@ ticks-per-generation
 ticks-per-generation
 1
 2000
-500.0
+101.0
 1
 1
 NIL
@@ -431,7 +453,7 @@ CHOOSER
 llm-type
 llm-type
 "groq" "claude" "deepseek" "gpt-4o"
-0
+1
 
 SWITCH
 20

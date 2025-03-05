@@ -24,7 +24,7 @@ GraphUnifiedProvider.openai_model_name = "gpt-4o"
 GraphUnifiedProvider.deepseek_model_name = "deepseek-chat"
 
 # Prompt configuration
-get_base_prompt.model_prompt = 'prompt2'
+get_base_prompt.model_prompt = 'prompt3'
 get_base_prompt.model_type = 'groq'
 
 
