@@ -7,6 +7,11 @@ globals [
   best-rule
   best-rule-energy
   error-log
+
+  selection
+  num-parents
+  tournament-size
+  selection-pressure
 ]
 
 breed [llm-agents llm-agent]
@@ -23,6 +28,14 @@ llm-agents-own [
 ]
 
 ;;; Setup Procedures
+
+to setup-params
+  ;; init selection algo params
+  set selection "tournament" ;"fitness-prop"
+  set num-parents 2
+  set tournament-size 7
+  set selection-pressure 0.8
+end
 
 to setup-llm-agents
   create-llm-agents num-llm-agents [
@@ -93,6 +106,7 @@ to setup
 
   spawn-food num-food-sources
   setup-llm-agents
+  setup-params
   if logging? [ setup-logger ]
   reset-ticks
 end
@@ -135,20 +149,25 @@ end
 to evolve-agents
   if ticks >= 1 and ticks mod ticks-per-generation = 0 [
 
-    let kill-dict agent-dict min-n-of 2 llm-agents [energy]
-    let best-dict agent-dict max-n-of 2 llm-agents [energy]
+    let parents select-agents
+    let kill-num length parents
+
+    let kill-dict agent-dict min-n-of kill-num llm-agents [energy]
+    let best-dict agent-dict turtle-set parents
     let new-agent-ids []
 
-    ask min-one-of llm-agents [energy] [ die ]
+    ask min-n-of kill-num llm-agents [energy] [ die ]
 
-    ask max-one-of llm-agents [energy] [
-      let my-parent-id who
-      hatch 1 [
-        set parent-id my-parent-id
-        set parent-rule rule
-        set rule mutate-rule
-        init-agent-params
-        set new-agent-ids lput who new-agent-ids
+    foreach parents [ parent ->
+      ask parent [
+        let my-parent-id who
+        hatch 1 [
+          set parent-id my-parent-id
+          set parent-rule rule
+          set rule mutate-rule
+          init-agent-params
+          set new-agent-ids lput who new-agent-ids
+        ]
       ]
     ]
 
@@ -161,6 +180,38 @@ to evolve-agents
       set energy 0
     ]
   ]
+end
+
+to-report select-agents
+  let parents []
+  ifelse selection = "tournament" [
+    set parents tournament-selection
+  ] [
+    set parents fitness-prop-selection
+  ]
+  report parents
+end
+
+to-report tournament-selection
+  let parent-list []
+  repeat num-parents [
+    let tournament n-of tournament-size llm-agents
+    let contestant-list reverse sort-on [fitness] tournament
+    let winner item 0 contestant-list
+    let flag true
+    foreach contestant-list [contestant ->
+      if random-float 1 < selection-pressure and flag [
+        set winner contestant
+        set flag false
+      ]
+    ]
+    set parent-list lput winner parent-list
+  ]
+  report parent-list
+end
+
+to-report fitness-prop-selection
+  report 0
 end
 
 to update-generation-stats
@@ -217,6 +268,10 @@ end
 
 ;;; Helpers and Observable Reporters
 
+to-report fitness
+  report energy
+end
+
 to-report get-observation
   let dist 7
   let angle 20
@@ -262,7 +317,7 @@ end
 ;; Constructs agent table (dict) for logging
 to-report agent-dict [agentset]
   let superdict table:make
-  let agentlist map [agent -> [(list who energy parent-id parent-rule rule)] of agent] sort-on [energy] agentset
+  let agentlist map [agent -> [(list who energy parent-id parent-rule rule)] of agent] reverse sort-on [energy] agentset
   let keys ["id" "energy" "parent-id" "parent-rule" "rule"]
   let kvlist map [vals -> fp:zip keys vals ] agentlist
 
@@ -489,7 +544,7 @@ INPUTBOX
 180
 440
 experiment-name
-test
+evotest
 1
 0
 String
