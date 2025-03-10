@@ -1,4 +1,4 @@
-extensions [ py table fp ]
+extensions [ py table fp rnd ]
 
 globals [
   generation
@@ -148,6 +148,7 @@ end
 
 to evolve-agents
   if ticks >= 1 and ticks mod ticks-per-generation = 0 [
+    print word "\nGeneration: " generation
 
     let parents select-agents
     let kill-num length parents
@@ -155,8 +156,6 @@ to evolve-agents
     let kill-dict agent-dict min-n-of kill-num llm-agents [energy]
     let best-dict agent-dict turtle-set parents
     let new-agent-ids []
-
-    ask min-n-of kill-num llm-agents [energy] [ die ]
 
     foreach parents [ parent ->
       ask parent [
@@ -170,6 +169,8 @@ to evolve-agents
         ]
       ]
     ]
+
+    ask min-n-of kill-num llm-agents with [not member? who new-agent-ids] [energy] [ die ]
 
     let new-dict agent-dict llm-agents with [member? who new-agent-ids]
     update-generation-stats
@@ -211,7 +212,7 @@ to-report tournament-selection
 end
 
 to-report fitness-prop-selection
-  report 0
+  report rnd:weighted-n-of-with-repeats num-parents llm-agents [fitness]
 end
 
 to update-generation-stats
@@ -230,8 +231,6 @@ end
 to-report mutate-rule
   let info (list rule input parent-rule energy ticks)
   let result rule
-
-  print word "\nGeneration: " generation
   print word "Current Rule: " result
 
   py:set "agent_info" info
