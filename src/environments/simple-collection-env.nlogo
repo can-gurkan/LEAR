@@ -1,17 +1,23 @@
 extensions [ py table fp rnd ]
 
+__includes [
+  "env_utils/evolution.nls"
+  "env_utils/logging.nls"
+  "config/simple-collection-config.nls"
+]
+
 globals [
   generation
   init-rule
   generation-stats
   best-rule
-  best-rule-energy
+  best-rule-fitness
   error-log
 
-  selection
-  num-parents
-  tournament-size
-  selection-pressure
+  ;selection
+  ;num-parents
+  ;tournament-size
+  ;selection-pressure
 ]
 
 breed [llm-agents llm-agent]
@@ -30,11 +36,13 @@ llm-agents-own [
 ;;; Setup Procedures
 
 to setup-params
-  ;; init selection algo params
-  set selection "tournament" ;"fitness-prop"
-  set num-parents 2
-  set tournament-size 7
-  set selection-pressure 0.8
+  if use-config-file? [
+    carefully [
+      run word "setup-params-" config-file
+    ] [
+      user-message word config-file " is not a valid config file."
+    ]
+  ]
 end
 
 to setup-llm-agents
@@ -63,32 +71,6 @@ to spawn-food [num]
   ]
 end
 
-to setup-logger
-  let init-params (list
-    (list "llm-type" llm-type)
-    (list "num-llm-agents" num-llm-agents)
-    (list "num-food-sources" num-food-sources)
-    (list "ticks-per-generation" ticks-per-generation)
-  )
-  py:set "init_params" init-params
-  py:run "from src.mutation.mutate_code import get_code_generator"
-
-  ;;; {{{TO DO: Change later so that get_base prompt doesn't require agent_info and maybe llm_type}}}
-  py:set "llm_type" llm-type
-  py:set "agent_info" [0 0 0 0 0]
-  let base-prompt py:runresult "get_code_generator(llm_type).get_base_prompt(agent_info,llm_type)"
-  py:set "base_prompt" base-prompt
-
-  ;; Initialize a new logger instance (ensures new log file per setup)
-  py:set "experiment_name" experiment-name
-  py:run "from src.utils.sim_logger import initialize_logger"
-  py:run "logger = initialize_logger(experiment_name)"
-
-  ;; Log the simulation parameters
-  py:run "logger.log_initial_parameters(init_params)"
-  py:run "logger.log_base_prompt(base_prompt)"
-end
-
 to setup
   clear-all
 
@@ -96,13 +78,13 @@ to setup
   py:run "import os"
   py:run "import sys"
   py:run "from pathlib import Path"
-  py:run "sys.path.append(os.path.dirname(os.path.abspath('.')))"
+  py:run "sys.path.append(os.path.dirname(os.path.abspath('..')))"
   py:run "from src.mutation.mutate_code import mutate_code"
 
   set init-rule "lt random 20 rt random 20 fd 1"
   set generation-stats []
   set error-log []
-  set best-rule-energy 0
+  set best-rule-fitness 0
 
   spawn-food num-food-sources
   setup-llm-agents
@@ -134,7 +116,7 @@ to run-rule
       "ERROR WHILE RUNNING RULE: " rule
       " | Agent: " who
       " | Tick: " ticks
-      " | Energy: " energy
+      " | Fitness: " fitness
       " | Lifetime: " lifetime
       " | Food Collected: " food-collected
       " | Input: " input
@@ -153,7 +135,7 @@ to evolve-agents
     let parents select-agents
     let kill-num length parents
 
-    let kill-dict agent-dict min-n-of kill-num llm-agents [energy]
+    let kill-dict agent-dict min-n-of kill-num llm-agents [fitness]
     let best-dict agent-dict turtle-set parents
     let new-agent-ids []
 
@@ -170,7 +152,7 @@ to evolve-agents
       ]
     ]
 
-    ask min-n-of kill-num llm-agents with [not member? who new-agent-ids] [energy] [ die ]
+    ask min-n-of kill-num llm-agents with [not member? who new-agent-ids] [fitness] [ die ]
 
     let new-dict agent-dict llm-agents with [member? who new-agent-ids]
     update-generation-stats
@@ -181,72 +163,6 @@ to evolve-agents
       set energy 0
     ]
   ]
-end
-
-to-report select-agents
-  let parents []
-  ifelse selection = "tournament" [
-    set parents tournament-selection
-  ] [
-    set parents fitness-prop-selection
-  ]
-  report parents
-end
-
-to-report tournament-selection
-  let parent-list []
-  repeat num-parents [
-    let tournament n-of tournament-size llm-agents
-    let contestant-list reverse sort-on [fitness] tournament
-    let winner item 0 contestant-list
-    let flag true
-    foreach contestant-list [contestant ->
-      if random-float 1 < selection-pressure and flag [
-        set winner contestant
-        set flag false
-      ]
-    ]
-    set parent-list lput winner parent-list
-  ]
-  report parent-list
-end
-
-to-report fitness-prop-selection
-  report rnd:weighted-n-of-with-repeats num-parents llm-agents [fitness]
-end
-
-to update-generation-stats
-  set generation generation + 1
-  let gen-energy mean-energy
-  let gen-info (list ticks gen-energy)
-  set generation-stats lput gen-info generation-stats
-
-  let best-agent max-one-of llm-agents [energy]
-  if [energy] of best-agent > best-rule-energy [
-    set best-rule-energy [energy] of best-agent
-    set best-rule [rule] of best-agent
-  ]
-end
-
-to-report mutate-rule
-  let info (list rule input parent-rule energy ticks)
-  let result rule
-  print word "Current Rule: " result
-
-  py:set "agent_info" info
-  py:set "llm_type" llm-type
-  py:set "text_based_evolution" text-based-evolution
-
-  carefully [
-    let new-rule py:runresult "mutate_code(agent_info=agent_info, model_type=llm_type, use_text_evolution=text_based_evolution)"
-    set result new-rule
-    print word "New Rule: " new-rule
-  ] [
-    let error-info (list error-message rule ticks)
-    set error-log lput error-info error-log
-    print word "Mutation error: " error-message
-  ]
-  report result
 end
 
 to eat-food
@@ -271,6 +187,10 @@ to-report fitness
   report energy
 end
 
+to-report mean-fitness
+  report mean [fitness] of llm-agents
+end
+
 to-report get-observation
   let dist 7
   let angle 20
@@ -293,18 +213,14 @@ to-report get-in-cone [dist angle]
   report val
 end
 
-to-report mean-energy
-  report mean [energy] of llm-agents
-end
-
 to-report get-generation-metrics
-  let keys ["generation" "best rule" "mean energy" "best energy" "mean food" "error log"]
+  let keys ["generation" "best rule" "mean fitness" "best fitness" "mean food" "error log"]
   let values ifelse-value any? llm-agents [
     (list
       generation
       best-rule
-      mean-energy
-      max [energy] of llm-agents
+      mean-fitness
+      max [fitness] of llm-agents
       mean [food-collected] of llm-agents
       error-log)
   ] [
@@ -313,46 +229,13 @@ to-report get-generation-metrics
   report fp:zip keys values
 end
 
-;; Constructs agent table (dict) for logging
-to-report agent-dict [agentset]
-  let superdict table:make
-  let agentlist map [agent -> [(list who energy parent-id parent-rule rule)] of agent] reverse sort-on [energy] agentset
-  let keys ["id" "energy" "parent-id" "parent-rule" "rule"]
-  let kvlist map [vals -> fp:zip keys vals ] agentlist
-
-  foreach kvlist [ lst ->
-    let subdict table:from-list lst
-    table:put superdict (word "agent " item 1 item 0 lst) subdict
-  ]
-  report superdict
-end
-
-;; Metric logging helper
-to log-metrics [agentdicts]
-  if logging?[
-    let metrics get-generation-metrics
-
-    let agentset-dict table:make
-    let keys ["mutated agents" "new agents" "killed agents"]
-    foreach range 3 [ i -> table:put agentset-dict item i keys item i agentdicts]
-
-    py:set "metrics" metrics
-    py:set "agent_dict" table:to-json agentset-dict
-
-    ;; Log generation results using the same logger instance
-    py:run "from src.utils.sim_logger import get_logger"
-    py:run "logger = get_logger()"
-    py:run "logger.log_generation([dict(metrics), agent_dict])"
-  ]
-end
-
 ;;; Plotting
 
 to do-plotting
   if ticks mod ticks-per-generation = 0 [
     set-current-plot "Mean Energy of Agents"
     set-current-plot-pen "Mean Energy"
-    plotxy generation mean-energy
+    plotxy generation mean-fitness
     set-current-plot-pen "Max Energy"
     plotxy generation max [energy] of llm-agents
   ]
@@ -387,9 +270,9 @@ ticks
 
 BUTTON
 20
-195
+190
 90
-228
+223
 NIL
 setup
 NIL
@@ -404,9 +287,9 @@ NIL
 
 BUTTON
 100
-195
+190
 170
-228
+223
 NIL
 go
 T
@@ -451,9 +334,9 @@ HORIZONTAL
 
 SWITCH
 20
-250
-162
-283
+240
+195
+273
 llm-mutation?
 llm-mutation?
 0
@@ -507,9 +390,9 @@ generation
 
 CHOOSER
 20
-330
-165
-375
+320
+195
+365
 llm-type
 llm-type
 "groq" "claude" "deepseek" "gpt-4o"
@@ -527,10 +410,10 @@ logging?
 -1000
 
 SWITCH
-10
-290
-180
-323
+20
+280
+195
+313
 text-based-evolution
 text-based-evolution
 1
@@ -538,12 +421,89 @@ text-based-evolution
 -1000
 
 INPUTBOX
-5
-380
-180
-440
+20
+370
+195
+430
 experiment-name
 evotest
+1
+0
+String
+
+CHOOSER
+20
+470
+195
+515
+selection
+selection
+"tournament" "fitness-prop"
+0
+
+SLIDER
+20
+520
+195
+553
+num-parents
+num-parents
+0
+10
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+20
+560
+195
+593
+tournament-size
+tournament-size
+0
+50
+7.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+20
+600
+195
+633
+selection-pressure
+selection-pressure
+0
+1
+0.8
+0.01
+1
+NIL
+HORIZONTAL
+
+SWITCH
+210
+470
+385
+503
+use-config-file?
+use-config-file?
+1
+1
+-1000
+
+INPUTBOX
+210
+510
+385
+570
+config-file
+default
 1
 0
 String

@@ -25,7 +25,7 @@ def get_logger():
     return _logger_instance
 
 class NetLogoLogger:
-    def __init__(self, experiment_name, base_log_directory="../Logs"):
+    def __init__(self, experiment_name, base_log_directory="../../Logs"):
         """Initialize a new logger instance."""
         self.base_log_directory = base_log_directory
 
