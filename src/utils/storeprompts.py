@@ -12,53 +12,63 @@ prompts = {
 
     # Text based evolution prompts
     "text_evolution": {
-      "pseudo_gen_prompt": """You are an AI assistant tasked with improving the movement code for a turtle agent in NetLogo. Your goal is to create new pseudocode with slight modifications using paradigms of genetic programming. The improved code should help the agent collect as much food as possible while adhering to specific constraints and strategic goals. Consider the following evolution goals:
-      
+      "pseudo_gen_prompt": """You are an AI assistant tasked with improving the movement code for a turtle agent in NetLogo. Your goal is to create new pseudocode with slight modifications using paradigms of genetic programming. The improved code should help the agent collect as much food as possible while adhering to specific constraints and strategic goals.
+
       Evolution Goals:
       1. Optimize movement for efficient food collection
       2. Balance exploration and exploitation
       3. Maintain simple, efficient NetLogo commands
       4. Consider both immediate food sources and long-term survival
 
-      You will be given two inputs:
+      You will be given this initial pseudocode to improve:
 
-      Initial Pseudocode:
       <initial_pseudocode>
       {}
       </initial_pseudocode>
 
+      STRICT GUIDELINES FOR PSEUDOCODE CREATION:
+      
+      1. FOCUS ON THESE MOVEMENT CONCEPTS ONLY:
+         - "Move forward" (will become fd or forward in NetLogo)
+         - "Turn right" (will become rt or right in NetLogo)
+         - "Turn left" (will become lt or left in NetLogo)
+         - Randomness (will use random or random-float in NetLogo)
+         - Simple trigonometric concepts (sin, cos)
+         - Conditional movements based on food sensor readings
+      
+      2. ABSOLUTELY FORBIDDEN CONCEPTS:
+         - DO NOT include any reference to "of" relationships between agents
+         - DO NOT create or reference any variables that don't exist
+         - DO NOT include asking other agents to perform actions
+         - DO NOT include creating or killing agents
+         - DO NOT include setting or changing environment variables
+      
+      3. ALLOWED STRUCTURE:
+         - You may include "if/else" logic based on the "input" list values
+         - Basic example: "If there is food to the left, turn left and move forward, otherwise turn randomly and move forward"
+         
+      4. FORMATTING:
+         - Keep the pseudocode simple, concise and readable
+         - Use plain English descriptions of movement patterns
+         - Focus on turtle movement logic only
 
       To improve the pseudocode, follow these guidelines:
-      1. Analyze the initial pseudocode to understand the existing movement strategy.
-      2. Consider ways to balance exploration and food-seeking behavior.
-      3. Combine different movement patterns to create a more effective strategy.
-      4. Ensure that the new pseudocode adheres to the given constraints and strategic goals.
+      1. Analyze the initial pseudocode to understand the existing movement strategy
+      2. Consider ways to balance exploration and food-seeking behavior
+      3. Combine different movement patterns to create a more effective strategy
+      4. Ensure that the new pseudocode adheres to the given constraints
 
-      Your output should be ONLY the improved pseudocode for the agent's movement strategy. Present your pseudocode enclosed in triple backticks, following this format:
+      Present your improved pseudocode enclosed in triple backticks:
 
       ```
       [Your improved pseudocode here]
       ```
 
-      The pseudocode should be clear, concise, and focused solely on the movement logic. Use simple, straightforward language to describe the actions, such as "move forward", "turn right", "turn left", etc.
-
-      Remember the following constraints:
-      1. Do not include code to kill or control any other agents
-      2. Do not include code to interact with the environment
-      3. Do not include code to change the environment
-      4. Do not include code to create new agents
-      5. Do not include code to create new food sources
-      6. Do not include code to change the rules of the simulation
-
-      Keep in mind the strategic goals:
-      1. Balance exploration and food-seeking behavior
-      2. Respond to sensor readings intelligently (if applicable)
-      3. Combine different movement patterns
-
-      Provide only the improved pseudocode as your response, without any additional explanations or justifications.""",
+      Do not include any explanations outside the code block.
+      """,
 
 
-    "code_gen_prompt": """You are tasked with converting pseudocode into well-structured NetLogo code for agent movement. Your goal is to generate only the movement code based on the provided pseudocode, adhering to specific constraints and requirements.
+      "code_gen_prompt": """You are tasked with converting pseudocode into well-structured NetLogo code for agent movement. Your goal is to generate only the movement code based on the provided pseudocode, adhering to specific constraints and requirements.
 
     Here is the pseudocode you will be working with:
     
@@ -66,17 +76,34 @@ prompts = {
     {}
     </pseudocode>
     
-    Please follow these guidelines when generating the NetLogo code:
+    STRICT GUIDELINES FOR CODE GENERATION:
     
-    1. Use NetLogo language primitives.
-    4. Generate only movement code.
-    5. Adhere to the following constraints:
-       a. Do not include code to kill or control any other agents.
-       b. Do not include code to interact with the environment.
-       c. Do not include code to change the environment.
-       d. Do not include code to create new agents.
-       e. Do not include code to create new food sources.
-       f. Do not include code to change the rules of the simulation.
+    1. VALID COMMANDS ONLY:
+       - Use only these movement commands: fd, forward, rt, right, lt, left
+       - Use only these reporters: random, random-float, sin, cos, item
+    
+    2. ABSOLUTELY FORBIDDEN:
+       - DO NOT use the "of" primitive/reporter - this will always cause errors
+       - DO NOT use any non-existent or undefined variables
+       - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
+       - DO NOT use "set", "let", or create any variables
+    
+    3. ALLOWED STRUCTURE:
+       - You may use "if/ifelse" statements with item checks on the "input" list
+       - Basic example: ifelse item 0 input != 0 [fd 1] [rt 90 fd 2]
+       
+    4. FORMATTING:
+       - Each command (fd/rt/lt) must be followed by a number or simple expression
+       - All commands must be properly separated by spaces
+       - Keep the code simple, focused only on movement
+    
+    5. OTHER CONSTRAINTS:
+       a. Do not include code to kill or control any other agents
+       b. Do not include code to interact with the environment
+       c. Do not include code to change the environment
+       d. Do not include code to create new agents
+       e. Do not include code to create new food sources
+       f. Do not include code to change the rules of the simulation
     
     Your task is to carefully analyze the provided pseudocode and translate it into NetLogo code that represents the agent's movement strategy. Focus solely on the movement aspects described in the pseudocode.
     
@@ -92,38 +119,42 @@ prompts = {
     
     "retry_prompts": {
       
-      "generate_code_with_error": """You are an expert NetLogo coder tasked with improving the code of a turtle agent that is trying to collect as much food as possible. Your goal is to update the given agent movement code based on an error message and fix the code accordingly.
+      "generate_code_with_error": """You are an expert NetLogo coder tasked with fixing a movement code error for a turtle agent. Your goal is to update the provided NetLogo movement code to fix the error message shown below.
 
       Here is the current rule:
-      <current_rule>
       {}
-      </current_rule>
 
       Here is the error message:
-      <error_message>
       {}
-      </error_message>
+      
+      STRICT GUIDELINES FOR FIXING THE CODE:
+      
+      1. VALID COMMANDS ONLY:
+         - Use only these movement commands: fd, forward, rt, right, lt, left
+         - Use only these reporters: random, random-float, sin, cos, item
+      
+      2. ABSOLUTELY FORBIDDEN:
+         - DO NOT use the "of" primitive/reporter - this will always cause errors
+         - DO NOT use any non-existent or undefined variables
+         - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
+         - DO NOT use "set", "let", or create any variables
+      
+      3. ALLOWED STRUCTURE:
+         - You may use "if/ifelse" statements with item checks on the "input" list
+         - Basic example: ifelse item 0 input != 0 [fd 1] [rt 90 fd 2]
+         
+      4. FORMATTING:
+         - Each command (fd/rt/lt) must be followed by a number or simple expression
+         - All commands must be properly separated by spaces
+         - Keep the code simple, focused only on movement
 
-      To complete this task, follow these steps:
-
-      1. Carefully analyze the current rule and the error message.
-      2. Identify the specific issue(s) causing the error.
-      3. Modify the code to fix the error while maintaining or improving the agent's food-collecting behavior.
-      4. Ensure that your updated code adheres to NetLogo syntax and best practices.
-      5. Consider the strategic goals of balancing exploration and food-seeking behavior, responding to sensor readings intelligently, and combining different movement patterns.
-
-      Generate ONLY the movement code. The code must be runnable in NetLogo in the context of a turtle. Present your generated NetLogo code enclosed in triple backticks, following this format:
+      Generate ONLY basic movement code that strictly avoids the error mentioned. The code must be runnable in NetLogo turtle context. Present your corrected NetLogo code enclosed in triple backticks:
 
       ```
-      [Your generated NetLogo code here]
+      [Your corrected NetLogo code here]
       ```
 
-      Remember to focus on these strategic goals while fixing the code:
-      1. Balance exploration and food-seeking behavior
-      2. Respond to sensor readings intelligently
-      3. Combine different movement patterns
-
-      Do not include any explanations or comments outside the code block. The code itself should be the only output.
+      Do not include any explanations - the code itself should be the only output.
       """
       },
 

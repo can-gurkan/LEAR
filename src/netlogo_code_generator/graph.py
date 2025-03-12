@@ -108,7 +108,7 @@ class NetLogoCodeGenerator(BaseCodeGenerator):
 
         self.logger.info(f"Input validation successful")
         self.logger.info(f"Original code: {agent_info[0]}")
-        self.logger.info(f"Initial pseudocode: {initial_pseudocode}")
+        # self.logger.info(f"Initial pseudocode: {initial_pseudocode}")
 
         # Initial state
         self.logger.info("Creating initial state")

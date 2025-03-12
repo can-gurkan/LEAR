@@ -44,7 +44,7 @@ def evolve_pseudocode(
 
     logger.info("Text evolution enabled, generating pseudocode")
     text_evolution = TextBasedEvolution(provider)
-    modified_pseudocode = text_evolution.generate_pseudocode(
+    modified_pseudocode = text_evolution.generate_pseudocode( 
         state["agent_info"], 
         state["initial_pseudocode"], 
         state["original_code"]
@@ -77,8 +77,9 @@ def generate_code(
     
     new_code = provider.generate_code_with_model(
         state["agent_info"],
+        state["current_code"],
         state["modified_pseudocode"],
-        state["error_message"]
+        state["error_message"],
     )
     
     logger.info(f"Generated new code: {new_code}")
@@ -118,6 +119,8 @@ def verify_code(
         if state.get("modified_pseudocode"):
             logger.info("Updating initial_pseudocode with modified_pseudocode")
             result["initial_pseudocode"] = state["modified_pseudocode"]
+        else:
+            logger.info("Updating code with Error")
     else:
         logger.info("Verification successful")
     

@@ -50,7 +50,7 @@ class TextBasedEvolution:
                     ("user", prompts["langchain"]["cot_template"].format(code=rule, base_prompt="", inputs=""))
                 ])
                 
-                chain = prompt | self.provider.initialize_llm() | StrOutputParser()
+                chain = prompt | self.provider.initialize_model() | StrOutputParser()
                 return chain.invoke({"input": ""})
                 
             except Exception as e:
@@ -91,7 +91,7 @@ class TextBasedEvolution:
                 ))
             ])
             
-            chain = prompt | self.provider.initialize_llm() | StrOutputParser()
+            chain = prompt | self.provider.initialize_model() | StrOutputParser()
             return chain.invoke({"input": ""})
             
         except Exception as e:

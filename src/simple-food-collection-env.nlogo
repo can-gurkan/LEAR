@@ -60,13 +60,13 @@ to setup-logger
     (list "ticks-per-generation" ticks-per-generation)
   )
   py:set "init_params" init-params
-  py:run "from src.mutation.mutate_code import get_code_generator"
+  py:run "from src.mutation.mutate_code import mutate_code"
 
   ;;; {{{TO DO: Change later so that get_base prompt doesn't require agent_info and maybe llm_type}}}
   py:set "llm_type" llm-type
-  py:set "agent_info" [0 0 0 0 0]
-  let base-prompt py:runresult "get_code_generator(llm_type).get_base_prompt(agent_info,llm_type)"
-  py:set "base_prompt" base-prompt
+  ; py:set "agent_info" [0 0 0 0 0]
+  ; let base-prompt py:runresult "get_code_generator(llm_type).get_base_prompt(agent_info,llm_type)"
+  ; py:set "base_prompt" base-prompt
 
   ;; Initialize a new logger instance (ensures new log file per setup)
   py:set "experiment_name" experiment-name
@@ -75,7 +75,7 @@ to setup-logger
 
   ;; Log the simulation parameters
   py:run "logger.log_initial_parameters(init_params)"
-  py:run "logger.log_base_prompt(base_prompt)"
+  ; py:run "logger.log_base_prompt(base_prompt)"
 end
 
 to setup
@@ -447,7 +447,7 @@ ticks-per-generation
 ticks-per-generation
 1
 2000
-101.0
+127.0
 1
 1
 NIL
@@ -502,7 +502,7 @@ INPUTBOX
 180
 440
 experiment-name
-test
+test1
 1
 0
 String

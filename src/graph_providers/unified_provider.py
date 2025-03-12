@@ -119,7 +119,7 @@ class GraphUnifiedProvider(GraphProviderBase):
             self.logger.error(f"Failed to initialize model for {self.model_name}: {str(e)}")
             raise
             
-    def _generate_with_prompt(self, prompt: str, agent_info: List) -> str:
+    def _generate_with_prompt(self, prompt: str) -> str:
         """Generate code using the model with the given prompt."""
         try:
             if not self.model:
@@ -140,11 +140,14 @@ class GraphUnifiedProvider(GraphProviderBase):
             # Invoke the chain
             response = chain.invoke({})
             
+            # print(f"Outputtttt: {response}")
+            
             return response
             
         except Exception as e:
             self.logger.error(f"Error generating with prompt: {str(e)}")
-            return agent_info[0]  # Return original code on error
+            # Return empty string on error, the parent method will handle it
+            return ""
             
     def generate_code(self, agent_info: List, use_text_evolution: bool = False) -> str:
         """

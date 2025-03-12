@@ -12,13 +12,6 @@ Key Features:
 - Variable assignment validation
 - Comprehensive error reporting
 
-Usage:
-    from src.verification.verify_netlogo import NetLogoVerifier
-    
-    verifier = NetLogoVerifier()
-    is_safe, message = verifier.is_safe("fd 10 rt 90")
-    if not is_safe:
-        print(f"Code validation failed: {message}")
 
 Dependencies:
 - Python 3.8+
