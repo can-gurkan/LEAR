@@ -101,7 +101,7 @@ def verify_code(
         Updated generation state with verification results
     """
     logger.info(f"NODE: verify_code")
-    logger.info(f"Code to verify: {state['current_code']}")
+    # logger.info(f"Code to verify: {state['current_code']}")
     is_safe, error_message = verifier.is_safe(state["current_code"])
     logger.info(f"Verification result: is_safe={is_safe}, error_message={error_message}")
     

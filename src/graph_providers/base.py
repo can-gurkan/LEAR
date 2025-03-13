@@ -3,12 +3,12 @@ import os
 import gin
 import re
 from typing import Optional, List
-import logging
 from dotenv import load_dotenv
 
 from src.generators.base import BaseCodeGenerator
 from src.verification.verify_netlogo import NetLogoVerifier
 from src.utils.storeprompts import prompts
+from src.utils.logging import get_logger
 
 # Load environment variables
 load_dotenv()
@@ -21,7 +21,7 @@ class GraphProviderBase(BaseCodeGenerator):
         """Initialize with verifier instance."""
         super().__init__(verifier)
         self.model = None  # To be set by child classes
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger()
         self.retry_handler.max_attempts = retry_max_attempts
         
     @abstractmethod

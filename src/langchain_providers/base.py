@@ -1,7 +1,6 @@
 from abc import abstractmethod
 import os
 from typing import Optional
-import logging
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -11,6 +10,7 @@ from langchain.chains import LLMChain
 from src.generators.base import BaseCodeGenerator
 from src.verification.verify_netlogo import NetLogoVerifier
 from src.utils.storeprompts import prompts
+from src.utils.logging import get_logger
 
 # Load environment variables
 load_dotenv()

@@ -1,16 +1,17 @@
 import logging
 import os
 
+_logger = None  # Initialize the global logger variable
+
 def setup_logging(log_file_path='../../Logs/debug.log', level=logging.DEBUG):
     """Sets up logging configuration."""
-
     # Create log directory if it doesn't exist
     os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
 
-    # Create a logger with a fixed name to ensure it's the same across all modules
+    global _logger
     _logger = logging.getLogger('lear_app')
     _logger.setLevel(level)
-    
+
     # Remove any existing handlers to avoid duplicates on re-initialization
     if _logger.handlers:
         _logger.handlers.clear()
@@ -43,8 +44,6 @@ def get_logger():
         The global logger instance
     """
     global _logger
-    
     if _logger is None:
-        return setup_logging()
-        
+        _logger = setup_logging()
     return _logger

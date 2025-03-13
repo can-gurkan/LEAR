@@ -133,28 +133,26 @@ class TextBasedEvolution:
             self.logger.error(f"Error generating evolution description: {str(e)}")
             return f"Basic agent with rule: {agent_info[0]}"
             
-    def generate_pseudocode(self, agent_info: list, initial_pseudocode: str, original_code: str) -> str:
+    def generate_pseudocode(self, agent_info: list, current_text: str, original_code: str) -> str:
         """
         Generate pseudocode for NetLogo code evolution using prompts from the prompt dictionary.
         
         Args:
             agent_info: List containing agent state and environment information
-            initial_pseudocode: The initial pseudocode to guide evolution
+            current_text: The current text description or pseudocode
             original_code: The original NetLogo code
             
         Returns:
             Modified pseudocode
         """
         if not self.provider:
-            self.logger.warning("No LLM provider available, using initial pseudocode")
-            return initial_pseudocode
+            self.logger.warning("No LLM provider available, using current text")
+            return current_text
             
         try:
             # Use appropriate prompt from the prompts dictionary
-            # Choose a appropriate prompt for pseudocode generation
             system_prompt = prompts["langchain"]["cot_system"]
-            user_prompt = prompts["text_evolution"]["pseudo_gen_prompt"].format(initial_pseudocode)
-        
+            user_prompt = prompts["text_evolution"]["pseudo_gen_prompt"].format(current_text)
             
             prompt = ChatPromptTemplate.from_messages([
                 ("system", system_prompt),
@@ -165,18 +163,16 @@ class TextBasedEvolution:
             pseudocode_response = chain.invoke({"input": ""})
             
             if pseudocode_response:
-                # Parse the response to extract the pseudocode - re to extract content within triple backticks
-                
+                # Parse the response to extract the pseudocode
                 match = re.search(r'```(.*?)```', pseudocode_response, re.DOTALL)
                 if match:
                     pseudocode_response = match.group(1).strip()
                 else:
-                    self.logger.warning("No pseudocode found in response, using initial pseudocode.")
-                    return initial_pseudocode
-                
-                        
+                    self.logger.warning("No pseudocode found in response, using current text.")
+                    return current_text
+            
             return pseudocode_response
             
         except Exception as e:
             self.logger.error(f"Error generating pseudocode: {str(e)}")
-            return initial_pseudocode
+            return current_text

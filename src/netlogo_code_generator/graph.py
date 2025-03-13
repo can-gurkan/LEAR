@@ -85,30 +85,32 @@ class NetLogoCodeGenerator(BaseCodeGenerator):
         self.logger.info("Compiling the graph...")
         return workflow.compile()
         
-    def generate_code(self, agent_info: List, initial_pseudocode: str, use_text_evolution: bool = False) -> str:
-        self.logger.info(f"Starting code generation with model type: {self.provider.__class__.__name__}, use_text_evolution: {use_text_evolution}")
+    def generate_code(self, agent_info: List, initial_pseudocode: str, use_text_evolution: bool = False) -> tuple:
         """
         Generate code using LangGraph with the same interface as existing generators.
 
         Args:
             agent_info: List containing agent state and environment information
-            initial_pseudocode: Initial pseudocode to guide the code generation
+            initial_pseudocode: Initial pseudocode or text to guide the code generation
             use_text_evolution: Whether to use text-based evolution approach
 
         Returns:
-            Generated NetLogo code as string
+            Tuple of (generated_code, text) where generated_code is the NetLogo code
+            and text is the descriptive text or pseudocode
         """
+        self.logger.info(f"Starting code generation with model type: {self.provider.__class__.__name__}, use_text_evolution: {use_text_evolution}")
+        
         # Validate input format
         self.logger.info(f"Validating input format: {agent_info}")
         is_valid, error_msg = self.validate_input(agent_info)
         
         if not is_valid:
             self.logger.error(f"Invalid input: {error_msg}")
-            return agent_info[0]
+            return (agent_info[0], initial_pseudocode)
 
         self.logger.info(f"Input validation successful")
         self.logger.info(f"Original code: {agent_info[0]}")
-        # self.logger.info(f"Initial pseudocode: {initial_pseudocode}")
+        self.logger.info(f"Initial text: {initial_pseudocode}")
 
         # Initial state
         self.logger.info("Creating initial state")
@@ -134,8 +136,10 @@ class NetLogoCodeGenerator(BaseCodeGenerator):
 
         # Return the result or original code if failed
         if final_state["error_message"] is None:
-            self.logger.info("Code generation successful, returning new code")
-            return final_state["current_code"]
+            self.logger.info("Code generation successful, returning new code and text")
+            # Get the final text - either the modified pseudocode or the initial one if no modification was done
+            final_text = final_state.get("modified_pseudocode", initial_pseudocode) or initial_pseudocode
+            return (final_state["current_code"], final_text)
         else:
-            self.logger.error(f"Code generation failed with error: {final_state['error_message']}, returning original code")
-            return agent_info[0]
+            self.logger.error(f"Code generation failed with error: {final_state['error_message']}, returning original code and text")
+            return (agent_info[0], initial_pseudocode)
