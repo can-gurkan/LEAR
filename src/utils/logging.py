@@ -1,28 +1,9 @@
 import logging
 import os
 
-# Global logger instance
-_logger = None
+def setup_logging(log_file_path='../../Logs/debug.log', level=logging.DEBUG):
+    """Sets up logging configuration."""
 
-def setup_logging(log_file_path='../Logs/debug.log', level=logging.DEBUG):
-    """Sets up logging configuration and returns the global logger instance.
-    
-    This function will initialize the global logger if it hasn't been initialized yet.
-    Subsequent calls will return the same logger instance.
-    
-    Args:
-        log_file_path: Path to the log file
-        level: Logging level
-        
-    Returns:
-        The global logger instance
-    """
-    global _logger
-    
-    # If logger is already initialized, return it
-    if _logger is not None:
-        return _logger
-        
     # Create log directory if it doesn't exist
     os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
 

@@ -1,330 +1,41 @@
-extensions [ py table fp ]
+extensions [ ls ]
 
 globals [
-  generation
-  init-rule
-  generation-stats
-  best-rule
-  best-rule-energy
-  error-log
-  initial-pseudocode
-  modified-pseudocode
+  child-model
 ]
-
-breed [llm-agents llm-agent]
-breed [food-sources food-source]
-
-llm-agents-own [
-  input ;; observation vector
-  rule ;; current rule (llm-generated)
-  energy ;; current score
-  lifetime ;; age of the agent (in generations)
-  food-collected  ;; total food agent gathered
-  parent-id ;; who number of parent
-  parent-rule ;; parent rule
-]
-
-;;; Setup Procedures
-
-to setup-llm-agents
-  create-llm-agents num-llm-agents [
-    set color red
-    setxy random-xcor random-ycor
-    set rule init-rule
-    set parent-id "na"
-    set parent-rule "na"
-    init-agent-params ;; Init with zero energy
-  ]
-end
-
-to init-agent-params
-  set energy 0
-  set food-collected 0
-  set lifetime 0
-end
-
-to spawn-food [num]
-  create-food-sources num [
-    set shape "circle"
-    set color green
-    set size 0.5
-    setxy random-xcor random-ycor
-  ]
-end
-
-to setup-logger
-  let init-params (list
-    (list "llm-type" llm-type)
-    (list "num-llm-agents" num-llm-agents)
-    (list "num-food-sources" num-food-sources)
-    (list "ticks-per-generation" ticks-per-generation)
-  )
-  py:set "init_params" init-params
-  py:run "from src.mutation.mutate_code import mutate_code"
-
-  ;;; {{{TO DO: Change later so that get_base prompt doesn't require agent_info and maybe llm_type}}}
-  py:set "llm_type" llm-type
-  ; py:set "agent_info" [0 0 0 0 0]
-  ; let base-prompt py:runresult "get_code_generator(llm_type).get_base_prompt(agent_info,llm_type)"
-  ; py:set "base_prompt" base-prompt
-
-  ;; Initialize a new logger instance (ensures new log file per setup)
-  py:set "experiment_name" experiment-name
-  py:run "from src.utils.sim_logger import initialize_logger"
-  py:run "logger = initialize_logger(experiment_name)"
-
-  ;; Log the simulation parameters
-  py:run "logger.log_initial_parameters(init_params)"
-  ; py:run "logger.log_base_prompt(base_prompt)"
-end
 
 to setup
+  ls:reset ; reset LevelSpace
   clear-all
 
-  py:setup py:python
-  py:run "import os"
-  py:run "import sys"
-  py:run "from pathlib import Path"
+  ; create the two models
+  ls:create-interactive-models 1 (word "environments/" environment ".nlogo")
+  set child-model last ls:models
 
-  py:run "current_dir = os.path.abspath('.')"
-  py:run "project_root = os.path.dirname(current_dir)"  ;; Go up one directory
-  py:run "if project_root not in sys.path: sys.path.insert(0, project_root)"
-  py:run "print(f'Added to Python path: {project_root}')"
+  ls:ask child-model [ setup ]
 
-
-  py:run "from src.mutation.mutate_code import mutate_code"
-
-  set init-rule "lt random 20 rt random 20 fd 1"
-  set generation-stats []
-  set error-log []
-  set best-rule-energy 0
-
-  set initial-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
-  set modified-pseudocode ""
-
-  spawn-food num-food-sources
-  setup-llm-agents
-  if logging? [ setup-logger ]
   reset-ticks
 end
 
-;;; Go Procedures
-
 to go
-  do-plotting
-  ask llm-agents [
-    set lifetime lifetime + 1
-    set input get-observation
-    run-rule
-    eat-food
-  ]
-  evolve-agents
-  replenish-food
+
+  ls:ask child-model [ go ]
+
   tick
 end
 
-to run-rule
-  carefully [
-    run rule
-  ] [
-    let error-info (word
-      "ERROR WHILE RUNNING RULE: " rule
-      " | Agent: " who
-      " | Tick: " ticks
-      " | Energy: " energy
-      " | Lifetime: " lifetime
-      " | Food Collected: " food-collected
-      " | Input: " input
-    )
-    if ticks mod ticks-per-generation = 1 [
-      print error-info
-      set error-log lput error-info error-log
-    ]
-  ]
-end
+to run-experiment
 
-to evolve-agents
-  if ticks >= 1 and ticks mod ticks-per-generation = 0 [
-
-    let kill-dict agent-dict min-n-of 2 llm-agents [energy]
-    let best-dict agent-dict max-n-of 2 llm-agents [energy]
-    let new-agent-ids []
-
-    ask min-one-of llm-agents [energy] [ die ]
-
-    ask max-one-of llm-agents [energy] [
-      let my-parent-id who
-      hatch 1 [
-        set parent-id my-parent-id
-        set parent-rule rule
-        set rule mutate-rule
-        init-agent-params
-        set new-agent-ids lput who new-agent-ids
-      ]
-    ]
-
-    let new-dict agent-dict llm-agents with [member? who new-agent-ids]
-    update-generation-stats
-    log-metrics (list best-dict new-dict kill-dict)
-
-    ask llm-agents [
-      set food-collected 0
-      set energy 0
-    ]
-  ]
-end
-
-to update-generation-stats
-  set generation generation + 1
-  let gen-energy mean-energy
-  let gen-info (list ticks gen-energy)
-  set generation-stats lput gen-info generation-stats
-
-  let best-agent max-one-of llm-agents [energy]
-  if [energy] of best-agent > best-rule-energy [
-    set best-rule-energy [energy] of best-agent
-    set best-rule [rule] of best-agent
-  ]
-end
-
-to-report mutate-rule
-  let info (list rule input parent-rule energy ticks)
-  let result rule
-
-
-  print word "\nGeneration: " generation
-  print word "Current Rule: " result
-
-  py:set "agent_info" info
-  py:set "llm_type" llm-type
-  py:set "text_based_evolution" text-based-evolution
-
-  carefully [
-    let new-rule py:runresult "mutate_code(agent_info=agent_info, model_type=llm_type, use_text_evolution=text_based_evolution)"
-    set result new-rule
-    print word "New Rule: " new-rule
-  ] [
-    let error-info (list error-message rule ticks)
-    set error-log lput error-info error-log
-    print word "Mutation error: " error-message
-    print error-message
-  ]
-  report result
-end
-
-to eat-food
-  if any? food-sources-here [
-    ask one-of food-sources-here [
-      die
-    ]
-    set energy energy + 1
-    set food-collected food-collected + 1
-  ]
-end
-
-to replenish-food
-  if count food-sources < num-food-sources [
-    spawn-food (num-food-sources - count food-sources)
-  ]
-end
-
-;;; Helpers and Observable Reporters
-
-to-report get-observation
-  let dist 7
-  let angle 20
-  let obs []
-  ;; obs order is [left-cone right-cone center-cone]
-  foreach [-20 40 -20] [a ->
-    rt a
-    set obs lput (get-in-cone dist angle) obs
-  ]
-  report obs
-end
-
-to-report get-in-cone [dist angle]
-  let val 0
-  let cone other food-sources in-cone dist angle
-  let f min-one-of cone with [is-food-source? self] [distance myself]
-  if f != nobody [
-    set val distance f
-  ]
-  report val
-end
-
-to-report mean-energy
-  report mean [energy] of llm-agents
-end
-
-to-report get-generation-metrics
-  let keys ["generation" "best rule" "mean energy" "best energy" "mean food" "error log"]
-  let values ifelse-value any? llm-agents [
-    (list
-      generation
-      best-rule
-      mean-energy
-      max [energy] of llm-agents
-      mean [food-collected] of llm-agents
-      error-log)
-  ] [
-    (list generation "na" 0 0 0 [])
-  ]
-  report fp:zip keys values
-end
-
-;; Constructs agent table (dict) for logging
-to-report agent-dict [agentset]
-  let superdict table:make
-  let agentlist map [agent -> [(list who energy parent-id parent-rule rule)] of agent] sort-on [energy] agentset
-  let keys ["id" "energy" "parent-id" "parent-rule" "rule"]
-  let kvlist map [vals -> fp:zip keys vals ] agentlist
-
-  foreach kvlist [ lst ->
-    let subdict table:from-list lst
-    table:put superdict (word "agent " item 1 item 0 lst) subdict
-  ]
-  report superdict
-end
-
-;; Metric logging helper
-to log-metrics [agentdicts]
-  if logging?[
-    let metrics get-generation-metrics
-
-    let agentset-dict table:make
-    let keys ["mutated agents" "new agents" "killed agents"]
-    foreach range 3 [ i -> table:put agentset-dict item i keys item i agentdicts]
-
-    py:set "metrics" metrics
-    py:set "agent_dict" table:to-json agentset-dict
-
-    ;; Log generation results using the same logger instance
-    py:run "from src.utils.sim_logger import get_logger"
-    py:run "logger = get_logger()"
-    py:run "logger.log_generation([dict(metrics), agent_dict])"
-  ]
-end
-
-;;; Plotting
-
-to do-plotting
-  if ticks mod ticks-per-generation = 0 [
-    set-current-plot "Mean Energy of Agents"
-    set-current-plot-pen "Mean Energy"
-    plotxy generation mean-energy
-    set-current-plot-pen "Max Energy"
-    plotxy generation max [energy] of llm-agents
-  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
-10
-647
-448
+40
+140
+61
+162
 -1
 -1
-13.0
+1.0
 1
 10
 1
@@ -334,10 +45,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+-6
+6
+-6
+6
 1
 1
 1
@@ -345,10 +56,27 @@ ticks
 30.0
 
 BUTTON
-20
-195
-90
-228
+120
+130
+215
+175
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+0
+
+BUTTON
+15
+130
+110
+175
 NIL
 setup
 NIL
@@ -362,13 +90,13 @@ NIL
 1
 
 BUTTON
-100
-195
-170
-228
+15
+185
+215
+230
 NIL
-go
-T
+run-experiment
+NIL
 1
 T
 OBSERVER
@@ -378,171 +106,17 @@ NIL
 NIL
 1
 
-SLIDER
-20
-20
-195
-53
-num-llm-agents
-num-llm-agents
-0
-25
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-20
-60
-195
-93
-num-food-sources
-num-food-sources
-0
-100
-30.0
-1
-1
-NIL
-HORIZONTAL
-
-SWITCH
-20
-250
-162
-283
-llm-mutation?
-llm-mutation?
-0
-1
--1000
-
-PLOT
-680
-60
-1090
-350
-Mean Energy of Agents
-generation
-energy
-0.0
-5.0
-0.0
-10.0
-true
-true
-"" ""
-PENS
-"Mean Energy" 1.0 0 -817084 true "" ""
-"Max Energy" 1.0 0 -13345367 true "" ""
-
-SLIDER
-20
-100
-195
-133
-ticks-per-generation
-ticks-per-generation
-1
-2000
-127.0
-1
-1
-NIL
-HORIZONTAL
-
-MONITOR
-680
-10
-757
-55
-NIL
-generation
-17
-1
-11
-
 CHOOSER
+15
 20
-330
-165
-375
-llm-type
-llm-type
-"groq" "claude" "deepseek" "gpt-4o"
-1
-
-SWITCH
-20
-140
-195
-173
-logging?
-logging?
+197
+65
+environment
+environment
+"simple-collection-env"
 0
-1
--1000
-
-SWITCH
-10
-290
-180
-323
-text-based-evolution
-text-based-evolution
-1
-1
--1000
-
-INPUTBOX
-5
-380
-180
-440
-experiment-name
-test1
-1
-0
-String
 
 @#$#@#$#@
-## WHAT IS IT?
-
-(a general understanding of what the model is trying to show or explain)
-
-## HOW IT WORKS
-
-(what rules the agents use to create the overall behavior of the model)
-
-## HOW TO USE IT
-
-(how to use the model, including a description of each of the items in the Interface tab)
-
-## THINGS TO NOTICE
-
-(suggested things for the user to notice while running the model)
-
-## THINGS TO TRY
-
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
-
-## EXTENDING THE MODEL
-
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
-
-## NETLOGO FEATURES
-
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
-
-## CREDITS AND REFERENCES
-
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
 @#$#@#$#@
 default
 true
@@ -851,6 +425,7 @@ Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
 NetLogo 6.4.0
 @#$#@#$#@
+need-to-manually-make-preview-for-this-model
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
