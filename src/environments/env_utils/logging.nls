@@ -10,13 +10,13 @@ to setup-logger
     (list "selection-pressure" selection-pressure)
   )
   py:set "init_params" init-params
-  py:run "from src.mutation.mutate_code import get_code_generator"
+  ; py:run "from src.mutation.mutate_code import get_code_generator"
 
   ;;; {{{TO DO: Change later so that get_base prompt doesn't require agent_info and maybe llm_type}}}
   py:set "llm_type" llm-type
   py:set "agent_info" [0 0 0 0 0]
-  let base-prompt py:runresult "get_code_generator(llm_type).get_base_prompt(agent_info,llm_type)"
-  py:set "base_prompt" base-prompt
+  ; let base-prompt py:runresult "get_code_generator(llm_type).get_base_prompt(agent_info,llm_type)"
+  ; py:set "base_prompt" base-prompt
 
   ;; Initialize a new logger instance (ensures new log file per setup)
   py:set "experiment_name" experiment-name
@@ -25,14 +25,14 @@ to setup-logger
 
   ;; Log the simulation parameters
   py:run "logger.log_initial_parameters(init_params)"
-  py:run "logger.log_base_prompt(base_prompt)"
+  ; py:run "logger.log_base_prompt(base_prompt)"
 end
 
 ;; Constructs agent table (dict) for logging
 to-report agent-dict [agentset]
   let superdict table:make
-  let agentlist map [agent -> [(list who fitness parent-id parent-rule rule)] of agent] reverse sort-on [fitness] agentset
-  let keys ["id" "fitness" "parent-id" "parent-rule" "rule"]
+  let agentlist map [agent -> [(list who fitness parent-id parent-rule rule pseudocode parent-pseudocode)] of agent] reverse sort-on [fitness] agentset
+  let keys ["id" "fitness" "parent-id" "parent-rule" "rule" "pseudocode" "parent-pseudocode"]
   let kvlist map [vals -> fp:zip keys vals ] agentlist
 
   foreach kvlist [ lst ->
@@ -60,4 +60,3 @@ to log-metrics [agentdicts]
     py:run "logger.log_generation([dict(metrics), agent_dict])"
   ]
 end
-
