@@ -3,8 +3,14 @@ from dotenv import load_dotenv
 import os
 import gin
 
+# Import configurable modules before parsing GIN config
+import src.generators.base
+import src.graph_providers.base
+import src.graph_providers.unified_provider
+import src.netlogo_code_generator.nodes
+
 def load_config():
-    """Load environment variables from .env file"""
+    """Load environment variables from .env file and GIN configuration"""
     load_dotenv()
     
     # Required environment variables

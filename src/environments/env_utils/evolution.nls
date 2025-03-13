@@ -31,8 +31,9 @@ to-report fitness-prop-selection
 end
 
 to-report mutate-rule
-  let info (list rule input parent-rule fitness ticks)
+  let info (list rule input parent-rule fitness ticks pseudocode)
   let result rule
+  let result-pseudocode pseudocode
   print word "Current Rule: " result
 
   py:set "agent_info" info
@@ -40,14 +41,17 @@ to-report mutate-rule
   py:set "text_based_evolution" text-based-evolution
 
   carefully [
-    let new-rule py:runresult "mutate_code(agent_info=agent_info, model_type=llm_type, use_text_evolution=text_based_evolution)"
-    set result new-rule
-    print word "New Rule: " new-rule
+    let mutation-result py:runresult "mutate_code(agent_info=agent_info, model_type=llm_type, use_text_evolution=text_based_evolution)"
+    set result item 0 mutation-result
+    set result-pseudocode item 1 mutation-result
+    print word "New Rule: " result
+    print word "New Pseudocode: " result-pseudocode
   ] [
     let error-info (list error-message rule ticks)
     set error-log lput error-info error-log
     print word "Mutation error: " error-message
   ]
+  set pseudocode result-pseudocode  ; Update the agent's pseudocode property
   report result
 end
 
