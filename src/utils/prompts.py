@@ -184,3 +184,116 @@ STRATEGIC GOALS:
 3. Combine different movement patterns
 
 Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
+
+        self.tag_groq_prompt = """You are an expert NetLogo agent behavior generator for a tag-based environment simulation. Generate code following these specifications:
+
+GAME CONTEXT:
+This environment simulates a game of tag where:
+- A small number of agents (5 by default) are randomly tagged at the start
+- Tagged agents try to chase and tag untagged agents
+- When a tagged agent touches an untagged agent, the tag is passed:
+  * The previously tagged agent becomes untagged
+  * The newly tagged agent becomes immune to being tagged by that specific agent for 20 ticks
+- Tagged agents that don't find someone to tag will "die" at the end of each round
+- Surviving agents reproduce, with one chosen to have its behavior code mutated
+- The environment is a bounded world where agents cannot move beyond borders
+- The maximum movement distance per tick is limited to 1 unit
+
+INPUT CONTEXT:
+- Current rule: {}
+- You are provided with observations in three 120-degree cones:
+  - Center cone: Covers -60° to 60° relative to your heading
+  - Right cone: Covers 60° to 180° relative to your heading
+  - Left cone: Covers -60° to -180° relative to your heading
+  
+AVAILABLE SEMANTIC INPUTS:
+- left-agent-distance: distance to nearest agent in the left cone (-60° to -180°)
+- left-agent-is-tagged?: whether the nearest agent in the left cone is tagged
+- left-agent-heading: clockwise relative heading to nearest agent in the left cone
+- center-agent-distance: distance to nearest agent in the center cone (-60° to 60°)
+- center-agent-is-tagged?: whether the nearest agent in the center cone is tagged
+- center-agent-heading: clockwise relative heading to nearest agent in the center cone
+- right-agent-distance: distance to nearest agent in the right cone (60° to 180°)
+- right-agent-is-tagged?: whether the nearest agent in the right cone is tagged
+- right-agent-heading: clockwise relative heading to nearest agent in the right cone
+- tagged?: whether the agent itself is tagged
+
+AGENT GOALS:
+- When tagged (color red): Pursue and tag untagged agents to pass the tag and survive
+- When untagged (color blue): Avoid tagged agents to maximize survival time and fitness
+
+CONSTRAINTS:
+1. Use only NetLogo commands: fd/forward, rt/right, lt/left, and conditionals (if/ifelse)
+2. Use the semantic variables
+3. Do not include code to kill, create, or control other agents
+4. Do not include code to change the environment
+5. Focus on movement strategies
+
+STRATEGIC GOALS:
+1. Develop different behaviors when tagged vs. untagged
+2. Use sensor information intelligently to chase or flee
+3. Balance exploration and targeted movement
+
+COMMON SYNTAX:
+`ifelse` documentation:
+
+ifelse boolean1 [ commands1 ] [ elsecommands ]
+(ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+For the first boolean that reports true, runs the commands that follow.
+
+If no boolean reports true, runs elsecommands or does nothing if elsecommands is not given. When using only one boolean you do not need to surround the entire ifelse primitive and its blocks in parentheses.
+
+If a boolean reports a value other than true or false a runtime error will occur.
+
+ask patches
+  [ ifelse pxcor > 0
+      [ set pcolor blue ]
+      [ set pcolor red ] ]
+;; the left half of the world turns red and
+;; the right half turns blue
+The reporters may report a different value for different agents, so some agents may run different command blocks. When using more than one boolean you must surround the whole ifelse primitive and its blocks in parentheses. This functionality was added in NetLogo 6.1.
+
+ask patches [
+  let choice random 4
+  (ifelse
+    choice = 0 [
+      set pcolor red
+      set plabel "r"
+    ]
+    choice = 1 [
+      set pcolor blue
+      set plabel "b"
+    ]
+    choice = 2 [
+      set pcolor green
+      set plabel "g"
+    ]
+    ; elsecommands
+    [
+      set pcolor yellow
+      set plabel "y"
+  ])
+]
+
+`if` documentation:
+
+if boolean [ commands ]
+If boolean reports true then the commands are run, otherwise the commands are not run if boolean reports false.
+
+If boolean reports a value other than true or false a runtime error will occur.
+
+The boolean may report a different value for different agents when used with a primitive like ask, so some agents may run commands and others don't.
+
+ask turtles [
+  if xcor > 0 [ set color blue ]
+  ;; turtles in the right half of the world
+  ;; turn blue
+]
+
+You must adhere to the common syntax, otherwise the code will not run. There is no such thing as a `else` statement in NetLogo.
+
+Every pair of brackets must be closed.
+
+Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
+
+        self.tag_claude_prompt = self.tag_groq_prompt

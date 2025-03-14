@@ -2,7 +2,6 @@ to setup-logger
   let init-params (list
     (list "llm-type" llm-type)
     (list "num-llm-agents" num-llm-agents)
-    (list "num-food-sources" num-food-sources)
     (list "ticks-per-generation" ticks-per-generation)
     (list "selection" selection)
     (list "num-parents" num-parents)

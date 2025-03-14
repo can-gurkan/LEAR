@@ -1,0 +1,17 @@
+to setup-params-default
+  set num-llm-agents 30
+  set ticks-per-generation 200
+  set logging? true
+  set llm-mutation? true
+  set text-based-evolution false
+  set llm-type "groq"
+  set tag-distance-threshold 1
+  set tag-immunity-duration 20
+  set initial-tagged-agents 5
+  
+  ;; selection algo params
+  set selection "tournament" ;"fitness-prop"
+  set num-parents 1
+  set tournament-size 7
+  set selection-pressure 0.8
+end
