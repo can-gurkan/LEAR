@@ -53,7 +53,6 @@ to setup
   clear-all
 
   py:setup py:python
-  py:setup "/Users/rudydanda/.rye/shims/python"
   py:run "import os"
   py:run "import sys"
   py:run "from pathlib import Path"
