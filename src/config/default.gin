@@ -5,10 +5,10 @@ from src.generators import base
 CodeRetryHandler.max_attempts = 5
 
 get_base_prompt.model_prompt = 'tag_groq_prompt'
-GroqCodeGenerator.temp = 0.2
+GroqCodeGenerator.temp = 1
 GroqCodeGenerator.model_name = "qwen-2.5-coder-32b"
 
 #get_base_prompt.model_prompt = 'tag_groq_prompt'
-ClaudeCodeGenerator.temp = 0.4
+ClaudeCodeGenerator.temp = 1
 ClaudeCodeGenerator.max_tokens = 1000
 ClaudeCodeGenerator.model_name = "claude-3-5-haiku-latest"

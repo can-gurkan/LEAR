@@ -99,7 +99,7 @@ class NetLogoVerifier:
         
         self.dangerous_primitives = {
             'die', 'kill', 'create', 'hatch', 'sprout',
-            'ask', 'of', 'with',
+            'ask',
             'run', 'runresult',
             'file', 'import', 'export',
             'python',

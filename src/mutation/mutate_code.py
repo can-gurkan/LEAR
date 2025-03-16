@@ -95,7 +95,8 @@ def mutate_code(agent_info: list, model_type: str = "groq", use_text_evolution: 
         else:
             generator = get_code_generator(model_type)
             #get rid of ```netlogo and ``` at the beginning and end of the code
-            return generator.generate_code(agent_info).replace("```netlogo", "").replace("```", "")
+            #return generator.generate_code(agent_info).replace("```netlogo", "").replace("```", "")
+            return generator.generate_code(agent_info).split("```netlogo")[1].split("```")[0].strip()
     except Exception as e:
         logger.error(f"Error in mutate_code: {str(e)}")
         # print(f"Error in mutate_code: {str(e)}")

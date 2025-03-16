@@ -189,7 +189,7 @@ Generate ONLY the movement code. Code must be runnable in NetLogo in the context
 
 GAME CONTEXT:
 This environment simulates a game of tag where:
-- A small number of agents (5 by default) are randomly tagged at the start
+- A small number of agents are randomly tagged at the start
 - Tagged agents try to chase and tag untagged agents
 - When a tagged agent touches an untagged agent, the tag is passed:
   * The previously tagged agent becomes untagged
@@ -202,9 +202,9 @@ This environment simulates a game of tag where:
 INPUT CONTEXT:
 - Current rule: {}
 - You are provided with observations in three 120-degree cones:
-  - Center cone: Covers -60° to 60° relative to your heading
-  - Right cone: Covers 60° to 180° relative to your heading
-  - Left cone: Covers -60° to -180° relative to your heading
+  - Center cone: Covers -60° to 60° relative to your current heading
+  - Right cone: Covers 60° to 180° relative to your current heading
+  - Left cone: Covers -60° to -180° relative to your current heading
   
 AVAILABLE SEMANTIC INPUTS:
 - left-agent-distance: distance to nearest agent in the left cone (-60° to -180°)
@@ -218,10 +218,6 @@ AVAILABLE SEMANTIC INPUTS:
 - right-agent-heading: clockwise relative heading to nearest agent in the right cone
 - tagged?: whether the agent itself is tagged
 
-AGENT GOALS:
-- When tagged (color red): Pursue and tag untagged agents to pass the tag and survive
-- When untagged (color blue): Avoid tagged agents to maximize survival time and fitness
-
 CONSTRAINTS:
 1. Use only NetLogo commands: fd/forward, rt/right, lt/left, and conditionals (if/ifelse)
 2. Use the semantic variables
@@ -230,11 +226,10 @@ CONSTRAINTS:
 5. Focus on movement strategies
 
 STRATEGIC GOALS:
-1. Develop different behaviors when tagged vs. untagged
-2. Use sensor information intelligently to chase or flee
-3. Balance exploration and targeted movement
+1. Use sensor information intelligently to avoid dying
 
 COMMON SYNTAX:
+<ifelse-documentation>
 `ifelse` documentation:
 
 ifelse boolean1 [ commands1 ] [ elsecommands ]
@@ -275,6 +270,10 @@ ask patches [
   ])
 ]
 
+All ifelse commands must have both a true and false block.
+</ifelse-documentation>
+
+<if-documentation>
 `if` documentation:
 
 if boolean [ commands ]
@@ -289,11 +288,13 @@ ask turtles [
   ;; turtles in the right half of the world
   ;; turn blue
 ]
-
+</if-documentation>
 You must adhere to the common syntax, otherwise the code will not run. There is no such thing as a `else` statement in NetLogo.
 
-Every pair of brackets must be closed.
+Every pair of open brackets MUST have a corresponding close bracket. 
 
-Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
+You MUST have movement code that causes you to move. For example, moving 1 step forward and 1 step backward is not valid movement code, because the net movement is 0.
+
+Generate ONLY the movement code. This means your output should only be a ```netlogo ``` code block. Code must be runnable in NetLogo in the context of a turtle."""
 
         self.tag_claude_prompt = self.tag_groq_prompt

@@ -260,8 +260,8 @@ to run-rule
 
     ;; If moved more than 1, scale back the movement
     if dist-moved > 1 [
-      ;;setxy initial-xcor + (xcor - initial-xcor) / dist-moved
-      ;;      initial-ycor + (ycor - initial-ycor) / dist-moved
+      setxy initial-xcor + (xcor - initial-xcor) / dist-moved
+            initial-ycor + (ycor - initial-ycor) / dist-moved
     ]
 
     ;; Check and enforce world boundaries
@@ -364,6 +364,7 @@ to evolve-agents
   let survivors llm-agents with [not tagged?]
   if any? survivors [
     ask one-of survivors [
+      set label "mutated"
       print (word "Mutating rule for agent " who ": " rule)
       set rule mutate-rule
     ]
@@ -449,28 +450,6 @@ to evolve-agents
   let new-dict agent-dict turtle-set new-agents
   update-generation-stats
   log-metrics (list best-dict new-dict kill-dict)
-
-  ;; Check if we have the right number of agents
-  let final-count count llm-agents
-  let expected-count num-llm-agents
-  if final-count != expected-count [
-    print (word "WARNING: Agent count mismatch. Expected: " expected-count ", Actual: " final-count)
-    ;; Fix the count if needed by adding more agents
-    if final-count < expected-count [
-      create-llm-agents (expected-count - final-count) [
-        set color blue
-        set shape "person"
-        set size 1.5
-        setxy random-xcor random-ycor
-        set rule init-rule
-        set parent-id "na"
-        set parent-rule "na"
-        set tagged? false
-        set immunities table:make
-        init-agent-params
-      ]
-    ]
-  ]
 
   print (word "After evolution - Total agents: " count llm-agents)
 
@@ -662,10 +641,7 @@ to update-fitness-scores
 
     if nearest-tagged != nobody [
       let dist distance nearest-tagged
-      ;; Scale up distance to make it more significant - multiply by 5
-      ;; Also ensure a minimum value of 1 to prevent zero scores
-      let untag-score max list 1 (dist * 5)
-      set untagged-distance-score untag-score
+      set untagged-distance-score (dist + untagged-distance-score)
     ]
 
   ]
@@ -678,7 +654,7 @@ to update-fitness-scores
       let dist distance nearest-untagged
       ;; Lower distance means better fitness (proximity-based), scale from 1-20
       let proximity-score 20 - (min list dist 20)
-      set tagged-distance-score proximity-score
+      set tagged-distance-score (tagged-distance-score + proximity-score)
     ]
   ]
 end
@@ -718,8 +694,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-0
-0
+1
+1
 1
 -16
 16
