@@ -42,7 +42,6 @@ globals [
   best-rule-fitness
   error-log
   tag-distance-threshold
-  tag-immunity-duration
   generation-length    ;; New global to separate round from generation concepts
 
   ;selection
@@ -102,7 +101,7 @@ to setup-params
   ]
 
   set tag-distance-threshold 1  ;; distance within which tagging occurs
-  set tag-immunity-duration 10   ;; ticks an agent is immune after being untagged
+  set tagged-time-penalty-factor 0.5 ;; default penalty factor if not set by slider
 end
 
 to setup-llm-agents
@@ -124,7 +123,7 @@ to setup-llm-agents
     set tagged? true
     set color red
   ]
-  
+
   ;; Use the same formation as during evolution
   arrange-agents-in-formation
 end
@@ -201,7 +200,7 @@ to go
     if immunity-timer > 0 [
       set immunity-timer immunity-timer - 1
     ]
-    
+
     ;; Visual indicator for immunity - use target shape when immune
     ifelse immunity-timer > 0 [
       set shape "target"  ;; Use target shape to show immunity
@@ -288,14 +287,23 @@ to check-tagging
 
   if any? potential-targets [
     let target one-of potential-targets
-    
-    ;; Create a visual effect for tagging
-    create-temporary-tagging-visual target
+    let my-id who  ;; Store the current agent's ID
 
     ;; Tag the target
     ask target [
       set tagged? true
       set color red
+
+      ;; Store tagger's ID to implement mutual immunity
+      let target-id who
+
+      ;; Make the target immune to the tagger for immunity-duration ticks
+      set immunity-timer immunity-duration
+
+      ;; Make the tagger immune to the tagged agent too (reciprocal immunity)
+      ask llm-agent my-id [
+        set immunity-timer immunity-duration
+      ]
     ]
 
     ;; Count successful tags
@@ -304,22 +312,7 @@ to check-tagging
     ;; Untag the tagger (pass the tag along)
     set tagged? false
     set color blue
-    
-    ;; Set immunity timer for 3 ticks
-    set immunity-timer 3
   ]
-end
-
-;; Create a temporary visual effect to show tagging action
-to create-temporary-tagging-visual [target-agent]
-  ;; TODO: DELETE
-  let x1 xcor
-  let y1 ycor
-  let x2 [xcor] of target-agent
-  let y2 [ycor] of target-agent
-
-  ;; Create temporary patches to show the tagging
-
 end
 
 ;; This procedure should be called every tick to handle delayed actions
@@ -336,91 +329,72 @@ to handle-delayed-actions
 end
 
 to evolve-agents
-  ;; TODO: Deduce the worst agents - the ones who spent the most time being tagged?
-  ;; but if you start being tagged then you're at a disadvantage
-  ;; when respawning, prevent automatic tags if you're within the radius
-  ;; one scenario is one breed of agents with rules for both tagged and untagged, worst "fitness" means the agent spent the most time in the tagged state,
-  ;; fitness is also determined by how far you can stay from tagged agent as untagged
-  ;; other scenario is two breeds of agents, one tagger and the other are escapers, fixed number of both, evolve both classes seperately
-  ;; fitness of the tagger is determined by how many they were able to tag, and escaping agents how many times they have been tagged in reverse fitness order
-  print word "\nGeneration: " generation
+  if ticks >= 1 and ticks mod ticks-per-generation = 0 [
+    print word "\nGeneration: " generation
 
-  let survivors llm-agents with [not tagged?]
-  if any? survivors [
-    ask one-of survivors [
-      set label "mutated"
-      print (word "Mutating rule for agent " who ": " rule)
-      set rule mutate-rule
+    ;; Select parents based on fitness (not just survivors)
+    let parents select-agents
+    let kill-num length parents
+
+    ;; Track which agents to kill and which are the best
+    let kill-dict agent-dict min-n-of kill-num llm-agents [fitness]
+    let best-dict agent-dict turtle-set parents
+    let new-agent-ids []
+
+    ;; Create new offspring from parents and mutate them
+    foreach parents [ parent ->
+      ask parent [
+        let my-parent-id who
+        hatch 1 [
+          set tagged? false
+          set color blue
+          set parent-id my-parent-id
+          set parent-rule rule
+
+          ;; Add the mutated label and mutate the rule
+          set label "mutated"
+          print (word "Mutating rule for agent " who ": " rule)
+          set rule mutate-rule
+
+          init-agent-params
+          set new-agent-ids lput who new-agent-ids
+        ]
+      ]
     ]
-  ]
 
-  ;; The tagged agents die
-  let tagged-agents llm-agents with [tagged?]
+    ;; Kill the least fit agents, but don't kill newly created offspring
+    ask min-n-of kill-num llm-agents with [not member? who new-agent-ids] [fitness] [ die ]
 
-  let num-tagged count tagged-agents
-  let num-survivors count survivors
+    ;; Prepare data for logging
+    let new-dict agent-dict llm-agents with [member? who new-agent-ids]
+    update-generation-stats
+    log-metrics (list best-dict new-dict kill-dict)
 
-  ;; If there are no tagged agents, tag agents at random based on slider
-  if num-tagged = 0 [
+    print (word "After evolution - Total agents: " count llm-agents)
+
+    ;; Reset agent states for the next generation
+    ask llm-agents [
+      set tagged? false
+      set color blue
+
+      ;; Conditionally reset fitness metrics based on the switch
+      if reset-fitness-between-rounds? [
+        set tagged-distance-score 0
+        set untagged-distance-score 0
+        set tags-made 0
+        set time-spent-tagged 1  ;; Set to 1 to avoid division by zero
+        set time-spent-untagged 1 ;; Set to 1 to avoid division by zero
+      ]
+    ]
+
+    ;; Tag some agents at random to start the next generation
     ask n-of initial-tagged-agents llm-agents [
       set tagged? true
       set color red
     ]
-    stop
-  ]
 
-  ;; Prepare dicts for logging
-  let kill-dict agent-dict tagged-agents
-  let best-dict agent-dict survivors
-  let new-agent-ids []
-
-  ;; Store the number of agents to be replaced
-  let agents-to-replace num-tagged
-
-  ;; Create offspring for the dead agents
-  ;; Randomly select 5 surviving agents to reproduce
-  let parents n-of (min list 5 count survivors) survivors
-
-  let new-agents []
-  ask tagged-agents [
-    ;; Remove this agent
-    let old-who who
-    die
-  ]
-
-  ;; Now create exactly the right number of new agents
-  repeat agents-to-replace [
-    ;; Create a new agent based on a randomly selected parent
-    let parent one-of parents
-    ask parent [
-      hatch 1 [
-        set tagged? false
-        set color blue
-        set parent-id [who] of parent
-        set parent-rule [rule] of parent
-        set rule [rule] of parent
-        init-agent-params
-        set new-agent-ids lput who new-agent-ids
-        set new-agents lput self new-agents
-        ;; Randomize position will be handled by arrange-agents-in-formation
-      ]
-    ]
-  ]
-
-  let new-dict agent-dict turtle-set new-agents
-  update-generation-stats
-  log-metrics (list best-dict new-dict kill-dict)
-
-  print (word "After evolution - Total agents: " count llm-agents)
-
-  ;; Tag agents at random based on slider at the start of each generation
-  ask llm-agents [
-    set tagged? false
-    set color blue
-  ]
-  ask n-of initial-tagged-agents llm-agents [
-    set tagged? true
-    set color red
+    ;; Position agents properly for the next round
+    arrange-agents-in-formation
   ]
 end
 
@@ -430,18 +404,18 @@ to arrange-agents-in-formation
   ask llm-agents with [tagged?] [
     setxy 0 0
   ]
-  
+
   ;; Get the untagged agents
   let untagged-agents llm-agents with [not tagged?]
   let num-untagged count untagged-agents
-  
+
   if num-untagged > 0 [
     ;; Create a set of patches in a circle to use as positions
     let circle-patches patches with [
       ;; Create a circle of patches at ~70% of max radius
       round sqrt (pxcor ^ 2 + pycor ^ 2) = round (max-pxcor * 0.7)
     ]
-    
+
     ;; If we have more agents than patches in our circle, add more patches
     if count circle-patches < num-untagged [
       set circle-patches patches with [
@@ -449,10 +423,10 @@ to arrange-agents-in-formation
         round sqrt (pxcor ^ 2 + pycor ^ 2) <= round (max-pxcor * 0.75)
       ]
     ]
-    
+
     ;; Select n patches evenly distributed around the circle
     let positions n-of (min list num-untagged count circle-patches) circle-patches
-    
+
     ;; Now place each untagged agent on one of these positions
     (foreach (sort untagged-agents) (sort positions) [ [agent pos] ->
       ask agent [
@@ -467,10 +441,58 @@ end
 ;;; Helpers and Observable Reporters
 
 to-report fitness
-  ;; Now we normalize fitness by dividing accumulated scores by ticks
-  ;; This amortizes fitness across the entire time the agent has been alive
+  ;; Normalize fitness by dividing each component by its mean before adding
+  ;; This ensures neither component dominates the overall fitness
 
-  report tagged-fitness + untagged-fitness
+  let normalized-tagged 0
+  let normalized-untagged 0
+
+  ;; Calculate mean fitness values for both states (avoiding division by zero)
+  let mean-tagged mean-tagged-fitness
+  let mean-untagged mean-untagged-fitness
+
+  ;; Calculate the penalty factor based on time spent tagged
+  let tagged-time-ratio time-spent-tagged / (time-spent-tagged + time-spent-untagged)
+  let penalty-factor 1 - (tagged-time-ratio * tagged-time-penalty-factor)
+
+  ;; Apply the penalty directly to the tagged fitness normalization
+  ifelse time-spent-tagged > 1 [
+    set normalized-tagged ifelse-value (mean-tagged > 0)
+      [(tagged-fitness / mean-tagged) * penalty-factor]
+      [tagged-fitness * penalty-factor]
+  ] [
+    ;; If agent has no tagged experience, use the mean value
+    set normalized-tagged 1
+  ]
+
+  ;; Set normalized untagged fitness
+  ifelse time-spent-untagged > 1 [
+    set normalized-untagged ifelse-value (mean-untagged > 0)
+      [untagged-fitness / mean-untagged]
+      [untagged-fitness]
+  ] [
+    ;; If agent has no untagged experience, use the mean value
+    set normalized-untagged 1
+  ]
+
+  ;; Return the sum of normalized components
+  report normalized-tagged + normalized-untagged
+end
+
+;; Report mean tagged fitness across all agents with tagged experience
+to-report mean-tagged-fitness
+  let tagged-agents llm-agents with [time-spent-tagged > 1]
+  ifelse any? tagged-agents
+    [report mean [tagged-fitness] of tagged-agents]
+    [report 1]  ;; Return 1 if no agents have been tagged (neutral value for division)
+end
+
+;; Report mean untagged fitness across all agents with untagged experience
+to-report mean-untagged-fitness
+  let untagged-agents llm-agents with [time-spent-untagged > 1]
+  ifelse any? untagged-agents
+    [report mean [untagged-fitness] of untagged-agents]
+    [report 1]  ;; Return 1 if no agents have been untagged (neutral value for division)
 end
 
 to-report mean-fitness
@@ -588,12 +610,12 @@ to do-plotting
     ;; Only plot if there are agents in each state
     if any? llm-agents with [time-spent-tagged > 0] [
       set-current-plot-pen "Tagged Fitness"
-      plot mean [tagged-fitness] of llm-agents with [time-spent-tagged > 0]
+      plot mean-tagged-fitness
     ]
 
     if any? llm-agents with [time-spent-untagged > 0] [
       set-current-plot-pen "Untagged Fitness"
-      plot mean [untagged-fitness] of llm-agents with [time-spent-untagged > 0]
+      plot mean-untagged-fitness
     ]
 
     ;; Plot the ratio of time spent in each state
@@ -643,7 +665,6 @@ end
 to-report untagged-fitness
   report untagged-distance-score / time-spent-untagged
 end
-; TODO: normalized tagged-fitness and untagged-fitness before adding them together
 
 ; TAGGED
 ;; 5 distance away from a untagged - 15
@@ -652,9 +673,6 @@ end
 ; 2 agents
 ; 1 has a really poor untagged rule but luckily stays untagged the entire time - really high untagged-fitness
 ; 1 has a really good untagged rule but unluckily stays tagged most of the time but gets untagged at the end - really low untagged-fitness
-
-
-
 
 
 @#$#@#$#@
@@ -754,9 +772,9 @@ Fitness Metrics
 ticks
 fitness
 0.0
-10.0
+2.0
 0.0
-10.0
+2.0
 true
 true
 "" ""
@@ -811,7 +829,7 @@ ticks-per-generation
 ticks-per-generation
 100
 2000
-200.0
+1000.0
 100
 1
 NIL
@@ -860,6 +878,47 @@ text-based-evolution
 1
 -1000
 
+SWITCH
+400
+470
+575
+503
+reset-fitness-between-rounds?
+reset-fitness-between-rounds?
+0
+1
+-1000
+
+SLIDER
+400
+510
+575
+543
+immunity-duration
+immunity-duration
+0
+30
+10.0
+1
+1
+ticks
+HORIZONTAL
+
+SLIDER
+400
+550
+575
+583
+tagged-time-penalty-factor
+tagged-time-penalty-factor
+0
+2
+0.5
+0.1
+1
+NIL
+HORIZONTAL
+
 INPUTBOX
 20
 370
@@ -890,7 +949,7 @@ num-parents
 num-parents
 0
 10
-2.0
+1.0
 1
 1
 NIL
@@ -905,7 +964,7 @@ tournament-size
 tournament-size
 0
 50
-7.0
+50.0
 1
 1
 NIL
@@ -920,7 +979,7 @@ selection-pressure
 selection-pressure
 0
 1
-0.8
+0.65
 0.01
 1
 NIL
@@ -1329,7 +1388,6 @@ Polygon -16777216 true false 238 112 252 141 219 141 218 112
 Circle -16777216 true false 234 174 42
 Rectangle -7500403 true true 181 185 214 194
 Circle -16777216 true false 144 174 42
-Circle -16777216 true false 24 174 42
 Circle -7500403 false true 24 174 42
 Circle -7500403 false true 144 174 42
 Circle -7500403 false true 234 174 42
@@ -1387,5 +1445,5 @@ true
 Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
 @#$#@#$#@
-1
+0
 @#$#@#$#@

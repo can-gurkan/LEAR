@@ -6,7 +6,6 @@ to setup-params-default
   set text-based-evolution false
   set llm-type "groq"
   set tag-distance-threshold 1
-  set tag-immunity-duration 20
   set initial-tagged-agents 5
   
   ;; selection algo params
