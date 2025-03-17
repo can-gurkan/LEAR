@@ -185,7 +185,8 @@ STRATEGIC GOALS:
 
 Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
 
-        self.tag_groq_prompt = """You are an expert NetLogo agent behavior generator for a tag-based environment simulation. Generate code following these specifications:
+        self.tag_groq_prompt = """
+You are an expert NetLogo agent behavior generator for a tag-based environment simulation. Generate code following these specifications:
 
 GAME CONTEXT:
 This environment simulates a game of tag where:

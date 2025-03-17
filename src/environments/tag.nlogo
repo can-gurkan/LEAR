@@ -62,7 +62,7 @@ llm-agents-own [
   survival-time ;; how long the agent has survived
   parent-id ;; who number of parent
   parent-rule ;; parent rule
-  immunities ;; table of agents that cannot tag this agent
+  immunity-timer ;; timer for immunity after being untagged (replaces immunities table)
   distance-score ;; accumulated distance score for fitness calculation
   tags-made ;; number of successful tags made (for tagged agents)
 
@@ -84,6 +84,10 @@ llm-agents-own [
   right-agent-distance    ;; distance to nearest agent on right
   right-agent-is-tagged?  ;; is the nearest agent on right tagged?
   right-agent-heading     ;; relative heading to nearest agent on right
+
+  ;; potential experimentation: provide multiple agent distances and headings within a radius
+  ;; would be a vector, each element in the vector represents the agent and have the same information, distance, is-tagged, relative heading
+  ;; for the closest n agents within a radius
 ]
 
 ;;; Setup Procedures
@@ -98,7 +102,7 @@ to setup-params
   ]
 
   set tag-distance-threshold 1  ;; distance within which tagging occurs
-  set tag-immunity-duration 20  ;; ticks an agent is immune after tagging another
+  set tag-immunity-duration 10   ;; ticks an agent is immune after being untagged
 end
 
 to setup-llm-agents
@@ -106,12 +110,12 @@ to setup-llm-agents
     set color blue
     set shape "person"  ;; Use person shape instead of default
     set size 1.5       ;; Make agents a bit larger
-    setxy random-xcor random-ycor
+    setxy random-xcor random-ycor  ;; Initial random placement (will be re-arranged)
     set rule init-rule
     set parent-id "na"
     set parent-rule "na"
     set tagged? false
-    set immunities table:make
+    set immunity-timer 0
     init-agent-params
   ]
 
@@ -120,6 +124,9 @@ to setup-llm-agents
     set tagged? true
     set color red
   ]
+  
+  ;; Use the same formation as during evolution
+  arrange-agents-in-formation
 end
 
 to init-agent-params
@@ -128,6 +135,7 @@ to init-agent-params
   set lifetime 0
   set distance-score 0
   set tags-made 0
+  set immunity-timer 0
 
   ;; Initialize the new tracking variables
   set tagged-distance-score 0
@@ -187,24 +195,15 @@ to go
   ;; Handle any delayed actions (like visual effects)
   handle-delayed-actions
 
-  ;; Update immunities and decrement immunity timers
+  ;; Update immunity timers
   ask llm-agents [
-    let me self
-    let keys table:keys immunities
-    let has-any-immunity? false
-
-    foreach keys [ k ->
-      let time table:get immunities k
-      ifelse time > 1 [
-        table:put immunities k (time - 1)
-        set has-any-immunity? true
-      ] [
-        table:remove immunities k
-      ]
+    ;; Decrement immunity timer if it's active
+    if immunity-timer > 0 [
+      set immunity-timer immunity-timer - 1
     ]
-
-    ;; Visual indicator for immunity - add a halo effect
-    ifelse has-any-immunity? and length keys > 0 [
+    
+    ;; Visual indicator for immunity - use target shape when immune
+    ifelse immunity-timer > 0 [
       set shape "target"  ;; Use target shape to show immunity
     ] [
       set shape "person"  ;; Return to person shape when not immune
@@ -230,19 +229,11 @@ to go
 
   ;; Update fitness scores at the end of each round
   if ticks >= 1 and ticks mod ticks-per-generation = 0 [
-
     evolve-agents
 
-    ;; Randomize all agents' positions at the end of each round
-    ask llm-agents [
-      setxy random-xcor random-ycor
-    ]
+    ;; Position agents: tagged at center, untagged in a circle
+    arrange-agents-in-formation
   ]
-
-  ;; Every generation-length ticks is a generation
-  ;;if ticks >= 1 and ticks mod generation-length = 0 [
-  ;;  evolve-agents
-  ;;]
 
   tick
 end
@@ -263,12 +254,11 @@ to run-rule
       setxy initial-xcor + (xcor - initial-xcor) / dist-moved
             initial-ycor + (ycor - initial-ycor) / dist-moved
     ]
+    ;; TODO: make parameter if the world can be wrapped or not
+    ;; disable playground effect if not wrapped
 
-    ;; Check and enforce world boundaries
-    ;;if xcor < min-pxcor [set xcor min-pxcor]
-    ;;if xcor > max-pxcor [set xcor max-pxcor]
-    ;;if ycor < min-pycor [set ycor min-pycor]
-    ;;if ycor > max-pycor [set ycor max-pycor]
+    ;; NOTE: What happens if you take out movement restriction, both here and in the prompt
+
   ] [
     let error-info (word
       "ERROR WHILE RUNNING RULE: " rule
@@ -292,14 +282,13 @@ to check-tagging
 
   ;; Find agents within tagging distance
   let potential-targets llm-agents in-radius tag-distance-threshold with [
-    not tagged? and                             ;; only tag untagged agents
-    not table:has-key? immunities [who] of myself ;; not immune to me
+    not tagged? and      ;; only tag untagged agents
+    immunity-timer = 0   ;; not immune
   ]
 
   if any? potential-targets [
     let target one-of potential-targets
-    let my-who who  ;; Store the current agent's ID
-
+    
     ;; Create a visual effect for tagging
     create-temporary-tagging-visual target
 
@@ -307,42 +296,30 @@ to check-tagging
     ask target [
       set tagged? true
       set color red
-
-      ;; Make the target immune to being tagged by this agent for tag-immunity-duration ticks
-      table:put immunities my-who tag-immunity-duration
     ]
 
-    ;; Make myself immune to the target I just tagged (to prevent immediate tag-backs)
-    table:put immunities [who] of target tag-immunity-duration
-
-    ;; Count successful tags but don't add a large score bonus
+    ;; Count successful tags
     set tags-made tags-made + 1
 
     ;; Untag the tagger (pass the tag along)
     set tagged? false
     set color blue
+    
+    ;; Set immunity timer for 3 ticks
+    set immunity-timer 3
   ]
 end
 
 ;; Create a temporary visual effect to show tagging action
 to create-temporary-tagging-visual [target-agent]
+  ;; TODO: DELETE
   let x1 xcor
   let y1 ycor
   let x2 [xcor] of target-agent
   let y2 [ycor] of target-agent
 
   ;; Create temporary patches to show the tagging
-  ask patches with [
-    distancexy ((x1 + x2) / 2) ((y1 + y2) / 2) < 1
-  ] [
-    let old-pcolor pcolor
-    ;set pcolor yellow
 
-    ;; Store the revert tick and original color directly in separate patch variables
-    ;; instead of trying to parse lists from strings
-    set plabel ticks + 3
-    set plabel-color old-pcolor
-  ]
 end
 
 ;; This procedure should be called every tick to handle delayed actions
@@ -359,6 +336,13 @@ to handle-delayed-actions
 end
 
 to evolve-agents
+  ;; TODO: Deduce the worst agents - the ones who spent the most time being tagged?
+  ;; but if you start being tagged then you're at a disadvantage
+  ;; when respawning, prevent automatic tags if you're within the radius
+  ;; one scenario is one breed of agents with rules for both tagged and untagged, worst "fitness" means the agent spent the most time in the tagged state,
+  ;; fitness is also determined by how far you can stay from tagged agent as untagged
+  ;; other scenario is two breeds of agents, one tagger and the other are escapers, fixed number of both, evolve both classes seperately
+  ;; fitness of the tagger is determined by how many they were able to tag, and escaping agents how many times they have been tagged in reverse fitness order
   print word "\nGeneration: " generation
 
   let survivors llm-agents with [not tagged?]
@@ -376,30 +360,8 @@ to evolve-agents
   let num-tagged count tagged-agents
   let num-survivors count survivors
 
-  print (word "Before evolution - Tagged: " num-tagged ", Untagged: " num-survivors ", Total: " (num-tagged + num-survivors))
-
   ;; If there are no tagged agents, tag agents at random based on slider
   if num-tagged = 0 [
-    ask n-of initial-tagged-agents llm-agents [
-      set tagged? true
-      set color red
-    ]
-    stop
-  ]
-
-  ;; If there are no survivors, reset all agents
-  if num-survivors = 0 [
-    ask llm-agents [
-      set tagged? false
-      set color blue
-      init-agent-params
-    ]
-
-    ;; Tag agents at random based on slider
-    ask llm-agents [
-      set tagged? false
-      set color blue
-    ]
     ask n-of initial-tagged-agents llm-agents [
       set tagged? true
       set color red
@@ -421,7 +383,7 @@ to evolve-agents
 
   let new-agents []
   ask tagged-agents [
-    ;; Remove this agent's immunities
+    ;; Remove this agent
     let old-who who
     die
   ]
@@ -438,11 +400,9 @@ to evolve-agents
         set parent-rule [rule] of parent
         set rule [rule] of parent
         init-agent-params
-        set immunities table:make
         set new-agent-ids lput who new-agent-ids
         set new-agents lput self new-agents
-        ;; Randomize position
-        setxy random-xcor random-ycor
+        ;; Randomize position will be handled by arrange-agents-in-formation
       ]
     ]
   ]
@@ -464,36 +424,52 @@ to evolve-agents
   ]
 end
 
+;; Position agents with tagged at center and untagged in a surrounding circle
+to arrange-agents-in-formation
+  ;; First place tagged agents at the center
+  ask llm-agents with [tagged?] [
+    setxy 0 0
+  ]
+  
+  ;; Get the untagged agents
+  let untagged-agents llm-agents with [not tagged?]
+  let num-untagged count untagged-agents
+  
+  if num-untagged > 0 [
+    ;; Create a set of patches in a circle to use as positions
+    let circle-patches patches with [
+      ;; Create a circle of patches at ~70% of max radius
+      round sqrt (pxcor ^ 2 + pycor ^ 2) = round (max-pxcor * 0.7)
+    ]
+    
+    ;; If we have more agents than patches in our circle, add more patches
+    if count circle-patches < num-untagged [
+      set circle-patches patches with [
+        round sqrt (pxcor ^ 2 + pycor ^ 2) >= round (max-pxcor * 0.65) and
+        round sqrt (pxcor ^ 2 + pycor ^ 2) <= round (max-pxcor * 0.75)
+      ]
+    ]
+    
+    ;; Select n patches evenly distributed around the circle
+    let positions n-of (min list num-untagged count circle-patches) circle-patches
+    
+    ;; Now place each untagged agent on one of these positions
+    (foreach (sort untagged-agents) (sort positions) [ [agent pos] ->
+      ask agent [
+        setxy [pxcor] of pos [pycor] of pos
+        ;; Add tiny random offset to avoid perfect overlap
+        setxy xcor + random-float 0.4 - 0.2 ycor + random-float 0.4 - 0.2
+      ]
+    ])
+  ]
+end
+
 ;;; Helpers and Observable Reporters
 
 to-report fitness
   ;; Now we normalize fitness by dividing accumulated scores by ticks
   ;; This amortizes fitness across the entire time the agent has been alive
 
-  ;; Calculate the total fitness as a weighted combination of tagged and untagged performance
-;  let tagged-factor max list 1 time-spent-tagged
-;  let untagged-factor max list 1 time-spent-untagged
-;
-;  ;; Calculate normalized scores
-;  let tagged-score (tagged-distance-score / tagged-factor) + (tags-made * 50)
-;  let untagged-score (untagged-distance-score / untagged-factor)
-;
-;  ;; Add survival bonus if applicable
-;  if survival-time >= generation-length [
-;    set untagged-score untagged-score + 1000
-;  ]
-;
-;  ;; If the agent has spent time in both states, combine scores, otherwise use just one
-;  ifelse time-spent-tagged > 0 and time-spent-untagged > 0 [
-;    ;; Weight by time spent in each state
-;    report (tagged-score * time-spent-tagged + untagged-score * time-spent-untagged) / (time-spent-tagged + time-spent-untagged)
-;  ] [
-;    ifelse tagged? [
-;      report tagged-score
-;    ] [
-;      report untagged-score
-;    ]
-;  ]
   report tagged-fitness + untagged-fitness
 end
 
@@ -661,24 +637,26 @@ end
 
 ;; Add reporters for getting tagged and untagged fitness separately
 to-report tagged-fitness
-  ;; Focus on proximity to untagged agents with small bonus for tags made
-  ;; No need to divide by time-spent-tagged since we're not accumulating
-  report (tagged-distance-score + (tags-made * 2)) / time-spent-tagged
+  report tagged-distance-score / time-spent-tagged
 end
 
 to-report untagged-fitness
-;  let untagged-factor max list 1 time-spent-untagged
-;  let base-score untagged-distance-score / untagged-factor
-;
-;  ;; Add survival bonus if applicable
-;  if survival-time >= generation-length [
-;    set base-score base-score + 1000
-;  ]
-;
-;  ;; Ensure a minimum reportable value to prevent zero readings on the plot
-;  report max list 0.1 base-score
-  report (untagged-distance-score / time-spent-untagged)
+  report untagged-distance-score / time-spent-untagged
 end
+; TODO: normalized tagged-fitness and untagged-fitness before adding them together
+
+; TAGGED
+;; 5 distance away from a untagged - 15
+;; 20 distance away - 0
+
+; 2 agents
+; 1 has a really poor untagged rule but luckily stays untagged the entire time - really high untagged-fitness
+; 1 has a really good untagged rule but unluckily stays tagged most of the time but gets untagged at the end - really low untagged-fitness
+
+
+
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -750,7 +728,7 @@ num-llm-agents
 num-llm-agents
 0
 100
-30.0
+10.0
 1
 1
 NIL
@@ -901,7 +879,7 @@ CHOOSER
 selection
 selection
 "tournament" "fitness-prop"
-0
+1
 
 SLIDER
 20
@@ -957,7 +935,7 @@ initial-tagged-agents
 initial-tagged-agents
 1
 20
-5.0
+2.0
 1
 1
 NIL
