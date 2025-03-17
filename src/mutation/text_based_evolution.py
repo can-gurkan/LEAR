@@ -5,6 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 import logging
 import re
+import gin
 
 from src.utils.storeprompts import prompts
 from src.langchain_providers.base import LangchainProviderBase
@@ -20,12 +21,27 @@ class EnvironmentContext:
     parent_rule: Optional[str]
     ticks: int
 
+@gin.configurable
 class TextBasedEvolution:
     """Handles text-based description generation for NetLogo code evolution"""
     
-    def __init__(self, provider: Optional[LangchainProviderBase] = None):
+    def __init__(
+        self, 
+        provider: Optional[LangchainProviderBase] = None,
+        evolution_strategy: str = "simple"  # Default to simple evolution strategy
+    ):
+        """
+        Initialize TextBasedEvolution.
+        
+        Args:
+            provider: LangChain provider for text generation
+            evolution_strategy: The evolution strategy to use (e.g., "simple", "complex")
+                                Controls which prompts will be used for code generation
+        """
         self.logger = logging.getLogger(__name__)
         self.provider = provider
+        self.evolution_strategy = evolution_strategy
+        self.logger.info(f"Initialized TextBasedEvolution with strategy: {evolution_strategy}")
     
     def _analyze_performance(self, context: EnvironmentContext) -> str:
         """Generate performance analysis description"""
@@ -150,9 +166,23 @@ class TextBasedEvolution:
             return current_text
             
         try:
-            # Use appropriate prompt from the prompts dictionary
+            # Use appropriate prompt based on the configured evolution strategy
             system_prompt = prompts["langchain"]["cot_system"]
-            user_prompt = prompts["text_evolution"]["pseudo_gen_prompt"].format(current_text)
+            
+            # Check if the evolution strategy exists
+            if "evolution_strategies" not in prompts or self.evolution_strategy not in prompts["evolution_strategies"]:
+                self.logger.warning(f"Evolution strategy '{self.evolution_strategy}' not found, falling back to simple strategy")
+                # Fall back to text_evolution for backward compatibility
+                if "text_evolution" in prompts:
+                    user_prompt = prompts["text_evolution"]["pseudo_gen_prompt"].format(current_text)
+                    self.logger.info("Using legacy text_evolution.pseudo_gen_prompt")
+                else:
+                    self.logger.error("No valid prompt found for pseudocode generation")
+                    return current_text
+            else:
+                # Use the configured evolution strategy
+                self.logger.info(f"Using evolution strategy: {self.evolution_strategy} for pseudocode generation")
+                user_prompt = prompts["evolution_strategies"][self.evolution_strategy]["pseudocode_prompt"].format(current_text)
             
             prompt = ChatPromptTemplate.from_messages([
                 ("system", system_prompt),
@@ -176,3 +206,46 @@ class TextBasedEvolution:
         except Exception as e:
             self.logger.error(f"Error generating pseudocode: {str(e)}")
             return current_text
+            
+    def generate_code(self, pseudocode: str) -> str:
+        """
+        Convert pseudocode to NetLogo code using the configured evolution strategy.
+        
+        Args:
+            pseudocode: The pseudocode to convert to NetLogo code
+            
+        Returns:
+            NetLogo code
+        """
+        if not self.provider:
+            self.logger.warning("No LLM provider available, unable to generate code")
+            return ""
+            
+        try:
+            # Use appropriate prompt based on the configured evolution strategy
+            system_prompt = prompts["langchain"]["cot_system"]
+            
+            user_prompt = prompts["evolution_strategies"][self.evolution_strategy]["code_prompt"].format(pseudocode)
+            
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", system_prompt),
+                ("user", user_prompt)
+            ])
+            
+            chain = prompt | self.provider.initialize_model() | StrOutputParser()
+            code_response = chain.invoke({"input": ""})
+            
+            if code_response:
+                # Parse the response to extract the code
+                match = re.search(r'```(.*?)```', code_response, re.DOTALL)
+                if match:
+                    code_response = match.group(1).strip()
+                else:
+                    self.logger.warning("No code found in response")
+                    return ""
+            
+            return code_response
+            
+        except Exception as e:
+            self.logger.error(f"Error generating code: {str(e)}")
+            return ""

@@ -64,23 +64,3 @@ def mutate_code(agent_info: list, model_type: str = "groq", use_text_evolution: 
     logger.info(f"Text: {text}")
     
     return (new_rule, text)
-
-
-
-
-#  py:run "from src.mutation.mutate_code import mutate_code"
-#   py:set "llm_type" llm-type
-#   ;;; {{{TO DO: Change later so that get_base prompt doesn't require agent_info and maybe llm_type}}}
-#   py:set "agent_info" [0 0 0 0 0]
-#   let base-prompt py:runresult "get_code_generator(llm_type).get_base_prompt(agent_info,llm_type)"
-#   py:set "base_prompt" base-prompt
-
-
-
-# if __name__ == "__main__":
-#     # Example usage
-#     agent_info = ['lt random 20 rt random 20 fd 1', [4, 0, 0], 'lt random 20 rt random 20 fd 1', 4, 101, 4, 102, 'Move forward and turn randomly to explore the environment and find food', '']
-#     model_type = "claude"
-#     use_text_evolution = True
-#     mutated_code = mutate_code(agent_info, model_type, use_text_evolution)
-#     # print(mutated_code)

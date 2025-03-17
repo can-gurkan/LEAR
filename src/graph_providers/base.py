@@ -57,6 +57,9 @@ class GraphProviderBase(BaseCodeGenerator):
             match = re.search(r'```(.*?)```', code_response, re.DOTALL)
             if match:
                 code_response = match.group(1).strip()
+                # Replace netlogo with "" if it exists
+                code_response = code_response.replace("netlogo", "").strip()
+                
                 
             return code_response
 

@@ -37,7 +37,7 @@ class BaseCodeGenerator(ABC):
         return True, None
 
     @gin.configurable
-    def get_base_prompt(self, rule: str, model_type=None, model_prompt=None) -> str:
+    def get_base_prompt(self, rule: str, prompt_type=None, prompt_name=None) -> str:
         """Construct and return base prompt."""
         
         # Considering only rule and food input for now
@@ -45,7 +45,7 @@ class BaseCodeGenerator(ABC):
 
         # food_input = agent_info[1]
         
-        prompt = prompts[model_type][model_prompt]
+        prompt = prompts[prompt_type][prompt_name]
                 
         return prompt.format(rule)
     

@@ -10,27 +10,20 @@ from src.netlogo_code_generator import nodes
 CodeRetryHandler.max_attempts = 5
 GraphProviderBase.retry_max_attempts = 5
 
-# Default model selection
-create_graph_provider.model_name = "groq"
-
 # Model-specific configurations
 GraphUnifiedProvider.temperature = 0.65
-GraphUnifiedProvider.max_tokens = 500
+GraphUnifiedProvider.max_tokens = 1024
 
 # Model-specific name configurations
-GraphUnifiedProvider.groq_model_name = "llama-3.3-70b-versatile"
+GraphUnifiedProvider.groq_model_name = "llama-3.3-70b-versatile" # qwen-2.5-coder-32b llama-3.3-70b-versatile deepseek-r1-distill-qwen-32b
 GraphUnifiedProvider.claude_model_name = "claude-3-5-sonnet-20241022"
 GraphUnifiedProvider.openai_model_name = "gpt-4o"
 GraphUnifiedProvider.deepseek_model_name = "deepseek-chat"
 
-# Prompt configuration
-get_base_prompt.model_prompt = 'prompt3'
-get_base_prompt.model_type = 'groq'
+# Prompt configuration - Check storeprompts.py dict
+get_base_prompt.prompt_type = 'complex_prompts'
+get_base_prompt.prompt_name = 'prompt1'
 
+# Text evolution configuration
+TextBasedEvolution.evolution_strategy = 'simple'  # Options: 'simple', 'complex'
 
-# Legacy configurations (commented out)
-# GroqCodeGenerator.temp = 0.65
-# GroqCodeGenerator.model_name = "llama-3.3-70b-versatile"
-# ClaudeCodeGenerator.temp = 0.4
-# ClaudeCodeGenerator.max_tokens = 612
-# ClaudeCodeGenerator.model_name = "claude-3-5-sonnet-20241022"

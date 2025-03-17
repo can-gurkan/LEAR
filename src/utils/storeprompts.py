@@ -1,4 +1,15 @@
-"""Collection of prompts used throughout the LEAR system"""
+"""Collection of prompts used throughout the LEAR system
+
+PROMPT STRUCTURE:
+- evolution_strategies: Different approaches for code evolution
+  - simple: Basic incremental evolution with minimal changes
+  - complex: Advanced evolution with sophisticated patterns
+  - [add more strategies as needed]
+- Each strategy contains:
+  - pseudocode_prompt: For generating pseudocode 
+  - code_prompt: For converting pseudocode to NetLogo code
+- Other specialized prompt categories (langchain, groq, claude, etc.)
+"""
 
 prompts = {
     # Evolution goals used in text-based evolution
@@ -7,12 +18,12 @@ prompts = {
     2. Balance exploration and exploitation
     3. Maintain simple, efficient NetLogo commands
     4. Consider both immediate food sources and long-term survival""",
-
-
-
-    # Text based evolution prompts
-    "text_evolution": {
-      "pseudo_gen_prompt": """You are an AI assistant tasked with improving the movement code for a turtle agent in NetLogo. Your goal is to create new pseudocode with slight modifications using paradigms of genetic programming. The improved code should help the agent collect as much food as possible while adhering to specific constraints and strategic goals.
+    
+    # Evolution strategies for different approaches to code evolution
+    "evolution_strategies": {
+        # Simple evolution strategy with minimal changes
+        "simple": {
+            "pseudocode_prompt": """You are an AI assistant tasked with improving the movement code for a turtle agent in NetLogo. Your goal is to create new pseudocode with slight modifications using paradigms of genetic programming. The improved code should help the agent collect as much food as possible while adhering to specific constraints and strategic goals.
 
       Evolution Goals:
       1. Optimize movement for efficient food collection
@@ -64,11 +75,8 @@ prompts = {
       [Your improved pseudocode here]
       ```
 
-      Do not include any explanations outside the code block.
-      """,
-
-
-      "code_gen_prompt": """You are tasked with converting pseudocode into well-structured NetLogo code for agent movement. Your goal is to generate only the movement code based on the provided pseudocode, adhering to specific constraints and requirements.
+      Do not include any explanations outside the code block.""",
+            "code_prompt": """You are tasked with converting pseudocode into well-structured NetLogo code for agent movement. Your goal is to generate only the movement code based on the provided pseudocode, adhering to specific constraints and requirements.
 
     Here is the pseudocode you will be working with:
     
@@ -79,31 +87,41 @@ prompts = {
     STRICT GUIDELINES FOR CODE GENERATION:
     
     1. VALID COMMANDS ONLY:
-       - Use only these movement commands: fd, forward, rt, right, lt, left
-       - Use only these reporters: random, random-float, sin, cos, item
+       - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+       - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+       - All commands must be properly space-separated: "fd 1" not "fd1"
     
     2. ABSOLUTELY FORBIDDEN:
        - DO NOT use the "of" primitive/reporter - this will always cause errors
        - DO NOT use any non-existent or undefined variables
        - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
        - DO NOT use "set", "let", or create any variables
+       - DO NOT include any infinite loops - avoid "while" or "loop" constructs
     
     3. ALLOWED STRUCTURE:
        - You may use "if/ifelse" statements with item checks on the "input" list
        - Basic example: ifelse item 0 input != 0 [fd 1] [rt 90 fd 2]
+       - For complex conditions, ensure proper bracket nesting and balance
+       - Make sure every opening bracket '[' has a matching closing bracket ']'
        
     4. FORMATTING:
        - Each command (fd/rt/lt) must be followed by a number or simple expression
        - All commands must be properly separated by spaces
        - Keep the code simple, focused only on movement
+       - Maximum nesting depth should be 3 levels to avoid complexity errors
     
-    5. OTHER CONSTRAINTS:
-       a. Do not include code to kill or control any other agents
-       b. Do not include code to interact with the environment
-       c. Do not include code to change the environment
-       d. Do not include code to create new agents
-       e. Do not include code to create new food sources
-       f. Do not include code to change the rules of the simulation
+    5. VALUE CONSTRAINTS:
+       - All numeric values should be between -1000 and 1000
+       - Prefer positive values when possible
+       - For random functions, use reasonable ranges (e.g., random 360 for turning)
+       - Avoid complex mathematical expressions - keep calculations simple
+    
+    6. ERROR PREVENTION:
+       - Ensure each condition has both true and false branches in ifelse statements
+       - Verify that each command has a valid parameter
+       - Check that no undefined variables or functions are referenced
+       - Make sure bracket pairs are properly matched
+       - Include at least one movement command (fd, bk, rt, lt)
     
     Your task is to carefully analyze the provided pseudocode and translate it into NetLogo code that represents the agent's movement strategy. Focus solely on the movement aspects described in the pseudocode.
     
@@ -114,11 +132,204 @@ prompts = {
     ```
     
     Ensure that your code accurately reflects the movement strategy described in the pseudocode while adhering to NetLogo syntax and the specified constraints. Do not add any explanations or comments outside the code block."""
+        },
+        
+        # Complex evolution strategy with sophisticated patterns
+        "complex": {
+            "pseudocode_prompt": """You are an expert NetLogo pseudocode creator specializing in complex turtle agent movement. Your task is to evolve the existing pseudocode into a more sophisticated version, balancing simplicity with advanced behavior patterns.
+
+    CURRENT PSEUDOCODE TO EVOLVE:
+    ```
+    {}
+    ```
+
+    EVOLUTIONARY ADVANCEMENT OBJECTIVES:
+
+    1. PROGRESSIVE COMPLEXITY ENHANCEMENT:
+       - Build upon the existing pseudocode's core logic
+       - Add 1-2 advanced movement concepts or conditional behaviors
+       - Incorporate more sophisticated decision-making based on food sensor inputs
+       - Explore mathematical relationships (trigonometric, probabilistic) for movement
+
+    2. INNOVATION GUIDELINES:
+       - Introduce adaptive movement that responds to changing environments
+       - Create multi-stage movement sequences that balance local and global exploration
+       - Develop intelligent turning behaviors that optimize path trajectories
+       - Implement energy-efficient movement strategies that minimize unnecessary actions
+       - Consider emergent swarm-like behaviors when multiple agents use this rule
+
+    3. VALID MOVEMENT CONCEPTS ONLY:
+       - "Move forward" (will become fd or forward in NetLogo)
+       - "Turn right" (will become rt or right in NetLogo)
+       - "Turn left" (will become lt or left in NetLogo)
+       - "Move backward" (will become bk or back in NetLogo)
+       - Randomness (will use random or random-float in NetLogo)
+       - Trigonometric concepts (sin, cos)
+       - Conditional movements based on food sensor readings (the "input" list)
+
+    4. ABSOLUTELY FORBIDDEN CONCEPTS:
+       - DO NOT include any reference to "of" relationships between agents
+       - DO NOT create or reference any variables that don't exist
+       - DO NOT include asking other agents to perform actions
+       - DO NOT include creating or killing agents
+       - DO NOT include setting or changing environment variables
+       - DO NOT use loops or recursive patterns
+
+    5. ALLOWED STRUCTURE:
+       - You may include "if/else" logic based on the "input" list values
+       - Example: "If there is food to the left, turn left and move forward, otherwise turn right at a random angle between 30-60 degrees and move forward"
+       - You may combine multiple movement commands in sequence
+       - You may use mathematical concepts like sine and cosine for turning angles
+
+    6. SOPHISTICATED PATTERN EXAMPLES:
+       - Adaptive Exploration: "Move forward a small random distance (0-2), then turn right by an angle based on sine of a random value (0-90), then move forward again"
+       - Sensor-Responsive: "If food is detected on the left, turn left by an angle proportional to the food's distance and move forward; otherwise turn right randomly and move forward further"
+       - Trigonometric Navigation: "Move forward, then turn right by an angle calculated using sine of a random value multiplied by 45, then move forward a variable distance"
+       - Multi-Stage Movement: "Move forward a short distance, turn right by an angle based on cosine of a random value, move forward again, then turn left by a small angle"
+
+    7. FORMATTING:
+       - Keep the pseudocode readable and focused on movement logic
+       - Use plain English descriptions of movement patterns
+       - Be specific about how food sensor readings influence movement
+       - Be clear about mathematical relationships while keeping them implementable
+
+    Present your evolved pseudocode enclosed in triple backticks:
+
+    ```
+    [Your evolved pseudocode here]
+    ```
+
+    Do not include any explanations outside the code block.""",       
+            "code_prompt": """You are an expert NetLogo programmer tasked with translating sophisticated movement pseudocode into valid, executable NetLogo code. Your goal is to faithfully implement the pseudocode while ensuring the code adheres to NetLogo syntax and execution constraints.
+
+    PSEUDOCODE TO TRANSLATE:
+    ```
+    {}
+    ```
+
+    TRANSLATION REQUIREMENTS:
+
+    1. VALID COMMANDS AND SYNTAX:
+       - Movement: fd/forward, rt/right, lt/left, bk/back
+       - Reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+       - Format: [command] [number | expression] with proper spacing
+       - All commands must be properly space-separated: "fd 1" not "fd1"
+
+    2. COMPLEXITY IMPLEMENTATION:
+       - Accurately implement all described movement patterns
+       - Convert trigonometric concepts to NetLogo sin/cos functions
+       - Translate conditional logic to ifelse statements with proper brackets
+       - Implement sensor-responsive behavior using the "input" list
+       - Convert multi-stage movements into appropriate command sequences
+
+    3. ABSOLUTELY FORBIDDEN:
+       - DO NOT use the "of" primitive/reporter - this will cause errors
+       - DO NOT use any non-existent or undefined variables
+       - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
+       - DO NOT use "set", "let", or create any variables
+       - DO NOT include any infinite loops - avoid "while" or "loop" constructs
+
+    4. ALLOWED STRUCTURE:
+       - You may use "if/ifelse" statements with item checks on the "input" list
+       - Example: ifelse item 0 input > 0 [lt (45 - item 0 input / 2) fd 1] [rt random 45 fd 2]
+       - For complex or nested conditions, ensure proper bracket nesting and balance
+       - Make sure every opening bracket '[' has a matching closing bracket ']'
+       - Maximum nesting depth should be 3 levels to avoid complexity errors
+
+    5. ADVANCED PATTERN IMPLEMENTATION:
+       - For random movement: Use random or random-float with appropriate ranges
+       - For trigonometric functions: Use sin/cos with appropriate arguments
+       - For sensor-responsive behavior: Use ifelse with item 0, 1, or 2 of the input list
+       - For multi-stage movements: Implement as a sequence of commands
+       - For complex expressions: Use parentheses to ensure correct order of operations
+
+    6. ERROR PREVENTION:
+       - Ensure each condition has both true and false branches in ifelse statements
+       - Verify that each command has a valid parameter
+       - Enclose complex expressions in parentheses for clarity: sin (random 90)
+       - Make sure bracket pairs are properly matched and nested
+       - Include at least one movement command (fd, bk, rt, lt)
+       - Keep all numeric values between -1000 and 1000
+
+    Your task is to carefully analyze the provided pseudocode and translate it into well-formed NetLogo code that represents the described movement strategy. Focus on creating executable code that accurately implements the sophisticated patterns described in the pseudocode.
+
+    Present your generated NetLogo code enclosed in triple backticks:
+
+    ```
+    [Your generated NetLogo code here]
+    ```
+
+    Ensure that your code accurately reflects the movement strategy described in the pseudocode while adhering to NetLogo syntax and the specified constraints. Do not add any explanations or comments outside the code block."""
+        },
+
+        # Add more evolution strategies as needed...
     },
-    
-    
+
+    # Code generation prompt for advanced agent movement rules
+    "complex_prompts": {
+       "prompt1": """You are an expert NetLogo movement code evolution specialist. Your task is to advance the agent's movement rules by enhancing the existing rule with more sophisticated behavior patterns while maintaining NetLogo compatibility.
+
+      CURRENT RULE TO EVOLVE:
+      ```
+      {}
+      ```
+
+      EVOLUTIONARY ADVANCEMENT OBJECTIVES:
+
+      1. PROGRESSIVE COMPLEXITY ENHANCEMENT:
+         - Build upon the existing rule's core structure
+         - Add 1-2 advanced movement patterns or conditional behaviors
+         - Incorporate more sophisticated decision-making based on food sensor inputs
+         - Explore mathematical relationships (trigonometric, probabilistic) for movement
+
+      2. INNOVATION GUIDELINES:
+         - Introduce adaptive movement that responds to changing environments
+         - Create multi-stage movement sequences that balance local and global exploration
+         - Develop intelligent turning behaviors that optimize path trajectories
+         - Implement energy-efficient movement strategies that minimize unnecessary actions
+         - Consider emergent swarm-like behaviors when multiple agents use this rule
+
+      3. VALID COMMANDS AND SYNTAX:
+         - Movement: fd/forward, rt/right, lt/left, bk/back
+         - Reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+         - Structure: Simple conditionals using ifelse with input list values
+         - Format: [command] [number | expression] with proper spacing
+
+      4. TECHNICAL GUARDRAILS:
+         - DO NOT use "of" primitives (will cause errors)
+         - DO NOT create variables with "set" or "let"
+         - DO NOT use "ask", "with", "turtles", or "patches"
+         - DO NOT use undefined variables or commands
+         - DO NOT implement loops or recursive patterns
+         - DO NOT exceed 3 levels of nested conditionals
+
+      5. SOPHISTICATED PATTERN EXAMPLES:
+         - Adaptive Exploration: fd random-float 2 rt sin (random 90) fd 1
+         - Sensor-Responsive: ifelse item 0 input > 0 [lt (45 - item 0 input / 2) fd 1] [rt random 45 fd 2]
+         - Trigonometric Navigation: fd 1 rt (sin (random 90) * 45) fd random-float 3
+         - Multi-Stage Movement: fd 1 rt cos (random 60) * 30 fd 2 lt sin (random 45) * 20
+
+      6. EVALUATION CRITERIA:
+         - Balance between exploration and exploitation
+         - Efficiency in food collection capability
+         - Robustness against getting stuck in local optima
+         - Mathematical elegance and behavioral complexity
+         - NetLogo syntax compliance and error prevention
+
+      7. EVOLUTIONARY APPROACH:
+         - Analyze the strengths and limitations of the current rule
+         - Identify specific areas for enhancement (decision-making, efficiency, adaptability)
+         - Implement targeted improvements while preserving working components
+         - Ensure the evolved rule represents a clear advancement from its predecessor
+
+      Return ONLY the evolved NetLogo code without explanation, enclosed in triple backticks:
+
+      ```
+      [Your evolved NetLogo code here]
+      ```
+      """},
+
     "retry_prompts": {
-      
       "generate_code_with_error": """You are an expert NetLogo coder tasked with fixing a movement code error for a turtle agent. Your goal is to update the provided NetLogo movement code to fix the error message shown below.
 
       Here is the current rule:
@@ -130,23 +341,33 @@ prompts = {
       STRICT GUIDELINES FOR FIXING THE CODE:
       
       1. VALID COMMANDS ONLY:
-         - Use only these movement commands: fd, forward, rt, right, lt, left
-         - Use only these reporters: random, random-float, sin, cos, item
+         - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+         - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
       
       2. ABSOLUTELY FORBIDDEN:
          - DO NOT use the "of" primitive/reporter - this will always cause errors
          - DO NOT use any non-existent or undefined variables
          - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
          - DO NOT use "set", "let", or create any variables
+         - DO NOT use loops or recursion - these create infinite loops
       
       3. ALLOWED STRUCTURE:
          - You may use "if/ifelse" statements with item checks on the "input" list
          - Basic example: ifelse item 0 input != 0 [fd 1] [rt 90 fd 2]
+         - For complex or nested conditions, maintain proper bracket balance
          
       4. FORMATTING:
          - Each command (fd/rt/lt) must be followed by a number or simple expression
          - All commands must be properly separated by spaces
          - Keep the code simple, focused only on movement
+         - Ensure all brackets are properly paired and balanced
+
+      5. ERROR-SPECIFIC FIXES:
+         - For "Dangerous primitives" errors: Remove ALL prohibited commands
+         - For "Unclosed brackets" errors: Check and fix ALL bracket pairs
+         - For "Invalid value" errors: Ensure all numeric values are valid and positive
+         - For "No movement commands" errors: Include at least one movement command (fd, rt, lt)
+         - For "Command needs a value" errors: Ensure every command has a parameter
 
       Generate ONLY basic movement code that strictly avoids the error mentioned. The code must be runnable in NetLogo turtle context. Present your corrected NetLogo code enclosed in triple backticks:
 
@@ -228,7 +449,6 @@ prompts = {
         4. Combine different movement patterns
         
         Generate ONLY the movement code with no explanations or comments. Code must be runnable in NetLogo.""",
-
         "prompt1": """Modify the given NetLogo movement rule according to the following guidelines:
 
         1. Use only existing variables and data types; do not define new variables.
@@ -251,82 +471,100 @@ prompts = {
         input: {}
 
         Remember, the goal is to create an efficient movement rule that balances exploration and exploitation, aiming to find food in both the short and long term.""",
-        
-        "prompt2": """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
+        "prompt2": """You are an expert NetLogo coder tasked with refining a turtle agent's movement code through small, incremental improvements. Your objective is to evolve the existing rule slightly rather than redesigning it entirely.
 
-        INPUT CONTEXT:
-        - Current rule: {}
-
-
-        CONSTRAINTS:
-        1. Do not include code to kill or control any other agents
-        2. Do not include code to interact with the environment
-        3. Do not include code to change the environment
-        4. Do not include code to create new agents
-        5. Do not include code to create new food sources
-        6. Do not include code to change the rules of the simulation
-
-        EXAMPLES OF VALID PATTERNS:
-        Current Rule: fd 1 rt random 45 fd 2 lt 30
-        Valid: ifelse item 0 input != 0 [rt 15 fd 0.5] [rt random 30 lt random 30 fd 5]
-        Why: Turns right and goes forward a little to reach food if the first element of input list contains a non-zero value, else moves forward in big steps and turns randomly to explore
-
-        INVALID EXAMPLES:
-        ❌ ask turtle 1 [die]
-        ❌ ask other turtles [die]
-        ❌ set energy 100
-        ❌ hatch-food 5
-        ❌ clear-all
-
-        STRATEGIC GOALS:
-        1. Balance exploration and food-seeking behavior
-        2. Respond to sensor readings intelligently
-        3. Combine different movement patterns
-
-        Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle.
-        Present your generated NetLogo code enclosed in triple backticks, following this format:
-
-        ```
-        [Your generated NetLogo code here]
-        ```
-        """,
-        
-        "prompt3": """You are an expert NetLogo programmer tasked with optimizing the movement code for a turtle agent in a food-collection simulation. Your goal is to enhance the given agent movement code while adhering to specific guidelines and focusing on simple, effective movement strategies.
+      **Current Rule to Evolve:**
+      {}
+      
+      **Evolution Guidelines:**
+      
+      1. **Preserve the Core Structure:**
+         - Retain most of the original code.
+         - Implement only 1-2 minor, strategic changes.
+         - Emulate genetic evolution: small mutations, not complete rewrites.
+      
+      2. **Potential Improvement Areas:**
+         - Introduce slight randomness to fixed values.
+         - Modify movement parameters slightly (distances or angles).
+         - Incorporate or enhance simple conditionals based on the "input" list.
+         - Optimize existing logic minimally.
+      
+      3. **Valid Commands and Reporters:**
+         - Movement: `fd`, `forward`, `rt`, `right`, `lt`, `left`, `bk`, `back`
+         - Reporters: `random`, `random-float`, `sin`, `cos`, `item`, `xcor`, `ycor`, `heading`
+      
+      4. **Absolutely Forbidden:**
+         - Do not use the `of` primitive/reporter (will cause errors).
+         - Do not use `ask`, `with`, `turtles`, `patches`.
+         - Do not create variables with `set` or `let`.
+         - Do not use any undefined variables.
+         - Do not introduce infinite loops or recursion.
+      
+      5. **Error Prevention:**
+         - Ensure balanced brackets `[ ]`.
+         - Verify that `ifelse` statements have both true and false branches.
+         - Confirm that all commands have parameters.
+         - Keep numerical values between -1000 and 1000.
+      
+      **Evolutionary Approach:**
+      
+      Consider this as a genetic algorithm where the current rule is the parent, and your task is to create a slightly mutated offspring with potentially better fitness. The mutation should be recognizable as being derived from the parent, not a completely different solution.
+      
+      Present your evolved NetLogo code enclosed in triple backticks:
+      
+      ```
+      [Your evolved NetLogo code here]
+      ```
+        """,     
+        "prompt3": """You are an expert NetLogo programmer tasked with evolving the movement code for a turtle agent in a food-collection simulation. Your goal is to enhance and improve the previous agent rule through small, incremental modifications rather than complete rewrites.
 
         Here is the current rule for the turtle's movement:
-        
-        <current_rule>
         {}
-        </current_rule>
         
-        Your task is to improve this rule by focusing on the following objectives:
+        ENHANCEMENT GUIDELINES:
         
-        1. Implement simple, effective movement commands.
-        2. Balance exploration and food-seeking behavior.
-        3. Respond intelligently to sensor readings.
-        4. Combine different movement patterns efficiently.
+        1. MAKE SMALL, TARGETED IMPROVEMENTS:
+           - Preserve most of the original code structure
+           - Add or modify only 1-2 elements at a time
+           - Maintain the core movement pattern of the original rule
         
-        When improving the code, adhere to these constraints:
+        2. FOCUS AREAS FOR IMPROVEMENT:
+           - Add slight randomness to fixed movements
+           - Enhance turning angles or movement distances
+           - Improve responsiveness to the "input" list (food sensor readings)
+           - Subtly adjust movement parameters for better performance
         
-        1. Use only NetLogo commands related to turtle movement and sensing.
-        2. Do not assume and use any variables or state names. 
-        3. Utilize only existing variables; do not create new ones.
-        4. Keep the code concise and focused on movement optimization.
-        5. Modify the above code slightly more complex
+        3. VALID COMMANDS AND SYNTAX:
+           - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+           - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+           - Format: [command] [positive_number | reporter_expression]
         
-        Before generating the final code, wrap your analysis in <movement_optimization_analysis> tags. Follow these steps:
+        4. ABSOLUTELY FORBIDDEN:
+           - DO NOT use "of" primitives - will cause errors
+           - DO NOT modify the overall structure drastically
+           - DO NOT create new variables with "set" or "let"
+           - DO NOT use "ask", "with", "turtles", or "patches"
+           - DO NOT use any undefined variables
+           - DO NOT use while loops or recursive constructs
         
-        1. Evaluate the strengths and weaknesses of the current rule.
-        2. Identify key NetLogo commands for movement and sensing that could be useful.
-        3. Outline a strategy for balancing exploration and food-seeking behaviour. 
+        5. ERROR PREVENTION:
+           - Ensure all bracket pairs match
+           - Make sure every movement command has a parameter
+           - Keep values within reasonable ranges (-1000 to 1000)
+           - Ensure at least one movement command is included
+           - Validate that all conditions have both true/false branches
         
-        Present your generated NetLogo code enclosed in triple backticks, following this format:
+        STRATEGY:
+        Think of this as an evolutionary process where each generation makes small beneficial mutations rather than complete redesigns. Introduce slight variations that might improve performance while respecting the existing structure and logic of the rule.
+        
+        Present your evolved NetLogo code enclosed in triple backticks:
 
         ```
-        [Your generated NetLogo code here]
+        [Your evolved NetLogo code here]
         ```
         """
     },
+    
     # Claude prompts
     "claude": {
         "prompt": """You are an expert NetLogo movement code generator. Generate movement code following these precise specifications:
@@ -446,42 +684,50 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
         You are encouraged to be creative and generate complex patterns that go beyond basic movement rules. Focus on creating sophisticated behaviors that could lead to emergent patterns in the simulation.
 
         Return ONLY the NetLogo code with no explanations. Make it mathematically interesting and behaviorally complex while ensuring it remains valid NetLogo syntax.""",
-        "prompt3": """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
+        "prompt3": """You are an expert NetLogo evolution specialist tasked with carefully evolving turtle agent movement code. Your goal is to make SMALL, INCREMENTAL improvements to the existing rule while preserving its core structure and behavior.
 
-INPUT CONTEXT:
-- Current rule: {}
-- Food sensor readings: {}
-  - Input list contains three values representing distances to food in three cone regions of 20 degrees each
-  - The first item in the input list is the distance to the nearest food in the left cone, the second is the right cone, and the third is the front cone
-  - Each value encodes the distance to nearest food source where a value of 0 indicates no food
-  - Non-zero lower values indicate closer food
-  - Use these to inform movement strategy
+CURRENT RULE TO EVOLVE:
+```
+{}
+```
 
-CONSTRAINTS:
-1. Do not include code to kill or control any other agents
-2. Do not include code to interact with the environment
-3. Do not include code to change the environment
-4. Do not include code to create new agents
-5. Do not include code to create new food sources
-6. Do not include code to change the rules of the simulation
+EVOLUTION APPROACH:
 
-EXAMPLES OF VALID PATTERNS:
-Current Rule: fd 1 rt random 45 fd 2 lt 30
-Valid: ifelse item 0 input != 0 [rt 15 fd 0.5] [rt random 30 lt random 30 fd 5]
-Why: Turns right and goes forward a little to reach food if the first element of input list contains a non-zero value, else moves forward in big steps and turns randomly to explore
+1. GENETIC PROGRAMMING MINDSET:
+   - Make 1-2 small, targeted "mutations" to the code
+   - Preserve 80-90% of the original structure
+   - Think of this as creating a slightly modified offspring
+   - DO NOT completely rewrite or redesign the rule
 
-INVALID EXAMPLES:
-❌ ask turtle 1 [die]
-❌ ask other turtles [die]
-❌ set energy 100
-❌ hatch-food 5
-❌ clear-all
+2. POTENTIAL MUTATION TYPES:
+   - Slightly adjust numeric parameters (angles, distances)
+   - Add small amounts of randomness to fixed values
+   - Enhance existing conditional logic
+   - Add minor responsiveness to input list (food sensors)
+   - Optimize movement efficiency with minimal changes
 
-STRATEGIC GOALS:
-1. Balance exploration and food-seeking behavior
-2. Respond to sensor readings intelligently
-3. Combine different movement patterns
+3. TECHNICAL REQUIREMENTS:
+   - Use only: fd, rt, lt, bk (movement) and random, random-float, sin, cos, item, xcor, ycor, heading (reporters)
+   - Keep all values within reasonable bounds (-1000 to 1000)
+   - Do not use any "set" or "let" statements
+   - Do not use "ask", "with", "turtles", "patches" primitives
+   - Ensure all brackets are properly paired
+   - Every command must have a valid parameter
 
-Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle.""",
+4. ERROR PREVENTION:
+   - Verify that ifelse statements have both true/false branches
+   - Check that no undefined variables or primitives are used
+   - Ensure at least one movement command is included
+   - Add spacing between commands and values
+   - Verify syntax after making changes
+
+Think of yourself as performing careful genetic modifications rather than creating a new design from scratch. The evolved code should be clearly recognizable as a descendant of the original rule, with small improvements that might enhance its performance.
+
+Return ONLY the evolved NetLogo code with no explanations:
+
+```
+[Your evolved NetLogo code here]
+```
+""",
     },
 }
