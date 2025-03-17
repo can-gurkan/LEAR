@@ -52,6 +52,7 @@ def evolve_pseudocode(
     logger.info(f"Generated modified pseudocode: \n{modified_pseudocode}")
     
     state["modified_pseudocode"] = modified_pseudocode
+    state["text_evolution_instance"] = text_evolution  # Store the instance for later use
     return state
 
 def generate_code(
@@ -75,12 +76,29 @@ def generate_code(
     # logger.info(f"Modified pseudocode: {state['modified_pseudocode']}")
     logger.info(f"NODE: generate_code")
     
-    new_code = provider.generate_code_with_model(
-        state["agent_info"],
-        state["current_code"],
-        state["modified_pseudocode"],
-        state["error_message"],
-    )
+    # Check if we have a text_evolution_instance and pseudocode to use
+    if state.get("use_text_evolution", False) and state.get("text_evolution_instance") and state.get("modified_pseudocode"):
+        logger.info("Using text evolution to generate code from pseudocode")
+        text_evolution = state["text_evolution_instance"]
+        new_code = text_evolution.generate_code(state["modified_pseudocode"])
+        
+        # If code generation failed, fall back to the provider
+        if not new_code:
+            logger.warning("Text evolution code generation failed, falling back to provider")
+            new_code = provider.generate_code_with_model(
+                state["agent_info"],
+                state["current_code"],
+                state["modified_pseudocode"],
+                state["error_message"],
+            )
+    else:
+        # Use the standard provider method
+        new_code = provider.generate_code_with_model(
+            state["agent_info"],
+            state["current_code"],
+            state["modified_pseudocode"],
+            state["error_message"],
+        )
     
     logger.info(f"Generated new code: {new_code}")
     return {**state, "current_code": new_code}

@@ -131,6 +131,7 @@ to run-rule
       " | Lifetime: " lifetime
       " | Food Collected: " food-collected
       " | Input: " input
+      " | Error: " error-message
     )
     if ticks mod ticks-per-generation = 1 [
       print error-info
@@ -385,7 +386,7 @@ ticks-per-generation
 ticks-per-generation
 1
 2000
-127.0
+500.0
 1
 1
 NIL
@@ -410,7 +411,7 @@ CHOOSER
 llm-type
 llm-type
 "groq" "claude" "deepseek" "gpt-4o"
-1
+0
 
 SWITCH
 20
@@ -507,7 +508,7 @@ SWITCH
 503
 use-config-file?
 use-config-file?
-1
+0
 1
 -1000
 
