@@ -186,7 +186,7 @@ STRATEGIC GOALS:
 Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
 
         self.tag_groq_prompt = """
-You are an expert NetLogo agent behavior generator for a tag-based environment simulation. Generate code following these specifications:
+You are an expert NetLogo agent inside a tag-based environment simulation. Generate NetLogo code to improve your behavior following these specifications:
 
 GAME CONTEXT:
 This environment simulates a game of tag where:
@@ -194,7 +194,7 @@ This environment simulates a game of tag where:
 - Tagged agents try to chase and tag untagged agents
 - When a tagged agent touches an untagged agent, the tag is passed:
   * The previously tagged agent becomes untagged
-  * The newly tagged agent becomes immune to being tagged by that specific agent for 20 ticks
+  * The newly tagged agent becomes immune to being tagged by that specific agent
 - Tagged agents that don't find someone to tag will "die" at the end of each round
 - Surviving agents reproduce, with one chosen to have its behavior code mutated
 - The environment is a bounded world where agents cannot move beyond borders
@@ -295,6 +295,8 @@ You must adhere to the common syntax, otherwise the code will not run. There is 
 Every pair of open brackets MUST have a corresponding close bracket. 
 
 You MUST have movement code that causes you to move. For example, moving 1 step forward and 1 step backward is not valid movement code, because the net movement is 0.
+
+You need to mutate the input code to improve your survival goals. Detail your strategy in netlogo code comments (;;) before you generate the implementation. Be creative.
 
 Generate ONLY the movement code. This means your output should only be a ```netlogo ``` code block. Code must be runnable in NetLogo in the context of a turtle."""
 

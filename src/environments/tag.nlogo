@@ -100,8 +100,7 @@ to setup-params
     ]
   ]
 
-  set tag-distance-threshold 1  ;; distance within which tagging occurs
-  set tagged-time-penalty-factor 0.5 ;; default penalty factor if not set by slider
+  set tag-distance-threshold 3  ;; distance within which tagging occurs
 end
 
 to setup-llm-agents
@@ -250,8 +249,9 @@ to run-rule
 
     ;; If moved more than 1, scale back the movement
     if dist-moved > 1 [
-      setxy initial-xcor + (xcor - initial-xcor) / dist-moved
-            initial-ycor + (ycor - initial-ycor) / dist-moved
+      ;DISABLE WHEN WORLD WRAP IS ENABLED
+      ;setxy initial-xcor + (xcor - initial-xcor) / dist-moved
+       ;     initial-ycor + (ycor - initial-ycor) / dist-moved
     ]
     ;; TODO: make parameter if the world can be wrapped or not
     ;; disable playground effect if not wrapped
@@ -674,7 +674,6 @@ end
 ; 1 has a really poor untagged rule but luckily stays untagged the entire time - really high untagged-fitness
 ; 1 has a really good untagged rule but unluckily stays tagged most of the time but gets untagged at the end - really low untagged-fitness
 
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -938,7 +937,7 @@ CHOOSER
 selection
 selection
 "tournament" "fitness-prop"
-1
+0
 
 SLIDER
 20
@@ -964,7 +963,7 @@ tournament-size
 tournament-size
 0
 50
-50.0
+7.0
 1
 1
 NIL
@@ -979,7 +978,7 @@ selection-pressure
 selection-pressure
 0
 1
-0.65
+0.5
 0.01
 1
 NIL
@@ -1007,7 +1006,7 @@ SWITCH
 503
 use-config-file?
 use-config-file?
-1
+0
 1
 -1000
 
