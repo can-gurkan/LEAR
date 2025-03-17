@@ -46,7 +46,12 @@ should_retry.max_attempts = 5             # Should match the above value
 ```gin
 # LangGraph node configurations
 evolve_pseudocode.use_text_evolution = False  # Set to True to enable text-based evolution
+TextBasedEvolution.evolution_strategy = 'simple'  # Options: 'simple', 'complex'
 ```
+
+The `evolution_strategy` parameter controls which prompt strategy is used for text-based evolution:
+- 'simple': Basic incremental evolution with minimal changes (default)
+- 'complex': Advanced evolution with sophisticated patterns including trigonometric functions and multi-stage movements
 
 ### Prompt Selection
 

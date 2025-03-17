@@ -20,9 +20,9 @@ GraphUnifiedProvider.claude_model_name = "claude-3-5-sonnet-20241022"
 GraphUnifiedProvider.openai_model_name = "gpt-4o"
 GraphUnifiedProvider.deepseek_model_name = "deepseek-chat"
 
-# Prompt configuration - Check storeprompts.py dict
-get_base_prompt.prompt_type = 'complex_prompts'
-get_base_prompt.prompt_name = 'prompt1'
+# Prompt configuration - Check storeprompts.py dict 
+get_base_prompt.prompt_type = 'complex_prompts'  # groq
+get_base_prompt.prompt_name = 'prompt1'  # prompt2
 
 # Text evolution configuration
 TextBasedEvolution.evolution_strategy = 'simple'  # Options: 'simple', 'complex'
