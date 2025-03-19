@@ -59,7 +59,6 @@ def generate_code(
     state: GenerationState,
     provider: GraphProviderBase
 ) -> GenerationState:
-    logger.info(f"Generating code, retry_count: {state['retry_count']}, error_message: {state['error_message']}")
     """
     Generate code using the provider.
 
@@ -70,12 +69,14 @@ def generate_code(
     Returns:
         Updated generation state with new code
     """
-    
-    # Generate code using provider
+    logger.info(f"Generating code, retry_count: {state['retry_count']}, error_message: {state['error_message']}")
     logger.info(f"NODE: generate_code")
     
     try:
-    
+        # Check if we have both modified_pseudocode and error_message for retry scenario
+        if state.get("modified_pseudocode") and state.get("error_message"):
+            logger.info("Using both modified_pseudocode and error_message for code generation")
+            
         new_code = provider.generate_code_with_model(
             state["agent_info"],
             state["current_code"],

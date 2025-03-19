@@ -86,42 +86,57 @@ prompts = {
     
     STRICT GUIDELINES FOR CODE GENERATION:
     
-    1. VALID COMMANDS ONLY:
+    1. UNDERSTANDING THE PSEUDOCODE:
+       - Focus on understanding the FUNCTIONALITY described in the pseudocode
+       - DO NOT use variable names from the pseudocode directly in your NetLogo code
+       - Translate conceptual descriptions into valid NetLogo syntax
+       - The pseudocode is a guideline for behavior, not a direct translation template
+    
+    2. VALID COMMANDS ONLY:
        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
        - All commands must be properly space-separated: "fd 1" not "fd1"
     
-    2. ABSOLUTELY FORBIDDEN:
+    3. ABSOLUTELY FORBIDDEN:
        - DO NOT use the "of" primitive/reporter - this will always cause errors
        - DO NOT use any non-existent or undefined variables
        - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
        - DO NOT use "set", "let", or create any variables
        - DO NOT include any infinite loops - avoid "while" or "loop" constructs
+       - DO NOT copy variable names from pseudocode if they don't exist in NetLogo
     
-    3. ALLOWED STRUCTURE:
+    4. ALLOWED STRUCTURE:
        - You may use "if/ifelse" statements with item checks on the "input" list
-       - Basic example: ifelse item 0 input != 0 [fd 1] [rt 90 fd 2]
+       - Basic example: ifelse item 0 input > 0 [fd 1] [rt 90 fd 2]
        - For complex conditions, ensure proper bracket nesting and balance
        - Make sure every opening bracket '[' has a matching closing bracket ']'
+       - Remember "input" is the only valid variable you can reference
        
-    4. FORMATTING:
+    5. FORMATTING:
        - Each command (fd/rt/lt) must be followed by a number or simple expression
        - All commands must be properly separated by spaces
        - Keep the code simple, focused only on movement
        - Maximum nesting depth should be 3 levels to avoid complexity errors
     
-    5. VALUE CONSTRAINTS:
+    6. VALUE CONSTRAINTS:
        - All numeric values should be between -1000 and 1000
        - Prefer positive values when possible
        - For random functions, use reasonable ranges (e.g., random 360 for turning)
        - Avoid complex mathematical expressions - keep calculations simple
     
-    6. ERROR PREVENTION:
+    7. ERROR PREVENTION:
        - Ensure each condition has both true and false branches in ifelse statements
        - Verify that each command has a valid parameter
        - Check that no undefined variables or functions are referenced
        - Make sure bracket pairs are properly matched
        - Include at least one movement command (fd, bk, rt, lt)
+    
+    8. ROBUST IMPLEMENTATION:
+       - Generate code that is resilient to edge cases
+       - If pseudocode mentions a variable that doesn't exist in NetLogo, translate its purpose 
+         without using the variable name (e.g., if pseudocode uses "angle", implement the 
+         calculation directly without referencing "angle")
+       - Focus on capturing the intent and behavior, not the exact syntax
     
     Your task is to carefully analyze the provided pseudocode and translate it into NetLogo code that represents the agent's movement strategy. Focus solely on the movement aspects described in the pseudocode.
     
@@ -209,47 +224,62 @@ prompts = {
 
     TRANSLATION REQUIREMENTS:
 
-    1. VALID COMMANDS AND SYNTAX:
+    1. UNDERSTANDING THE PSEUDOCODE:
+       - Focus on understanding the FUNCTIONALITY described in the pseudocode
+       - DO NOT use variable names from the pseudocode directly in your NetLogo code
+       - Translate conceptual descriptions into valid NetLogo syntax
+       - The pseudocode is a guideline for behavior, not a direct translation template
+
+    2. VALID COMMANDS AND SYNTAX:
        - Movement: fd/forward, rt/right, lt/left, bk/back
        - Reporters: random, random-float, sin, cos, item, xcor, ycor, heading
        - Format: [command] [number | expression] with proper spacing
        - All commands must be properly space-separated: "fd 1" not "fd1"
 
-    2. COMPLEXITY IMPLEMENTATION:
+    3. COMPLEXITY IMPLEMENTATION:
        - Accurately implement all described movement patterns
        - Convert trigonometric concepts to NetLogo sin/cos functions
        - Translate conditional logic to ifelse statements with proper brackets
-       - Implement sensor-responsive behavior using the "input" list
+       - Implement sensor-responsive behavior using the "input" list only
        - Convert multi-stage movements into appropriate command sequences
 
-    3. ABSOLUTELY FORBIDDEN:
+    4. ABSOLUTELY FORBIDDEN:
        - DO NOT use the "of" primitive/reporter - this will cause errors
        - DO NOT use any non-existent or undefined variables
        - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
        - DO NOT use "set", "let", or create any variables
        - DO NOT include any infinite loops - avoid "while" or "loop" constructs
+       - DO NOT copy variable names from pseudocode if they don't exist in NetLogo
 
-    4. ALLOWED STRUCTURE:
+    5. ALLOWED STRUCTURE:
        - You may use "if/ifelse" statements with item checks on the "input" list
        - Example: ifelse item 0 input > 0 [lt (45 - item 0 input / 2) fd 1] [rt random 45 fd 2]
        - For complex or nested conditions, ensure proper bracket nesting and balance
        - Make sure every opening bracket '[' has a matching closing bracket ']'
        - Maximum nesting depth should be 3 levels to avoid complexity errors
+       - Remember "input" is the only valid variable you can reference
 
-    5. ADVANCED PATTERN IMPLEMENTATION:
+    6. ADVANCED PATTERN IMPLEMENTATION:
        - For random movement: Use random or random-float with appropriate ranges
        - For trigonometric functions: Use sin/cos with appropriate arguments
        - For sensor-responsive behavior: Use ifelse with item 0, 1, or 2 of the input list
        - For multi-stage movements: Implement as a sequence of commands
        - For complex expressions: Use parentheses to ensure correct order of operations
 
-    6. ERROR PREVENTION:
+    7. ERROR PREVENTION:
        - Ensure each condition has both true and false branches in ifelse statements
        - Verify that each command has a valid parameter
        - Enclose complex expressions in parentheses for clarity: sin (random 90)
        - Make sure bracket pairs are properly matched and nested
        - Include at least one movement command (fd, bk, rt, lt)
        - Keep all numeric values between -1000 and 1000
+
+    8. ROBUST IMPLEMENTATION:
+       - Generate code that is resilient to edge cases
+       - If pseudocode mentions a variable that doesn't exist in NetLogo, translate its purpose 
+         without using the variable name (e.g., if pseudocode uses "angle", implement the 
+         calculation directly without referencing "angle")
+       - Focus on capturing the intent and behavior, not the exact syntax
 
     Your task is to carefully analyze the provided pseudocode and translate it into well-formed NetLogo code that represents the described movement strategy. Focus on creating executable code that accurately implements the sophisticated patterns described in the pseudocode.
 
@@ -370,6 +400,62 @@ prompts = {
          - For "Command needs a value" errors: Ensure every command has a parameter
 
       Generate ONLY basic movement code that strictly avoids the error mentioned. The code must be runnable in NetLogo turtle context. Present your corrected NetLogo code enclosed in triple backticks:
+
+      ```
+      [Your corrected NetLogo code here]
+      ```
+
+      Do not include any explanations - the code itself should be the only output.
+      """,
+      
+      "generate_code_with_pseudocode_and_error": """You are an expert NetLogo coder tasked with fixing a movement code error for a turtle agent. Your goal is to update the NetLogo movement code to fix the error message while following the provided pseudocode.
+
+      Here is the current rule:
+      {}
+
+      Here is the error message:
+      {}
+      
+      Here is the pseudocode to follow:
+      {}
+      
+      STRICT GUIDELINES FOR FIXING THE CODE:
+      
+      1. FOLLOW THE PSEUDOCODE:
+         - Use the pseudocode as a guide for the movement logic
+         - Implement the logic described in the pseudocode while fixing the error
+         - Ensure the fixed code aligns with the pseudocode's intent and strategy
+      
+      2. VALID COMMANDS ONLY:
+         - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+         - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+      
+      3. ABSOLUTELY FORBIDDEN:
+         - DO NOT use the "of" primitive/reporter - this will always cause errors
+         - DO NOT use any non-existent or undefined variables
+         - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
+         - DO NOT use "set", "let", or create any variables
+         - DO NOT use loops or recursion - these create infinite loops
+      
+      4. ALLOWED STRUCTURE:
+         - You may use "if/ifelse" statements with item checks on the "input" list
+         - Basic example: ifelse item 0 input != 0 [fd 1] [rt 90 fd 2]
+         - For complex or nested conditions, maintain proper bracket balance
+         
+      5. FORMATTING:
+         - Each command (fd/rt/lt) must be followed by a number or simple expression
+         - All commands must be properly separated by spaces
+         - Keep the code simple, focused only on movement
+         - Ensure all brackets are properly paired and balanced
+
+      6. ERROR-SPECIFIC FIXES:
+         - For "Dangerous primitives" errors: Remove ALL prohibited commands
+         - For "Unclosed brackets" errors: Check and fix ALL bracket pairs
+         - For "Invalid value" errors: Ensure all numeric values are valid and positive
+         - For "No movement commands" errors: Include at least one movement command (fd, rt, lt)
+         - For "Command needs a value" errors: Ensure every command has a parameter
+
+      Generate NetLogo code that follows the pseudocode while fixing the error. The code must be runnable in NetLogo turtle context. Present your corrected NetLogo code enclosed in triple backticks:
 
       ```
       [Your corrected NetLogo code here]

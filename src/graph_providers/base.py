@@ -17,7 +17,7 @@ load_dotenv()
 class GraphProviderBase(BaseCodeGenerator):
     """Base class for graph-based code generators."""
     
-    def __init__(self, verifier: NetLogoVerifier, retry_max_attempts: int = 5, evolution_strategy: str = "simple", prompt_type: str = "groq", prompt_name: str = "prompt2"):
+    def __init__(self, verifier: NetLogoVerifier, retry_max_attempts: int = 5, evolution_strategy: str = "simple", prompt_type: str = "groq", prompt_name: str = "prompt2", retry_prompt: str = "generate_code_with_error"):
         """Initialize with verifier instance."""
         super().__init__(verifier)
         self.model = None  # To be set by child classes
@@ -28,6 +28,9 @@ class GraphProviderBase(BaseCodeGenerator):
         # Code generation prompts
         self.prompt_type = prompt_type
         self.prompt_name = prompt_name
+        
+        # Retry Prompts
+        self.retry_prompt = retry_prompt
         
     @abstractmethod
     def initialize_model(self):
@@ -73,8 +76,11 @@ class GraphProviderBase(BaseCodeGenerator):
 
     def _build_prompt(self, current_code: str, evolution_description: Optional[str] = None, error_message: Optional[str] = None) -> str:
         """Build the prompt based on the given information."""
-        if error_message:
-            return prompts["retry_prompts"]["generate_code_with_error"].format(current_code, error_message)
+        if error_message and evolution_description:
+            # Use the new prompt that handles both pseudocode and error message
+            return prompts["retry_prompts"]["generate_code_with_pseudocode_and_error"].format(current_code, error_message, evolution_description)
+        elif error_message:
+            return prompts["retry_prompts"][self.retry_prompt].format(current_code, error_message)
         elif evolution_description:
             return prompts["evolution_strategies"][self.evolution_strategy]["code_prompt"].format(evolution_description)
         else:
