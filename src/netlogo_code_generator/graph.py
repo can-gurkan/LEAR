@@ -65,21 +65,7 @@ class NetLogoCodeGenerator(BaseCodeGenerator):
         workflow.add_edge("generate_code", "verify_code")
         
         workflow.add_conditional_edges("verify_code", should_retry, {"retry": "generate_code", "end": END})
-        
-        # Add conditional edges manually
-        # def route_after_verification(state):
-        #     if state["error_message"] and state["retry_count"] < self.retry_handler.max_attempts:
-        #         return "generate_code"
-        #     else:
-        #         return END
-            
-        
                 
-        # workflow.add_edge("verify_code", route_after_verification)
-        
-        # Instead of using middleware, we'll handle retry count in the conditional edges
-        # workflow.add_middleware(increment_retry_count)
-        
         workflow.set_entry_point("evolve_pseudocode")
         
         self.logger.info("Compiling the graph...")

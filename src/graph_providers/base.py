@@ -17,12 +17,17 @@ load_dotenv()
 class GraphProviderBase(BaseCodeGenerator):
     """Base class for graph-based code generators."""
     
-    def __init__(self, verifier: NetLogoVerifier, retry_max_attempts: int = 5):
+    def __init__(self, verifier: NetLogoVerifier, retry_max_attempts: int = 5, evolution_strategy: str = "simple", prompt_type: str = "groq", prompt_name: str = "prompt2"):
         """Initialize with verifier instance."""
         super().__init__(verifier)
         self.model = None  # To be set by child classes
         self.logger = get_logger()
         self.retry_handler.max_attempts = retry_max_attempts
+        self.evolution_strategy = evolution_strategy # Default evolution strategy
+        
+        # Code generation prompts
+        self.prompt_type = prompt_type
+        self.prompt_name = prompt_name
         
     @abstractmethod
     def initialize_model(self):
@@ -60,7 +65,6 @@ class GraphProviderBase(BaseCodeGenerator):
                 # Replace netlogo with "" if it exists
                 code_response = code_response.replace("netlogo", "").strip()
                 
-                
             return code_response
 
         except Exception as e:
@@ -70,21 +74,11 @@ class GraphProviderBase(BaseCodeGenerator):
     def _build_prompt(self, current_code: str, evolution_description: Optional[str] = None, error_message: Optional[str] = None) -> str:
         """Build the prompt based on the given information."""
         if error_message:
-            
-            # self.logger.info(error_message)
             return prompts["retry_prompts"]["generate_code_with_error"].format(current_code, error_message)
-        
         elif evolution_description:
-            # Use evolution description for text-based evolution
-            # return f"This is the evolution description: {evolution_description} Here is the code: {agent_info[0]}. Generate new code based on the above description."
-            
-            return prompts["text_evolution"]["code_gen_prompt"].format(evolution_description)
-
+            return prompts["evolution_strategies"][self.evolution_strategy]["code_prompt"].format(evolution_description)
         else:
-            # Use standard prompt
-            base_prompt = self.get_base_prompt(current_code)
-            # print(base_prompt)
-            return base_prompt
+            return prompts[self.prompt_type][self.prompt_name].format(current_code)
 
     @abstractmethod
     def _generate_with_prompt(self, prompt: str) -> str:

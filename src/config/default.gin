@@ -10,6 +10,14 @@ from src.netlogo_code_generator import nodes
 CodeRetryHandler.max_attempts = 5
 GraphProviderBase.retry_max_attempts = 5
 
+
+# Text evolution configuration
+GraphProviderBase.evolution_strategy = 'simple' 
+
+# Prompt configuration - Check storeprompts.py dict 
+GraphProviderBase.prompt_type = 'groq'  # groq, complex
+GraphProviderBase.prompt_name = 'prompt3'  # prompt2, prompt1
+
 # Model-specific configurations
 GraphUnifiedProvider.temperature = 0.65
 GraphUnifiedProvider.max_tokens = 1024
@@ -20,10 +28,4 @@ GraphUnifiedProvider.claude_model_name = "claude-3-5-sonnet-20241022"
 GraphUnifiedProvider.openai_model_name = "gpt-4o"
 GraphUnifiedProvider.deepseek_model_name = "deepseek-chat"
 
-# Prompt configuration - Check storeprompts.py dict 
-get_base_prompt.prompt_type = 'complex_prompts'  # groq
-get_base_prompt.prompt_name = 'prompt1'  # prompt2
-
-# Text evolution configuration
-TextBasedEvolution.evolution_strategy = 'simple'  # Options: 'simple', 'complex'
 
