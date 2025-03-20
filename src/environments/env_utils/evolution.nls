@@ -31,6 +31,7 @@ to-report fitness-prop-selection
 end
 
 to-report mutate-rule
+  
   let info (list rule input parent-rule fitness ticks)
   let result rule
   print word "Current Rule: " result
