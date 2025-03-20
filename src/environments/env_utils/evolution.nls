@@ -45,7 +45,7 @@ to-report mutate-rule
     set result item 0 mutation-result
     set result-pseudocode item 1 mutation-result
     print word "New Rule: " result
-    print word "New Pseudocode: " result-pseudocode
+    if text-based-evolution [ print word "New Pseudocode: " result-pseudocode ]
   ] [
     let error-info (list error-message rule ticks)
     set error-log lput error-info error-log

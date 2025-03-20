@@ -13,13 +13,7 @@ globals [
   best-rule
   best-rule-fitness
   error-log
-  initial-pseudocode
-  modified-pseudocode
-
-  ;selection
-  ;num-parents
-  ;tournament-size
-  ;selection-pressure
+  init-pseudocode
 ]
 
 breed [llm-agents llm-agent]
@@ -33,7 +27,7 @@ llm-agents-own [
   food-collected  ;; total food agent gathered
   parent-id ;; who number of parent
   parent-rule ;; parent rule
-  pseudocode ;; descriptive text or
+  pseudocode ;; descriptive text rule
   parent-pseudocode ;; pseudocode associated with the parent
 ]
 
@@ -49,6 +43,14 @@ to setup-params
   ]
 end
 
+to-report get-additional-params
+  report (list
+    list "num-food-sources" num-food-sources
+    list "init-rule" init-rule
+    list "init-pseudocode" init-pseudocode
+  )
+end
+
 to setup-llm-agents
   create-llm-agents num-llm-agents [
     set color red
@@ -56,7 +58,7 @@ to setup-llm-agents
     set rule init-rule
     set parent-id "na"
     set parent-rule "na"
-    set pseudocode initial-pseudocode
+    set pseudocode init-pseudocode
     set parent-pseudocode "na"
     init-agent-params ;; Init with zero energy
   ]
@@ -66,8 +68,6 @@ to init-agent-params
   set energy 0
   set food-collected 0
   set lifetime 0
-  if pseudocode = 0 or pseudocode = "" [ set pseudocode initial-pseudocode ]  ; Initialize pseudocode with initial-pseudocode if not set
-  if parent-pseudocode = 0 or parent-pseudocode = "" [ set parent-pseudocode "na" ]  ; Initialize parent-pseudocode if not set
 end
 
 to spawn-food [num]
@@ -90,17 +90,16 @@ to setup
   py:run "from src.mutation.mutate_code import mutate_code"
 
   set init-rule "lt random 20 rt random 20 fd 1"
+  set init-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
+
   set generation-stats []
   set error-log []
   set best-rule-fitness 0
 
-  set initial-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
-  set modified-pseudocode ""
-
   spawn-food num-food-sources
   setup-llm-agents
   setup-params
-  if logging? [ setup-logger ]
+  if logging? [ setup-logger get-additional-params ]
   reset-ticks
 end
 
@@ -441,7 +440,7 @@ INPUTBOX
 195
 430
 experiment-name
-evotest
+texttest
 1
 0
 String
