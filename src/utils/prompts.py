@@ -1,9 +1,11 @@
 class LEARPrompts:
     """Collection of prompts used throughout the LEAR system"""
-    
+
     def __init__(self):
         # Evolution goals used in text-based evolution
-        self.evolution_goals = "Optimize movement for food, balance exploration, keep commands simple."
+        self.evolution_goals = (
+            "Optimize movement for food, balance exploration, keep commands simple."
+        )
 
         # Chain of thought prompt for langchain providers
         self.langchain_cot_system = "You are a NetLogo expert."
@@ -12,7 +14,9 @@ class LEARPrompts:
         self.evolution_performance = "Energy: {energy}, Food: {food}, Lifetime: {lifetime}, Efficiency: {efficiency:.2f}"
         self.evolution_movement_pattern = "moves {direction} {value}"
         self.evolution_movement_pattern_none = "no movement"
-        self.evolution_goals_prompt = "Optimize movement for food, balance exploration, keep commands simple."
+        self.evolution_goals_prompt = (
+            "Optimize movement for food, balance exploration, keep commands simple."
+        )
 
         # Code analysis prompts
         self.code_analysis_system_message = """You are a NetLogo expert specializing in analyzing agent behavior code. 
@@ -31,7 +35,7 @@ Provide a clear, concise description that a non-programmer could understand."""
 
         # LLM-based explanation prompts
         self.explanation_system_message = """You are a NetLogo expert analyzing agent behavior. Provide clear, concise explanations of agent movement patterns and their effectiveness in collecting food."""
-        
+
         self.explanation_user_message = """Analyze the agent's behavior and environment:
 
 Current Movement: {movement_pattern}
@@ -46,7 +50,9 @@ Explain:
 Keep the explanation concise and focused on behavior analysis."""
 
         self.langchain_system_message = "You are a NetLogo expert."
-        self.langchain_user_message_evolution = """Evolve code:\n{code}\n\nAnalysis: {evolution_description}"""
+        self.langchain_user_message_evolution = (
+            """Evolve code:\n{code}\n\nAnalysis: {evolution_description}"""
+        )
 
         self.langchain_user_message = """Evolve code:\n{code}\n\nInputs: {inputs}"""
 
@@ -70,7 +76,7 @@ Generate ONLY the code."""
 
 rule: {} 
 input: {}"""
-        
+
         self.groq_prompt2 = """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
 
 INPUT CONTEXT:
@@ -203,7 +209,7 @@ INPUT CONTEXT:
 - Food: {} (0 = no food, lower = closer)
 
 Generate ONLY the code."""
-        
+
         self.claude_prompt1 = """Modify NetLogo movement rule:
 1. Use only fd, rt, lt, random N
 2. Keep expressions simple
@@ -215,9 +221,7 @@ CURRENT STATE:
 - Food: {}
         
 Return ONLY the code."""
-        
-        
-        
+
         self.claude_prompt2 = """You are an expert NetLogo agent movement behavior generator creating sophisticated patterns.
 
 CORE:

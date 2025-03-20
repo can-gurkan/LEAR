@@ -13,6 +13,8 @@ globals [
   best-rule
   best-rule-fitness
   error-log
+  initial-pseudocode
+  modified-pseudocode
 
   ;selection
   ;num-parents
@@ -31,6 +33,8 @@ llm-agents-own [
   food-collected  ;; total food agent gathered
   parent-id ;; who number of parent
   parent-rule ;; parent rule
+  pseudocode ;; descriptive text or
+  parent-pseudocode ;; pseudocode associated with the parent
 ]
 
 ;;; Setup Procedures
@@ -52,6 +56,8 @@ to setup-llm-agents
     set rule init-rule
     set parent-id "na"
     set parent-rule "na"
+    set pseudocode initial-pseudocode
+    set parent-pseudocode "na"
     init-agent-params ;; Init with zero energy
   ]
 end
@@ -60,6 +66,8 @@ to init-agent-params
   set energy 0
   set food-collected 0
   set lifetime 0
+  if pseudocode = 0 or pseudocode = "" [ set pseudocode initial-pseudocode ]  ; Initialize pseudocode with initial-pseudocode if not set
+  if parent-pseudocode = 0 or parent-pseudocode = "" [ set parent-pseudocode "na" ]  ; Initialize parent-pseudocode if not set
 end
 
 to spawn-food [num]
@@ -85,6 +93,9 @@ to setup
   set generation-stats []
   set error-log []
   set best-rule-fitness 0
+
+  set initial-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
+  set modified-pseudocode ""
 
   spawn-food num-food-sources
   setup-llm-agents
@@ -120,6 +131,7 @@ to run-rule
       " | Lifetime: " lifetime
       " | Food Collected: " food-collected
       " | Input: " input
+      " | Error: " error-message
     )
     if ticks mod ticks-per-generation = 1 [
       print error-info
@@ -142,9 +154,12 @@ to evolve-agents
     foreach parents [ parent ->
       ask parent [
         let my-parent-id who
+        let my-rule rule
+        let my-pseudocode pseudocode
         hatch 1 [
           set parent-id my-parent-id
-          set parent-rule rule
+          set parent-rule my-rule
+          set parent-pseudocode my-pseudocode
           set rule mutate-rule
           init-agent-params
           set new-agent-ids lput who new-agent-ids
@@ -493,7 +508,7 @@ SWITCH
 503
 use-config-file?
 use-config-file?
-1
+0
 1
 -1000
 

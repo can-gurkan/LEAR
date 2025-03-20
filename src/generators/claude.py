@@ -26,7 +26,7 @@ class ClaudeCodeGenerator(BaseCodeGenerator):
             prompt = error_prompt
         else:
             # Use base prompt for initial generation
-            prompt = self.get_base_prompt(agent_info=agent_info, model_type='claude')
+            prompt = self.get_base_prompt(agent_info=agent_info, prompt_type='claude')
             
         response = self.client.messages.create(
             model=self.model_name,

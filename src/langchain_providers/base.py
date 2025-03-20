@@ -1,7 +1,6 @@
 from abc import abstractmethod
 import os
 from typing import Optional
-import logging
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -10,7 +9,8 @@ from langchain.chains import LLMChain
 
 from src.generators.base import BaseCodeGenerator
 from src.verification.verify_netlogo import NetLogoVerifier
-from src.utils.prompts import LEARPrompts
+from src.utils.storeprompts import prompts
+from src.utils.logging import get_logger
 
 # Load environment variables
 load_dotenv()
@@ -32,10 +32,9 @@ class LangchainProviderBase(BaseCodeGenerator):
         """Construct chain-of-thought prompt template."""
         base_prompt = self.get_base_prompt(agent_info, 'langchain')
         
-        prompt_library = LEARPrompts()
         return ChatPromptTemplate.from_messages([
-            ("system", prompt_library.langchain_cot_system),
-            ("user", prompt_library.langchain_cot_template.format(
+            ("system", prompts["langchain"]["cot_system"]),
+            ("user", prompts["langchain"]["cot_template"].format(
                 base_prompt,
                 code=agent_info[0],
                 inputs=agent_info[1]

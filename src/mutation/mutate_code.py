@@ -1,101 +1,66 @@
 from typing import Union
-    
+import os
+from pathlib import Path
+# Ensure the script is run from the correct directory
+
+# Add parent directory to path
+import sys
+import os
+import sys
+from pathlib import Path
+
+# Add project root directory to path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+print("Current working directory:", os.getcwd())
+
 from src.utils.config import load_config
 from src.verification.verify_netlogo import NetLogoVerifier
-from src.utils.logging import setup_logging
-from src.generators.groq import GroqCodeGenerator
-from src.generators.claude import ClaudeCodeGenerator
-
-from src.generators.langchain import LangChainCodeGenerator
-from src.langchain_providers.groq_langchain import LangchainGroqGenerator
-from src.langchain_providers.claude_langchain import LangchainClaudeGenerator
-from src.langchain_providers.deepseek_langchain import LangchainDeepseekGenerator
-
-# LOG_FILE = "../Logs/netlogo_evolution.log"
-# # Create log file if it doesn't exist
-# os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
-
-# logging.basicConfig(
-#     filename=LOG_FILE,
-#     level=logging.INFO,
-#     format='%(asctime)s - %(levelname)s - %(message)s'
-# )
-
+from src.utils import logging
+from src.netlogo_code_generator.graph import NetLogoCodeGenerator
+from src.graph_providers.unified_provider import create_graph_provider
 
 config = load_config()
+logger = logging.get_logger()
+logger.info("Loading NetLogoVerifier...")
 verifier = NetLogoVerifier()
-logger = setup_logging()
+logger.info("NetLogoVerifier loaded.")
 
+def get_graph_provider(model_type: str):
+    """Get the appropriate Graph provider based on model type."""
+    return create_graph_provider(model_type, verifier)
 
-def get_code_generator(model_type: str = "groq") -> Union[GroqCodeGenerator, ClaudeCodeGenerator]:
-    
-    """Get the appropriate direct code generator based on model type.
-    
-    Args:
-        model_type: Type of model to use ("groq" or "claude")
-        
-    Returns:
-        Initialized code generator instance
-        
-    Raises:
-        ValueError: If unsupported model type provided
+def mutate_code(agent_info: list, model_type: str = "groq", use_text_evolution: bool = False) -> tuple:
     """
-    if model_type.lower() == "groq":
-        return GroqCodeGenerator(config['GROQ_API_KEY'], verifier, temp=0.65)
-    elif model_type.lower() == "claude":
-        return ClaudeCodeGenerator(config["ANTHROPIC_API_KEY"], verifier, temp=0.65)
+    Generate evolved NetLogo code using graph-based evolution.
+    
+    Returns:
+        tuple: (new_rule, text) containing the new rule and the descriptive text (pseudocode)
+    """
+    logger.info(f"Starting code generation with model type: {model_type}, use_text_evolution: {use_text_evolution}")
+
+    # print(f"Agent info: {agent_info}")
+    
+    # Extract current text from agent_info if available (at index 5)
+    current_text = ""
+    if len(agent_info) > 5:
+        current_text = agent_info[5]
+    
+    provider = get_graph_provider(model_type)
+    graph_generator = NetLogoCodeGenerator(provider, verifier)
+    result = graph_generator.generate_code(agent_info, current_text, use_text_evolution)
+    
+    # Check if result is a tuple (new_rule, modified_pseudocode)
+    if isinstance(result, tuple) and len(result) == 2:
+        new_rule, text = result
     else:
-        raise ValueError(f"Unsupported model type: {model_type}")
+        # For backward compatibility, if result is just a string (the code),
+        # then use the current text as the text value
+        new_rule = result
+        text = current_text
     
-def get_langchain_provider(model_type: str):
-    """Get the appropriate LangChain provider based on model type.
+    logger.info(f"Graph-based code generation complete. Result code: {new_rule}")
+    logger.info(f"Text: {text}")
     
-    Args:
-        model_type: Type of LangChain provider to use ("groq", "claude", "openai", or "deepseek")
-        
-    Returns:
-        Initialized LangChain provider instance
-        
-    Raises:
-        ValueError: If unsupported provider type provided
-        ImportError: If required provider module not found
-    """
-    
-    providers = {
-        "groq": LangchainGroqGenerator(config['GROQ_API_KEY']),
-        "claude": LangchainClaudeGenerator(config['ANTHROPIC_API_KEY']),
-        # "openai": LangchainOpenAIGenerator(config['OPENAI_API_KEY']),
-        "deepseek": LangchainDeepseekGenerator(config['DEEPSEEK_API_KEY'])
-    }
-    
-    if model_type.lower() not in providers:
-        raise ValueError(f"Unsupported LangChain provider type: {model_type}")
-    
-    return providers[model_type.lower()]
-
-def mutate_code(agent_info: list, model_type: str = "groq", use_text_evolution: bool = False) -> str:
-    """Generate evolved NetLogo code using either direct or text-based evolution.
-    
-    Args:
-        agent_info: List containing agent state and environment information
-        model_type: Type of LLM to use ("groq", "claude", "openai", or "deepseek")
-        use_text_evolution: Whether to use text-based evolution approach
-        
-    Returns:
-        Evolved NetLogo code as string
-    """
-    try:
-        #logger.info(f"Starting code generation with model type: {model_type}")
-        if use_text_evolution:
-            provider = get_langchain_provider(model_type)
-            langchain_generator = LangChainCodeGenerator(provider, verifier)
-            result = langchain_generator.generate_code(agent_info, use_text_evolution=True)
-            logger.info(f"Langchain code generation complete. Result: {result}")
-            return result
-        else:
-            generator = get_code_generator(model_type)
-            return generator.generate_code(agent_info)
-    except Exception as e:
-        logger.error(f"Error in mutate_code: {str(e)}")
-        # print(f"Error in mutate_code: {str(e)}")
-        return agent_info[0]  # Return original code on error
+    return (new_rule, text)
