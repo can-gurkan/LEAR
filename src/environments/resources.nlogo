@@ -3,35 +3,40 @@ extensions [ py table fp rnd ]
 __includes [
   "env_utils/evolution.nls"
   "env_utils/logging.nls"
-  "config/simple-collection-config.nls"
 ]
 
 globals [
   generation
-  init-rule
   generation-stats
   best-rule
   best-rule-fitness
+  best-resource-score
   error-log
-  init-pseudocode
+  community-chest
+  init-rule
 ]
 
-breed [llm-agents llm-agent]
-breed [food-sources food-source]
+breed [llm-agents llm-agent]  ;; Agents collect resources
+breed [resources resource] ;; Resources on the map
 
 llm-agents-own [
-  input ;; observation vector
-  rule ;; current rule (llm-generated)
-  energy ;; current score
-  lifetime ;; age of the agent (in generations)
-  food-collected  ;; total food agent gathered
-  parent-id ;; who number of parent
-  parent-rule ;; parent rule
-  pseudocode ;; descriptive text rule
-  parent-pseudocode ;; pseudocode associated with the parent
+  input
+  rule        ;; Movement strategy (mutation variable)
+  inventory        ;; Table mapping resource types to amounts
+  weight          ;; Total weight carried
+  resource-score  ;; Total points (deposited + held)
+  parent-rule
+  parent-id
+  lifetime        ;; age of agent
+  distance-from-center
 ]
 
-;;; Setup Procedures
+resources-own [
+  resource-kind  ;; Type of resource (silver, gold, crystal)
+]
+
+;;; ========== SETUP PROCEDURES ==========
+
 
 to setup-params
   if use-config-file? [
@@ -43,41 +48,6 @@ to setup-params
   ]
 end
 
-to-report get-additional-params
-  report (list
-    list "num-food-sources" num-food-sources
-    list "init-rule" init-rule
-    list "init-pseudocode" init-pseudocode
-  )
-end
-
-to setup-llm-agents
-  create-llm-agents num-llm-agents [
-    set color red
-    setxy random-xcor random-ycor
-    set rule init-rule
-    set parent-id "na"
-    set parent-rule "na"
-    set pseudocode init-pseudocode
-    set parent-pseudocode "na"
-    init-agent-params ;; Init with zero energy
-  ]
-end
-
-to init-agent-params
-  set energy 0
-  set food-collected 0
-  set lifetime 0
-end
-
-to spawn-food [num]
-  create-food-sources num [
-    set shape "circle"
-    set color green
-    set size 0.5
-    setxy random-xcor random-ycor
-  ]
-end
 
 to setup
   clear-all
@@ -87,49 +57,181 @@ to setup
   py:run "import sys"
   py:run "from pathlib import Path"
   py:run "sys.path.append(os.path.dirname(os.path.abspath('..')))"
+
   py:run "from src.mutation.mutate_code import mutate_code"
 
   set init-rule "lt random 20 rt random 20 fd 1"
-  set init-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
-
   set generation-stats []
   set error-log []
-  set best-rule-fitness 0
+  set best-resource-score 0
 
-  spawn-food num-food-sources
+
+  setup-environment
+  setup-resources
   setup-llm-agents
-  setup-params
-  if logging? [ setup-logger get-additional-params ]
+  if logging? [ setup-logger ]
   reset-ticks
 end
 
-;;; Go Procedures
+to setup-environment
+  ;; Define the chest as a 3x3 patch area in the center
+  set community-chest patches with [abs pxcor <= 1 and abs pycor <= 1]
 
+  let outline patches with [(abs pxcor = 2 and (abs pycor <= 2)) or (abs pycor = 2 and (abs pxcor <= 2))]
+
+  ;; Color the chest area
+  ask community-chest [
+    set pcolor brown
+    set plabel-color white
+  ]
+
+  ask outline [ set pcolor 44 ]
+end
+
+to setup-resources
+  ;; Create different types of resources randomly
+  let resource-types ["silver" "gold" "crystal"]
+
+  repeat num-resources [  ;; Spawn resources dynamically
+    let spawn-location one-of patches with [not any? turtles-here]
+    if spawn-location != nobody [
+      create-resources 1 [
+        move-to spawn-location
+        set resource-kind one-of resource-types
+        set shape resource-kind
+        set color (ifelse-value (resource-kind = "silver") [gray]
+                              (resource-kind = "gold") [yellow]
+                              [cyan])
+        set size 1.5
+        ;set label resource-kind  ;; Show type above the resource (DEBUGGING)
+      ]
+    ]
+  ]
+end
+
+to setup-llm-agents
+  create-llm-agents num-llm-agents [
+    setxy random-xcor random-ycor
+    set shape "person"
+    set color blue
+    set inventory table:make
+    set weight 0
+    set resource-score 0
+    set rule initial-rule
+    set size 1.25
+  ]
+end
+
+
+;; create more resources if environment is lacking sufficient amount
+to replenish-resources
+  if count resources < num-resources [  ;; Check if we are below target resource count
+    let missing-resources (num-resources - count resources)
+
+    repeat missing-resources [
+      let spawn-location one-of patches with [not any? turtles-here]
+      if spawn-location != nobody [
+        create-resources 1 [
+          move-to spawn-location
+          set resource-kind one-of ["silver" "gold" "crystal"]
+
+          ;; Assign visual properties
+          if resource-kind = "silver" [ set shape "silver" set color gray ]
+          if resource-kind = "gold" [ set shape "gold" set color yellow ]
+          if resource-kind = "crystal" [ set shape "crystal" set color cyan ]
+
+          set size 1.5
+          ;; set label resource-kind
+        ]
+      ]
+    ]
+  ]
+end
+
+;;; ========== GO PROCEDURE ==========
 to go
   do-plotting
   ask llm-agents [
     set lifetime lifetime + 1
+    set distance-from-center distancexy 0 0
+    set resource-score resource-score - (weight * 0.25)  ;; Lose resource-score at a rate of 25% of total weight
+    ;; set resource-score resource-score - (weight ^ 1.5 * 0.1) ;; exponential loss (higher weights are punished more)
+    ;; if weight > 2 [ set resource-score resource-score - ((weight - 2) * 0.3) ] ;; start losing weight once over a threshold
     set input get-observation
+    ;;if energy <= 0 [ die ]
     run-rule
-    eat-food
+
+    set resource-score max (list 0 resource-score)
   ]
   evolve-agents
-  replenish-food
+  replenish-resources
   tick
 end
 
+;;; ========== OBSERVATION VECTOR REPORTERS ==========
+
+to-report get-observation
+  let dist 7
+  let angle 20
+  let obs []
+
+  ;; Observe in three directions: left, right, center
+  foreach [-20 40 -20] [a ->
+    rt a
+    let result get-in-cone dist angle
+    set obs lput result obs
+  ]
+
+  ;; Also observe distance/angle to chest
+  let chest-dist distancexy 0 0
+  let chest-heading towardsxy 0 0  ;; Angle to face the chest
+  ;; set obs lput (list chest-dist "distance to chest") obs
+  ;; set obs lput chest-heading "direction/angle to face chest") obs
+  ;;set obs lput chest-dist obs
+  ;;set obs lput chest-heading obs
+
+  ;; print(obs)
+  report obs
+end
+
+;;; Detects nearest resource in a given cone & returns (distance, type)
+to-report get-in-cone [dist angle]
+  let closest-resource nobody
+  let closest-distance dist
+  let closest-type "none"
+
+  ;; Find the closest resource in the vision cone
+  let cone other resources in-cone dist angle
+  let f min-one-of cone [distance myself]
+
+  if f != nobody [
+    set closest-resource f
+    set closest-distance distance f
+    set closest-type [resource-kind] of f
+  ]
+
+  ;; Return a list (distance, resource type)
+  report (list closest-distance closest-type)
+end
+
+
+
+;;; ========== RUN LLM-GENERATED STRATEGY ==========
 to run-rule
   carefully [
     run rule
+
+    ;; Always attempt to pick up and deposit if conditions are met
+    pick-up
+    deposit
   ] [
+    ;; Log any execution errors
     let error-info (word
-      "ERROR WHILE RUNNING RULE: " rule
+      "ERROR WHILE RUNNING STRATEGY: " rule
       " | Agent: " who
       " | Tick: " ticks
-      " | Fitness: " fitness
-      " | Lifetime: " lifetime
-      " | Food Collected: " food-collected
-      " | Input: " input
+      " | Resource Score: " resource-score
+      " | Weight: " weight
       " | Error: " error-message
     )
     if ticks mod ticks-per-generation = 1 [
@@ -139,103 +241,152 @@ to run-rule
   ]
 end
 
+
+;;; ========== INITIAL STRATEGY ==========
+to-report initial-rule
+  report "lt random 20 rt random 20 fd 1"
+end
+
+;;; ========== PICK UP RESOURCES ==========
+to pick-up
+  let resource-here one-of resources-here  ;; Find a nearby resource
+
+  if resource-here != nobody [
+    let kind [resource-kind] of resource-here
+    let value 0
+    let weight-addition 0.2  ;; Base weight
+
+
+    if kind = "silver" [ set value 1 ]
+    if kind = "gold" [ set value 2  set weight-addition 0.3] ;; gold slow agents more
+    if kind = "crystal" [ set value 4 set weight-addition 0.5 ]  ;; Crystals slow agents most
+
+    table:put inventory kind ((table:get-or-default inventory kind 0) + 1)
+
+
+    ;; ----- Resource Score calculation: incremented when picking up
+    let keys table:keys inventory
+    foreach keys [ key ->
+      let val (ifelse-value (key = "silver") [1] (key = "gold") [2] [4])
+      set resource-score resource-score + (table:get inventory key) * val
+    ]
+
+    set weight weight + weight-addition
+    ;;set speed max (list 0.2 (speed - weight-addition)) ;; Reduce speed
+
+    ;; Remove the resource
+    ask resource-here [ die ]
+  ]
+end
+
+;;; ========== DEPOSIT RESOURCES ==========
+to deposit
+  if member? patch-here community-chest [
+    let keys table:keys inventory
+    foreach keys [ key ->
+      ;; Resource Score incremented only when deposited
+;      let value (ifelse-value (key = "silver") [1] (key = "gold") [2] [4])
+;      set resource-score resource-score + (table:get inventory key) * value
+      table:remove inventory key
+    ]
+
+    ;; Reset weight and energy
+    set weight 0
+  ]
+end
+
+;;; ========== EVOLUTION ==========
+
 to evolve-agents
   if ticks >= 1 and ticks mod ticks-per-generation = 0 [
-    print word "\nGeneration: " generation
 
-    let parents select-agents
-    let kill-num length parents
+    ;; Select top n agents with the highest resource-score
+    let top-agents max-n-of num-best-agents-to-evolve llm-agents [resource-score]
 
-    let kill-dict agent-dict min-n-of kill-num llm-agents [fitness]
-    let best-dict agent-dict turtle-set parents
+    ;; Select bottom n agents with the lowest resource-score
+    let worst-agents min-n-of num-worst-agents-to-kill llm-agents [resource-score]
+
+    let kill-dict agent-dict min-n-of num-worst-agents-to-kill llm-agents [resource-score]
+    let best-dict agent-dict max-n-of num-best-agents-to-evolve llm-agents [resource-score]
     let new-agent-ids []
 
-    foreach parents [ parent ->
-      ask parent [
-        let my-parent-id who
-        let my-rule rule
-        let my-pseudocode pseudocode
-        hatch 1 [
-          set parent-id my-parent-id
-          set parent-rule my-rule
-          set parent-pseudocode my-pseudocode
-          set rule mutate-rule
-          init-agent-params
-          set new-agent-ids lput who new-agent-ids
-        ]
+    print word "Top n resource scores: " [resource-score] of top-agents  ;; DEBUGGING
+    print word "Worst n resource scores: " [resource-score] of worst-agents  ;; DEBUGGING
+
+    ;; Each top agent hatches n offspring
+    ask top-agents [
+      let my-parent-id who
+
+      hatch num-hatch-per-agent [
+        set parent-id my-parent-id
+        set parent-rule rule
+        set rule mutate-rule
+        set resource-score 0
+        set inventory table:make
+        set weight 0
+
+        set new-agent-ids lput who new-agent-ids
       ]
     ]
 
-    ask min-n-of kill-num llm-agents with [not member? who new-agent-ids] [fitness] [ die ]
+    ;; Kill the n worst agents
+    ask worst-agents [ die ]
 
     let new-dict agent-dict llm-agents with [member? who new-agent-ids]
     update-generation-stats
     log-metrics (list best-dict new-dict kill-dict)
-
-    ask llm-agents [
-      set food-collected 0
-      set energy 0
-    ]
   ]
 end
 
-to eat-food
-  if any? food-sources-here [
-    ask one-of food-sources-here [
-      die
-    ]
-    set energy energy + 1
-    set food-collected food-collected + 1
-  ]
-end
 
-to replenish-food
-  if count food-sources < num-food-sources [
-    spawn-food (num-food-sources - count food-sources)
-  ]
-end
 
-;;; Helpers and Observable Reporters
+;;; ========== REPORTER HELPERS =========
 
 to-report fitness
-  report energy
+  report resource-score
 end
 
 to-report mean-fitness
   report mean [fitness] of llm-agents
 end
 
-to-report get-observation
-  let dist 7
-  let angle 20
-  let obs []
-  ;; obs order is [left-cone right-cone center-cone]
-  foreach [-20 40 -20] [a ->
-    rt a
-    set obs lput (get-in-cone dist angle) obs
+
+
+;;; ========== LOGGING & REPORTING ==========
+
+to-report create-agent-dict [name agent-list]
+  let agents-sub-dict table:make
+  foreach agent-list [agent-data ->
+    let agent-id item 1 (item 0 agent-data)
+    let agent-key word "Agent " agent-id
+    table:put agents-sub-dict agent-key agent-data
   ]
-  report obs
+  let agents-super-dict table:make
+  table:put agents-super-dict name agents-sub-dict
+  report agents-super-dict
 end
 
-to-report get-in-cone [dist angle]
-  let val 0
-  let cone other food-sources in-cone dist angle
-  let f min-one-of cone with [is-food-source? self] [distance myself]
-  if f != nobody [
-    set val distance f
-  ]
-  report val
-end
+;to-report get-generation-metrics
+;  let metrics ifelse-value any? llm-agents [
+;    (list
+;      (list "generation" generation)
+;      (list "best resource score" max [resource-score] of llm-agents)
+;      (list "mean resource score" mean [resource-score] of llm-agents)
+;    )
+;  ] [
+;    (list generation [] 0 0 0 [])
+;  ]
+;  report metrics
+;end
 
 to-report get-generation-metrics
-  let keys ["generation" "best rule" "mean fitness" "best fitness" "mean food" "error log"]
+  let keys ["generation" "best rule" "mean fitness" "best fitness" "error log"]
   let values ifelse-value any? llm-agents [
     (list
       generation
       best-rule
       mean-fitness
       max [fitness] of llm-agents
-      mean [food-collected] of llm-agents
       error-log)
   ] [
     (list generation "na" 0 0 0 [])
@@ -243,22 +394,22 @@ to-report get-generation-metrics
   report fp:zip keys values
 end
 
-;;; Plotting
+;;; ========== PLOTTING ==========
 
 to do-plotting
   if ticks mod ticks-per-generation = 0 [
-    set-current-plot "Mean Energy of Agents"
-    set-current-plot-pen "Mean Energy"
-    plotxy generation mean-fitness
-    set-current-plot-pen "Max Energy"
-    plotxy generation max [energy] of llm-agents
+    set-current-plot "Mean Resource Score of Agents"
+    set-current-plot-pen "Mean Score"
+    plotxy generation mean [resource-score] of llm-agents
+    set-current-plot-pen "Max Score"
+    plotxy generation max [resource-score] of llm-agents
   ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+249
 10
-647
+686
 448
 -1
 -1
@@ -283,11 +434,28 @@ ticks
 30.0
 
 BUTTON
-20
-190
-90
-223
+121
+136
+184
+169
+go
+go
+T
+1
+T
+OBSERVER
 NIL
+NIL
+NIL
+NIL
+0
+
+BUTTON
+44
+137
+110
+170
+setup
 setup
 NIL
 1
@@ -299,167 +467,184 @@ NIL
 NIL
 1
 
-BUTTON
-100
-190
-170
-223
-NIL
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-SLIDER
-20
-20
-195
-53
-num-llm-agents
-num-llm-agents
-0
-25
-10.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-20
-60
-195
-93
-num-food-sources
-num-food-sources
-0
-100
-30.0
-1
-1
-NIL
-HORIZONTAL
-
 SWITCH
-20
-240
-195
-273
-llm-mutation?
-llm-mutation?
+54
+233
+164
+266
+logging?
+logging?
 0
 1
 -1000
 
+SLIDER
+47
+15
+219
+48
+num-resources
+num-resources
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+45
+83
+217
+116
+num-llm-agents
+num-llm-agents
+0
+100
+13.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+46
+49
+230
+82
+ticks-per-generation
+ticks-per-generation
+0
+500
+225.0
+1
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+31
+309
+215
+369
+experiment-name
+resources_test
+1
+0
+String
+
 PLOT
-680
-60
-1090
-350
-Mean Energy of Agents
+723
+133
+1148
+395
+Mean Resource Score of Agents
 generation
-energy
+resource score
 0.0
-5.0
+10.0
 0.0
 10.0
 true
 true
 "" ""
 PENS
-"Mean Energy" 1.0 0 -817084 true "" ""
-"Max Energy" 1.0 0 -13345367 true "" ""
-
-SLIDER
-20
-100
-195
-133
-ticks-per-generation
-ticks-per-generation
-1
-2000
-500.0
-1
-1
-NIL
-HORIZONTAL
+"Mean Score" 1.0 0 -955883 true "" ""
+"Max Score" 1.0 0 -14070903 true "" ""
 
 MONITOR
-680
-10
-757
-55
-NIL
+723
+87
+803
+132
+generation
 generation
 17
 1
 11
 
 CHOOSER
-20
-320
-195
-365
+39
+183
+177
+228
 llm-type
 llm-type
-"groq" "claude" "deepseek" "gpt-4o"
-1
-
-SWITCH
-20
-140
-195
-173
-logging?
-logging?
+"groq" "claude"
 0
-1
--1000
 
 SWITCH
-20
-280
-195
-313
+29
+270
+218
+303
 text-based-evolution
 text-based-evolution
 1
 1
 -1000
 
-INPUTBOX
-20
-370
-195
-430
-experiment-name
-bspacetest
-1
+SLIDER
+832
+86
+1047
+119
+num-worst-agents-to-kill
+num-worst-agents-to-kill
 0
-String
+5
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+832
+47
+1022
+80
+num-hatch-per-agent
+num-hatch-per-agent
+0
+5
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+831
+10
+1043
+43
+num-best-agents-to-evolve
+num-best-agents-to-evolve
+0
+5
+1.0
+1
+1
+NIL
+HORIZONTAL
 
 CHOOSER
-20
-470
-195
-515
+38
+407
+176
+452
 selection
 selection
-"tournament" "fitness-prop"
+"tournament"
 0
 
 SLIDER
-20
-520
-195
-553
+31
+461
+203
+494
 num-parents
 num-parents
 0
@@ -471,40 +656,40 @@ NIL
 HORIZONTAL
 
 SLIDER
-20
-560
-195
-593
+32
+498
+204
+531
 tournament-size
 tournament-size
 0
-50
-8.0
+100
+7.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-20
-600
-195
-633
+29
+538
+201
+571
 selection-pressure
 selection-pressure
 0
 1
 0.8
-0.01
+0.10
 1
 NIL
 HORIZONTAL
 
 SWITCH
-210
-470
-385
-503
+257
+483
+413
+516
 use-config-file?
 use-config-file?
 1
@@ -512,12 +697,12 @@ use-config-file?
 -1000
 
 INPUTBOX
-210
-510
-385
-570
+254
+522
+413
+582
 config-file
-default
+NIL
 1
 0
 String
@@ -633,15 +818,27 @@ Polygon -7500403 true true 200 193 197 249 179 249 177 196 166 187 140 189 93 19
 Polygon -7500403 true true 73 210 86 251 62 249 48 208
 Polygon -7500403 true true 25 114 16 195 9 204 23 213 25 200 39 123
 
-cylinder
+crate
 false
 0
-Circle -7500403 true true 0 0 300
+Rectangle -7500403 true true 45 45 255 255
+Rectangle -16777216 false false 45 45 255 255
+Rectangle -16777216 false false 60 60 240 240
+Line -16777216 false 180 60 180 240
+Line -16777216 false 150 60 150 240
+Line -16777216 false 120 60 120 240
+Line -16777216 false 210 60 210 240
+Line -16777216 false 90 60 90 240
+Polygon -7500403 true true 75 240 240 75 240 60 225 60 60 225 60 240
+Polygon -16777216 false false 60 225 60 240 75 240 240 75 240 60 225 60
 
-dot
+crystal
 false
 0
-Circle -7500403 true true 90 90 120
+Rectangle -7500403 true true 90 90 210 270
+Polygon -1 true false 210 270 255 240 255 60 210 90
+Polygon -13345367 true false 90 90 45 60 45 240 90 270
+Polygon -11221820 true false 45 60 90 30 210 30 255 60 210 90 90 90
 
 face happy
 false
@@ -700,6 +897,16 @@ Circle -7500403 true true 96 51 108
 Circle -16777216 true false 113 68 74
 Polygon -10899396 true false 189 233 219 188 249 173 279 188 234 218
 Polygon -10899396 true false 180 255 150 210 105 210 75 240 135 240
+
+gold
+false
+0
+Circle -7500403 true true 0 0 300
+
+hex
+false
+0
+Polygon -7500403 true true 0 150 75 30 225 30 300 150 225 270 75 270
 
 house
 false
@@ -766,6 +973,11 @@ Rectangle -1 true true 65 221 80 296
 Polygon -1 true true 195 285 210 285 210 240 240 210 195 210
 Polygon -7500403 true false 276 85 285 105 302 99 294 83
 Polygon -7500403 true false 219 85 210 105 193 99 201 83
+
+silver
+false
+0
+Circle -7500403 true true 90 90 120
 
 square
 false
@@ -868,114 +1080,6 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
-<experiments>
-  <experiment name="test-exp" repetitions="3" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <timeLimit steps="5000"/>
-    <metric>generation</metric>
-    <metric>mean-fitness</metric>
-    <metric>max [fitness] of llm-agents</metric>
-    <metric>best-rule-fitness</metric>
-    <metric>best-rule</metric>
-    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
-    <enumeratedValueSet variable="tournament-size">
-      <value value="8"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-llm-agents">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="selection-pressure">
-      <value value="0.85"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="use-config-file?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="logging?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-parents">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="config-file">
-      <value value="&quot;default&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="ticks-per-generation">
-      <value value="500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="text-based-evolution">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="llm-mutation?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-food-sources">
-      <value value="30"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="experiment-name">
-      <value value="&quot;bspacetest&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="selection">
-      <value value="&quot;tournament&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="llm-type">
-      <value value="&quot;claude&quot;"/>
-    </enumeratedValueSet>
-  </experiment>
-  <experiment name="one-shot-code-exp" repetitions="10" runMetricsEveryStep="false">
-    <setup>setup</setup>
-    <go>go</go>
-    <timeLimit steps="150000"/>
-    <metric>generation</metric>
-    <metric>mean-fitness</metric>
-    <metric>max [fitness] of llm-agents</metric>
-    <metric>best-rule-fitness</metric>
-    <metric>best-rule</metric>
-    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
-    <enumeratedValueSet variable="tournament-size">
-      <value value="8"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-llm-agents">
-      <value value="10"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="selection-pressure">
-      <value value="0.8"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="use-config-file?">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="logging?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-parents">
-      <value value="2"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="config-file">
-      <value value="&quot;default&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="ticks-per-generation">
-      <value value="500"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="text-based-evolution">
-      <value value="false"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="llm-mutation?">
-      <value value="true"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="num-food-sources">
-      <value value="30"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="experiment-name">
-      <value value="&quot;bspacetest&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="selection">
-      <value value="&quot;tournament&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="llm-type">
-      <value value="&quot;claude&quot;"/>
-    </enumeratedValueSet>
-  </experiment>
-</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
@@ -988,6 +1092,17 @@ true
 0
 Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
+
+gold
+0.0
+-0.2 0 0.0 1.0
+0.0 1 1.0 0.0
+0.2 0 0.0 1.0
+link direction
+true
+0
+Line -7500403 true 150 150 90 180
+Line -7500403 true 150 150 210 180
 @#$#@#$#@
-1
+0
 @#$#@#$#@

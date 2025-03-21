@@ -7,6 +7,10 @@ to setup-params-default
   set text-based-evolution false
   set llm-type "groq"
   
+  ;; initial rules
+  set init-rule "lt random 20 rt random 20 fd 1"
+  set init-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
+  
   ;; selection algo params
   set selection "tournament" ;"fitness-prop"
   set num-parents 2

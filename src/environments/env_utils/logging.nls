@@ -1,20 +1,23 @@
-to setup-logger
+to setup-logger [additional-params]
   let init-params (list
     (list "llm-type" llm-type)
     (list "num-llm-agents" num-llm-agents)
-    (list "num-food-sources" num-food-sources)
     (list "ticks-per-generation" ticks-per-generation)
     (list "selection" selection)
     (list "num-parents" num-parents)
     (list "tournament-size" tournament-size)
     (list "selection-pressure" selection-pressure)
   )
+  set init-params sentence init-params additional-params
   py:set "init_params" init-params
+  py:run "from src.mutation.mutate_code import get_graph_provider"
+  py:run "from src.utils.storeprompts import prompts"
 
-  ;; Get active prompt information from gin configuration
-  py:run "from src.graph_providers.unified_provider import get_active_prompt_info"
-  let base-prompt py:runresult "get_active_prompt_info()"
+  py:set "llm_type" llm-type
+  py:set "prompt_type" py:runresult "get_graph_provider(llm_type).prompt_type"
+  py:set "prompt_name" py:runresult "get_graph_provider(llm_type).prompt_name"
   
+  let base-prompt py:runresult "prompts[prompt_type][prompt_name]"
   py:set "base_prompt" base-prompt
 
   ;; Initialize a new logger instance (ensures new log file per setup)
