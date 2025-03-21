@@ -1,16 +1,14 @@
 # Default parameters
 
 # Shared prompt config
-prompt_name = 'prompt3'    # prompt1        
-prompt_type = 'groq'       # claude, simple, complex   
+prompt_type = 'groq'            # claude, simple, complex   
+prompt_name = 'prompt3'         # prompt1        
 evolution_strategy = 'simple'   # complex
 
 # Import necessary modules
 from src.generators import base
 from src.graph_providers import unified_provider
 from src.graph_providers import base as graph_base
-
-from src.netlogo_code_generator import nodes
 
 # Retry configuration
 CodeRetryHandler.max_attempts = 5
