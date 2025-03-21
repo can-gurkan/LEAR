@@ -133,7 +133,7 @@ to run-rule
       " | Error: " error-message
     )
     if ticks mod ticks-per-generation = 1 [
-      print error-info
+      if verbose? [ print error-info ]
       set error-log lput error-info error-log
     ]
   ]
@@ -440,7 +440,7 @@ INPUTBOX
 195
 430
 experiment-name
-bspacetest
+one_shot_code_exp
 1
 0
 String
@@ -521,6 +521,17 @@ default
 1
 0
 String
+
+SWITCH
+400
+470
+575
+503
+verbose?
+verbose?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -973,6 +984,9 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="llm-type">
       <value value="&quot;claude&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="false"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
