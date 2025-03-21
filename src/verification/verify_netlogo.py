@@ -385,6 +385,11 @@ class NetLogoVerifier:
         """
         result = ValidationResult(True)
         
+        # Check if this is an ifelse-value expression, which is allowed to not have movement commands
+        # as it returns a value rather than executing commands
+        if "ifelse-value" in code.lower():
+            return result
+        
         # Code should contain at least one movement command
         movement_commands = {'fd', 'forward', 'rt', 'right', 'lt', 'left', 'bk', 'back'}
         words = set(re.findall(r'\b\w+\b', code.lower()))
@@ -447,7 +452,8 @@ class NetLogoVerifier:
     def _validate_if_statement(self, tokens: List[Tuple[str, int]], 
                               start_idx: int) -> Tuple[ValidationResult, int]:
         """
-        Validate an if or ifelse statement.
+        Validate an if, ifelse, or ifelse-value statement. Supports both simple and 
+        multi-conditional formats.
         
         Args:
             tokens: List of tokens with line numbers
@@ -463,7 +469,21 @@ class NetLogoVerifier:
         statement_type, line_num = tokens[i]
         statement_type = statement_type.lower()
         
-        # Move past the statement token
+        # Check if this is a parenthesized multi-conditional format
+        is_multi_conditional = False
+        
+        # Check if the statement is inside parentheses
+        if i > 0 and tokens[i-1][0] == '(':
+            is_multi_conditional = True
+        elif i + 1 < len(tokens) and tokens[i+1][0] == '(':
+            is_multi_conditional = True
+            i += 1  # Skip the opening parenthesis
+        
+        # If it's a multi-conditional ifelse/ifelse-value, use the specialized handler
+        if is_multi_conditional and statement_type in {'ifelse', 'ifelse-value'}:
+            return self._validate_multi_conditional(tokens, i, statement_type)
+        
+        # Move past the statement token for standard if/ifelse
         i += 1
         
         # Check if we have enough tokens for a condition
@@ -561,6 +581,137 @@ class NetLogoVerifier:
         
         return result, i
 
+    def _validate_multi_conditional(self, tokens: List[Tuple[str, int]],
+                                   start_idx: int, 
+                                   statement_type: str) -> Tuple[ValidationResult, int]:
+        """
+        Validate a multi-conditional ifelse or ifelse-value statement in the format:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+        (ifelse-value boolean1 [ reporter1 ] boolean2 [ reporter2 ] ... [ elsereporter ])
+        
+        Args:
+            tokens: List of tokens with line numbers
+            start_idx: Starting index of the statement
+            statement_type: Either 'ifelse' or 'ifelse-value'
+            
+        Returns:
+            Tuple containing:
+                - ValidationResult with any errors
+                - New index position after the statement
+        """
+        result = ValidationResult(True)
+        i = start_idx
+        line_num = tokens[i][1]
+        
+        # Skip past the statement type token
+        i += 1
+        
+        # Track whether we found the final else branch
+        found_final_else = False
+        
+        # Process condition-branch pairs until we find the final else branch
+        while i < len(tokens):
+            # If we encounter a closing parenthesis, we're done
+            if tokens[i][0] == ')':
+                i += 1
+                break
+                
+            # If we find an opening bracket without a condition first,
+            # this is the final else branch
+            if tokens[i][0] == '[':
+                # Validate final else branch
+                bracket_count = 1
+                else_branch_start = i + 1
+                i += 1  # Skip the opening bracket
+                
+                while i < len(tokens) and bracket_count > 0:
+                    if tokens[i][0] == '[':
+                        bracket_count += 1
+                    elif tokens[i][0] == ']':
+                        bracket_count -= 1
+                    i += 1
+                
+                if bracket_count > 0:
+                    result.add_error(ValidationError(
+                        f"Unclosed bracket in {statement_type} else branch",
+                        line_number=tokens[else_branch_start-1][1]
+                    ))
+                    return result, i
+                
+                else_branch_end = i - 1
+                
+                # Validate the else branch
+                else_branch_result = self._validate_branch_contents(
+                    tokens[else_branch_start:else_branch_end]
+                )
+                if not else_branch_result.is_valid:
+                    result.merge(else_branch_result)
+                
+                found_final_else = True
+                
+                # Look for a closing parenthesis
+                if i < len(tokens) and tokens[i][0] == ')':
+                    i += 1
+                    
+                break
+            
+            # Validate a condition
+            condition_end = i
+            while condition_end < len(tokens) and tokens[condition_end][0] != '[':
+                condition_end += 1
+            
+            if condition_end >= len(tokens):
+                result.add_error(ValidationError(
+                    f"Incomplete {statement_type} statement - missing opening bracket",
+                    line_number=tokens[i][1]
+                ))
+                return result, i
+            
+            # Validate the condition
+            condition_tokens = tokens[i:condition_end]
+            condition_result = self._validate_condition(condition_tokens)
+            if not condition_result.is_valid:
+                result.merge(condition_result)
+            
+            # Move past the condition to the opening bracket
+            i = condition_end + 1  # Skip the opening bracket
+            
+            # Find matching closing bracket for this branch
+            bracket_count = 1
+            branch_start = i
+            while i < len(tokens) and bracket_count > 0:
+                if tokens[i][0] == '[':
+                    bracket_count += 1
+                elif tokens[i][0] == ']':
+                    bracket_count -= 1
+                i += 1
+            
+            if bracket_count > 0:
+                result.add_error(ValidationError(
+                    f"Unclosed bracket in {statement_type} branch",
+                    line_number=tokens[branch_start-1][1]
+                ))
+                return result, i
+            
+            branch_end = i - 1
+            
+            # Validate the branch
+            branch_result = self._validate_branch_contents(
+                tokens[branch_start:branch_end]
+            )
+            if not branch_result.is_valid:
+                result.merge(branch_result)
+        
+        # Verify that we found a final else branch
+        if not found_final_else:
+            result.add_error(ValidationError(
+                f"Missing final else branch in {statement_type} statement",
+                line_number=line_num,
+                severity=ErrorSeverity.ERROR
+            ))
+        
+        return result, i
+
     def _validate_condition(self, tokens: List[Tuple[str, int]]) -> ValidationResult:
         """
         Validate a condition expression.
@@ -580,6 +731,39 @@ class NetLogoVerifier:
         # Join tokens to analyze the condition as a whole
         condition_str = " ".join(token for token, _ in tokens)
         line_num = tokens[0][1]  # Use line number of first token for errors
+        
+        # Check for logical operators (and/or)
+        if " and " in condition_str:
+            parts = condition_str.split(" and ")
+            for part in parts:
+                part_result = self._validate_simple_condition(part.strip(), line_num)
+                if not part_result.is_valid:
+                    result.merge(part_result)
+            return result
+        
+        if " or " in condition_str:
+            parts = condition_str.split(" or ")
+            for part in parts:
+                part_result = self._validate_simple_condition(part.strip(), line_num)
+                if not part_result.is_valid:
+                    result.merge(part_result)
+            return result
+        
+        # If no logical operators, validate as a simple condition
+        return self._validate_simple_condition(condition_str, line_num)
+    
+    def _validate_simple_condition(self, condition_str: str, line_num: int) -> ValidationResult:
+        """
+        Validate a simple condition without logical operators.
+        
+        Args:
+            condition_str: The condition string to validate
+            line_num: Line number for error reporting
+            
+        Returns:
+            ValidationResult with any errors in the condition
+        """
+        result = ValidationResult(True)
         
         # Check for common condition patterns
         # 1. Simple comparisons: <value> <operator> <value>
@@ -619,6 +803,11 @@ class NetLogoVerifier:
         if self._is_valid_reporter_expression(condition_str):
             return result
         
+        # 3. Check for negation ('not' operator)
+        if condition_str.lower().startswith("not "):
+            inner_condition = condition_str[4:].strip()
+            return self._validate_simple_condition(inner_condition, line_num)
+        
         # If we get here, the condition doesn't match known patterns
         result.add_error(ValidationError(
             f"Invalid or unsupported condition: {condition_str}",
@@ -657,7 +846,7 @@ class NetLogoVerifier:
             
             # Handle nested if/ifelse
             if token_lower in {'if', 'ifelse', 'ifelse-value'}:
-                nested_result, new_i = self._validate_if_statement(tokens, i)
+                nested_result, new_i = nested_result, new_i = self._validate_if_statement(tokens, i)
                 if not nested_result.is_valid:
                     result.merge(nested_result)
                 i = new_i
@@ -1164,10 +1353,21 @@ def test_verifier():
         ("rt 45.5", True),
         ("lt -0.75", True),
         
-        # Complex control structure case
+         # Complex control structure case
         ("""ifelse item 0 input != 0 [rt 15 fd 0.5] [ifelse item 2 input != 0 [fd 1] [ifelse item 1 input != 0 [lt 15 fd 0.5] [rt random 30 lt random 30 fd 5]]]""", True),
+        ("""(ifelse item 2 input != 0 [  fd 1]item 0 input != 0 and item 0 input < item 1 input [  lt 15 fd 0.5]item 1 input != 0 [  rt 15 fd 0.5][  fd 1])""", True),
         
-        ("lt random 20 rt random 20 fd (1 + random-float 0.5)", True)
+        ("lt random 20 rt random 20 fd (1 + random-float 0.5)", True),
+        
+        # Multi-conditional format test cases
+        ("(ifelse item 0 input > 0 [fd 1] item 1 input > 0 [rt 90 fd 1] [lt 90 fd 1])", True),
+        ("(ifelse-value item 0 input > 0 [1] item 1 input > 0 [2] [0])", True),
+        ("(ifelse item 0 input > 0 [fd 1] item 1 input > 0 [rt 90 fd 1])", False),  # Missing final else branch
+        ("(ifelse item 0 input > 0 fd 1] item 1 input > 0 [rt 90 fd 1])", False),  # Syntax error
+        ("(ifelse-value item 0 input > 0 [1 + 2] item 1 input > 0 [sin random 360] [0])", True),
+        ("(ifelse item 0 input > 10 and item 1 input < 5 [fd 1] item 2 input != 0 [rt 45 fd 2] [lt 45 fd 1])", True), # Complex condition with logical operator
+        
+        ("(ifelse   item 2 input != 0 [    fd 1  ]  item 0 input != 0 and item 0 input < item 1 input [    lt 15 fd 0.5  ]  item 1 input != 0 [    rt 15 fd 0.5  ]  [    fd 1  ])", True)
     ]
     
     for code, expected_safe in test_cases:
