@@ -201,3 +201,24 @@ def create_graph_provider(model_name: str = "groq", verifier: NetLogoVerifier = 
         ValueError: If unsupported model type provided
     """
     return GraphUnifiedProvider(model_name, verifier)
+
+
+@gin.configurable
+def get_active_prompt_info(prompt_type: str = "groq", prompt_name: str = "prompt2"):
+    """
+    Get the active prompt information based on prompt type and name.
+    
+    Args:
+        prompt_type: Type of prompt to use
+        prompt_name: Name of prompt to use
+        
+    Returns:
+        Tuple containing prompt text and system message
+    """
+    try:
+        prompt_text = prompts[prompt_type][prompt_name]
+        return prompt_text
+        
+    except Exception as e:
+        logging.error(f"Error getting active prompt info: {str(e)}")
+        return ""

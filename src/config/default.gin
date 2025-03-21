@@ -1,10 +1,14 @@
 # Default parameters
 
+# Shared prompt config
+prompt_type = 'groq'            # claude, simple, complex   
+prompt_name = 'prompt3'         # prompt1        
+evolution_strategy = 'simple'   # complex
+
 # Import necessary modules
 from src.generators import base
 from src.graph_providers import unified_provider
 from src.graph_providers import base as graph_base
-from src.netlogo_code_generator import nodes
 
 # Retry configuration
 CodeRetryHandler.max_attempts = 5
@@ -27,5 +31,6 @@ GraphUnifiedProvider.groq_model_name = "llama-3.3-70b-versatile" #"llama-3.1-8b-
 GraphUnifiedProvider.claude_model_name = "claude-3-haiku-20240307" #"claude-3-5-sonnet-20241022" #claude-3-5-haiku-latest #claude-3-haiku-20240307
 GraphUnifiedProvider.openai_model_name = "gpt-4o"
 GraphUnifiedProvider.deepseek_model_name = "deepseek-chat"
+
 
 

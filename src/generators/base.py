@@ -40,11 +40,6 @@ class BaseCodeGenerator(ABC):
     def get_base_prompt(self, rule: str, prompt_type=None, prompt_name=None) -> str:
         """Construct and return base prompt."""
         
-        # Considering only rule and food input for now
-        # TO DO: get rid of food_input
-
-        # food_input = agent_info[1]
-        
         prompt = prompts[prompt_type][prompt_name]
                 
         return prompt.format(rule)
