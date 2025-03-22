@@ -61,6 +61,10 @@ llm-agents-own [
   survival-time ;; how long the agent has survived
   parent-id ;; who number of parent
   parent-rule ;; parent rule
+  pseudocode ;; descriptive text rule
+  parent-pseudocode ;; pseudocode associated with the parent
+
+
   immunity-timer ;; timer for immunity after being untagged (replaces immunities table)
   distance-score ;; accumulated distance score for fitness calculation
   tags-made ;; number of successful tags made (for tagged agents)
@@ -152,7 +156,9 @@ to setup
   py:run "sys.path.append(os.path.dirname(os.path.abspath('..')))"
   py:run "from src.mutation.mutate_code import mutate_code"
 
-  set init-rule "lt random 360 fd 1"
+    set init-rule "lt random 20 rt random 20 fd 1"
+  set init-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
+
   set generation-stats []
   set error-log []
   set best-rule-fitness 0
@@ -163,7 +169,7 @@ to setup
 
   setup-params
   setup-llm-agents
-  if logging? [ setup-logger ]
+  if logging? [ setup-logger [] ]
   reset-ticks
 end
 
@@ -673,7 +679,6 @@ end
 ; 2 agents
 ; 1 has a really poor untagged rule but luckily stays untagged the entire time - really high untagged-fitness
 ; 1 has a really good untagged rule but unluckily stays tagged most of the time but gets untagged at the end - really low untagged-fitness
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210

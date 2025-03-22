@@ -1,14 +1,35 @@
 # Default parameters
 
+# Shared prompt config
+prompt_type = 'groq'            # claude, simple, complex   
+prompt_name = 'prompt3'         # prompt1        
+evolution_strategy = 'simple'   # complex
+
+# Import necessary modules
 from src.generators import base
+from src.graph_providers import unified_provider
+from src.graph_providers import base as graph_base
 
-CodeRetryHandler.max_attempts = 5
+# Retry configuration
+CodeRetryHandler.max_attempts = 2
+GraphProviderBase.retry_max_attempts = 2
+GraphProviderBase.retry_prompt = 'generate_code_with_error'
 
-get_base_prompt.model_prompt = 'tag_groq_prompt'
-GroqCodeGenerator.temp = 1
-GroqCodeGenerator.model_name = "qwen-2.5-coder-32b"
+# Text evolution configuration
+GraphProviderBase.evolution_strategy = 'simple' 
 
-#get_base_prompt.model_prompt = 'tag_groq_prompt'
-ClaudeCodeGenerator.temp = 1
-ClaudeCodeGenerator.max_tokens = 2000
-ClaudeCodeGenerator.model_name = "claude-3-5-haiku-latest"
+# Prompt configuration - Check storeprompts.py dict 
+GraphProviderBase.prompt_type = 'collection_simple'  # groq, complex
+GraphProviderBase.prompt_name = 'zero_shot_code_wcomments'  # prompt2, prompt1
+
+# Model-specific configurations
+GraphUnifiedProvider.temperature = 0.65
+GraphUnifiedProvider.max_tokens = 1024
+
+# Model-specific name configurations
+GraphUnifiedProvider.groq_model_name = "llama-3.3-70b-versatile" #"llama-3.1-8b-instant" # qwen-2.5-coder-32b llama-3.3-70b-versatile deepseek-r1-distill-qwen-32b
+GraphUnifiedProvider.claude_model_name = "claude-3-5-haiku-latest" #"claude-3-5-sonnet-20241022" #claude-3-5-haiku-latest #claude-3-haiku-20240307
+GraphUnifiedProvider.openai_model_name = "gpt-4o"
+GraphUnifiedProvider.deepseek_model_name = "deepseek-chat"
+
+
