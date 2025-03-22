@@ -7,8 +7,7 @@ extensions [ py table fp rnd ]
 ;;; 3. When a tagged agent touches an untagged agent, the tag is passed:
 ;;;    - The previously tagged agent becomes untagged
 ;;;    - The newly tagged agent becomes immune to being tagged by that specific agent for 20 ticks
-;;; 4. At the end of each round, all tagged agents die and are replaced
-;;;    by offspring of the survivors. One survivor at random is choosen to mutate their code.
+;;; 4. At the end of each round, the most unfit survivor dies and gets replaced
 ;;;
 ;;; Fitness is determined by:
 ;;; - For untagged agents: accumulated distance from the nearest tagged agent (measured every 100 ticks)
@@ -41,6 +40,8 @@ globals [
   best-rule
   best-rule-fitness
   error-log
+  init-pseudocode
+
   tag-distance-threshold
   generation-length    ;; New global to separate round from generation concepts
 
@@ -107,6 +108,14 @@ to setup-params
   set tag-distance-threshold 3  ;; distance within which tagging occurs
 end
 
+to-report get-additional-params
+  report (list
+
+    list "init-rule" init-rule
+    list "init-pseudocode" init-pseudocode
+  )
+end
+
 to setup-llm-agents
   create-llm-agents num-llm-agents [
     set color blue
@@ -116,6 +125,9 @@ to setup-llm-agents
     set rule init-rule
     set parent-id "na"
     set parent-rule "na"
+    set pseudocode init-pseudocode
+    set parent-pseudocode "na"
+
     set tagged? false
     set immunity-timer 0
     init-agent-params
@@ -156,7 +168,7 @@ to setup
   py:run "sys.path.append(os.path.dirname(os.path.abspath('..')))"
   py:run "from src.mutation.mutate_code import mutate_code"
 
-    set init-rule "lt random 20 rt random 20 fd 1"
+  set init-rule "lt random 20 rt random 20 fd 1"
   set init-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
 
   set generation-stats []
@@ -169,7 +181,7 @@ to setup
 
   setup-params
   setup-llm-agents
-  if logging? [ setup-logger [] ]
+  if logging? [ setup-logger get-additional-params ]
   reset-ticks
 end
 
@@ -1017,9 +1029,9 @@ use-config-file?
 
 INPUTBOX
 210
-510
+575
 385
-570
+635
 config-file
 default
 1
@@ -1047,6 +1059,17 @@ count llm-agents with [not tagged?]
 17
 1
 11
+
+SWITCH
+209
+518
+386
+551
+verbose?
+verbose?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
