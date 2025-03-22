@@ -14,21 +14,27 @@ globals [
   error-log
   community-chest
   init-rule
+  init-pseudocode
 ]
 
 breed [llm-agents llm-agent]  ;; Agents collect resources
 breed [resources resource] ;; Resources on the map
 
 llm-agents-own [
+  input-resource-distances
+  input-resource-types
   input
+  distance-from-center
   rule        ;; Movement strategy (mutation variable)
   inventory        ;; Table mapping resource types to amounts
   weight          ;; Total weight carried
-  resource-score  ;; Total points (deposited + held)
+  resource-score  ;; Total points (deposited + held) accounting for score decay
+  resource-deposited ;; Total points (deposited) accounting for score decay
   parent-rule
   parent-id
+  pseudocode ;; descriptive text rule
+  parent-pseudocode ;; pseudocode associated with the parent
   lifetime        ;; age of agent
-  distance-from-center
 ]
 
 resources-own [
@@ -61,6 +67,7 @@ to setup
   py:run "from src.mutation.mutate_code import mutate_code"
 
   set init-rule "lt random 20 rt random 20 fd 1"
+  set init-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
   set generation-stats []
   set error-log []
   set best-resource-score 0
@@ -69,7 +76,7 @@ to setup
   setup-environment
   setup-resources
   setup-llm-agents
-  if logging? [ setup-logger ]
+  if logging? [ setup-logger get-additional-params ]
   reset-ticks
 end
 
@@ -114,14 +121,23 @@ to setup-llm-agents
     setxy random-xcor random-ycor
     set shape "person"
     set color blue
-    set inventory table:make
-    set weight 0
-    set resource-score 0
-    set rule initial-rule
     set size 1.25
+
+    set rule init-rule
+    set parent-rule "na"
+    set pseudocode init-pseudocode
+    set parent-pseudocode "na"
+
+    init-agent-params ;; init with empty inventory, zero weight, and zero resource-score
   ]
 end
 
+to init-agent-params
+  set inventory table:make
+  set weight 0
+  set resource-score 0
+  set resource-deposited 0
+end
 
 ;; create more resources if environment is lacking sufficient amount
 to replenish-resources
@@ -155,9 +171,13 @@ to go
     set lifetime lifetime + 1
     set distance-from-center distancexy 0 0
     set resource-score resource-score - (weight * 0.25)  ;; Lose resource-score at a rate of 25% of total weight
+    set resource-deposited resource-deposited - (weight * 0.25)  ;; Lose resource-deposited at a rate of 25% of total weight
+
     ;; set resource-score resource-score - (weight ^ 1.5 * 0.1) ;; exponential loss (higher weights are punished more)
     ;; if weight > 2 [ set resource-score resource-score - ((weight - 2) * 0.3) ] ;; start losing weight once over a threshold
     set input get-observation
+    set input-resource-distances first input
+    set input-resource-types last input
     ;;if energy <= 0 [ die ]
     run-rule
 
@@ -168,30 +188,31 @@ to go
   tick
 end
 
+
 ;;; ========== OBSERVATION VECTOR REPORTERS ==========
 
-to-report get-observation
+to-report get-observation  ;; returns list of two flat lists (distances and types), each index correspond to each as resource-distance, resource-type
   let dist 7
   let angle 20
   let obs []
+  let distances []
+  let types []
 
   ;; Observe in three directions: left, right, center
   foreach [-20 40 -20] [a ->
     rt a
     let result get-in-cone dist angle
-    set obs lput result obs
+    ;; set obs lput result obs
+    set distances lput item 0 result distances
+    set types lput item 1 result types
   ]
 
   ;; Also observe distance/angle to chest
   let chest-dist distancexy 0 0
   let chest-heading towardsxy 0 0  ;; Angle to face the chest
-  ;; set obs lput (list chest-dist "distance to chest") obs
-  ;; set obs lput chest-heading "direction/angle to face chest") obs
-  ;;set obs lput chest-dist obs
-  ;;set obs lput chest-heading obs
 
   ;; print(obs)
-  report obs
+  report (list distances types)
 end
 
 ;;; Detects nearest resource in a given cone & returns (distance, type)
@@ -227,25 +248,25 @@ to run-rule
   ] [
     ;; Log any execution errors
     let error-info (word
-      "ERROR WHILE RUNNING STRATEGY: " rule
+      "ERROR WHILE RUNNING RULE: " rule
       " | Agent: " who
       " | Tick: " ticks
-      " | Resource Score: " resource-score
+      " | Fitness: " resource-score
+      " | Total Resource Value Deposited (With Decay): " resource-deposited
       " | Weight: " weight
+      " | Lifetime: " lifetime
+      " | Resource Input Distances: " input-resource-distances
+      " | Resource Input Types: " input-resource-types
       " | Error: " error-message
     )
     if ticks mod ticks-per-generation = 1 [
-      print error-info
+
+      if verbose? [ print error-info ]
       set error-log lput error-info error-log
     ]
   ]
 end
 
-
-;;; ========== INITIAL STRATEGY ==========
-to-report initial-rule
-  report "lt random 20 rt random 20 fd 1"
-end
 
 ;;; ========== PICK UP RESOURCES ==========
 to pick-up
@@ -265,14 +286,16 @@ to pick-up
 
 
     ;; ----- Resource Score calculation: incremented when picking up
-    let keys table:keys inventory
-    foreach keys [ key ->
-      let val (ifelse-value (key = "silver") [1] (key = "gold") [2] [4])
-      set resource-score resource-score + (table:get inventory key) * val
-    ]
+    set resource-score resource-score + value
+    ;; print (word "PICKED UP: " kind " | New Score: " resource-score) ## DEBUGGING!!!
+
+;    let keys table:keys inventory
+;    foreach keys [ key ->
+;      let val (ifelse-value (key = "silver") [1] (key = "gold") [2] [4])
+;      set resource-score resource-score + (table:get inventory key) * val
+;    ]
 
     set weight weight + weight-addition
-    ;;set speed max (list 0.2 (speed - weight-addition)) ;; Reduce speed
 
     ;; Remove the resource
     ask resource-here [ die ]
@@ -284,9 +307,9 @@ to deposit
   if member? patch-here community-chest [
     let keys table:keys inventory
     foreach keys [ key ->
-      ;; Resource Score incremented only when deposited
-;      let value (ifelse-value (key = "silver") [1] (key = "gold") [2] [4])
-;      set resource-score resource-score + (table:get inventory key) * value
+      ;; resource-deposited incremented only when deposited
+      let val (ifelse-value (key = "silver") [1] (key = "gold") [2] [4])
+      set resource-deposited resource-deposited + (table:get inventory key) * val
       table:remove inventory key
     ]
 
@@ -300,37 +323,33 @@ end
 to evolve-agents
   if ticks >= 1 and ticks mod ticks-per-generation = 0 [
 
-    ;; Select top n agents with the highest resource-score
-    let top-agents max-n-of num-best-agents-to-evolve llm-agents [resource-score]
+    let parents select-agents
+    let kill-num length parents
 
-    ;; Select bottom n agents with the lowest resource-score
-    let worst-agents min-n-of num-worst-agents-to-kill llm-agents [resource-score]
-
-    let kill-dict agent-dict min-n-of num-worst-agents-to-kill llm-agents [resource-score]
-    let best-dict agent-dict max-n-of num-best-agents-to-evolve llm-agents [resource-score]
+    let kill-dict agent-dict min-n-of kill-num llm-agents [fitness]
+    let best-dict agent-dict turtle-set parents
     let new-agent-ids []
 
-    print word "Top n resource scores: " [resource-score] of top-agents  ;; DEBUGGING
-    print word "Worst n resource scores: " [resource-score] of worst-agents  ;; DEBUGGING
 
-    ;; Each top agent hatches n offspring
-    ask top-agents [
-      let my-parent-id who
+    foreach parents [ parent ->
+      ask parent [
+        let my-parent-id who
+        let my-rule rule
+        let my-pseudocode pseudocode
 
-      hatch num-hatch-per-agent [
-        set parent-id my-parent-id
-        set parent-rule rule
-        set rule mutate-rule
-        set resource-score 0
-        set inventory table:make
-        set weight 0
+        hatch 1 [
+          set parent-id my-parent-id
+          set parent-rule my-rule
+          set parent-pseudocode my-pseudocode
+          set rule mutate-rule
+          init-agent-params  ;; base params for agent (new inventory, 0 weight, 0 resource-score)
 
-        set new-agent-ids lput who new-agent-ids
+          set new-agent-ids lput who new-agent-ids
+        ]
       ]
     ]
 
-    ;; Kill the n worst agents
-    ask worst-agents [ die ]
+    ask min-n-of kill-num llm-agents with [not member? who new-agent-ids] [fitness] [ die ]
 
     let new-dict agent-dict llm-agents with [member? who new-agent-ids]
     update-generation-stats
@@ -350,6 +369,14 @@ to-report mean-fitness
   report mean [fitness] of llm-agents
 end
 
+to-report get-additional-params
+  report (list
+    list "num-food-sources" num-resources
+    list "init-rule" init-rule
+    list "init-pseudocode" init-pseudocode
+  )
+end
+
 
 
 ;;; ========== LOGGING & REPORTING ==========
@@ -366,18 +393,8 @@ to-report create-agent-dict [name agent-list]
   report agents-super-dict
 end
 
-;to-report get-generation-metrics
-;  let metrics ifelse-value any? llm-agents [
-;    (list
-;      (list "generation" generation)
-;      (list "best resource score" max [resource-score] of llm-agents)
-;      (list "mean resource score" mean [resource-score] of llm-agents)
-;    )
-;  ] [
-;    (list generation [] 0 0 0 [])
-;  ]
-;  report metrics
-;end
+
+;;; ============== GENERATION METRICS ==============
 
 to-report get-generation-metrics
   let keys ["generation" "best rule" "mean fitness" "best fitness" "error log"]
@@ -407,13 +424,13 @@ to do-plotting
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-249
+229
 10
-686
+666
 448
 -1
 -1
-13.0
+12.152
 1
 10
 1
@@ -434,10 +451,10 @@ ticks
 30.0
 
 BUTTON
-121
-136
-184
-169
+107
+178
+172
+211
 go
 go
 T
@@ -451,10 +468,10 @@ NIL
 0
 
 BUTTON
-44
-137
-110
-170
+34
+178
+100
+211
 setup
 setup
 NIL
@@ -468,10 +485,10 @@ NIL
 1
 
 SWITCH
-54
-233
-164
-266
+34
+128
+205
+161
 logging?
 logging?
 0
@@ -479,10 +496,10 @@ logging?
 -1000
 
 SLIDER
-47
-15
-219
-48
+34
+10
+206
+43
 num-resources
 num-resources
 0
@@ -494,24 +511,24 @@ NIL
 HORIZONTAL
 
 SLIDER
-45
-83
-217
-116
+34
+88
+205
+121
 num-llm-agents
 num-llm-agents
 0
 100
-13.0
+12.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-46
+34
 49
-230
+205
 82
 ticks-per-generation
 ticks-per-generation
@@ -524,10 +541,10 @@ NIL
 HORIZONTAL
 
 INPUTBOX
-31
-309
-215
-369
+35
+359
+205
+419
 experiment-name
 resources_test
 1
@@ -565,116 +582,71 @@ generation
 11
 
 CHOOSER
-39
-183
-177
-228
+35
+303
+203
+348
 llm-type
 llm-type
 "groq" "claude"
 0
 
 SWITCH
-29
-270
-218
-303
+35
+266
+204
+299
 text-based-evolution
 text-based-evolution
 1
 1
 -1000
 
-SLIDER
-832
-86
-1047
-119
-num-worst-agents-to-kill
-num-worst-agents-to-kill
-0
-5
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-832
-47
-1022
-80
-num-hatch-per-agent
-num-hatch-per-agent
-0
-5
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-831
-10
-1043
-43
-num-best-agents-to-evolve
-num-best-agents-to-evolve
-0
-5
-1.0
-1
-1
-NIL
-HORIZONTAL
-
 CHOOSER
-38
-407
-176
-452
+34
+468
+204
+513
 selection
 selection
-"tournament"
+"tournament" "fitness-prop"
 0
 
 SLIDER
-31
-461
-203
-494
+34
+518
+204
+551
 num-parents
 num-parents
 0
 10
-2.0
+1.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-32
-498
+35
+555
 204
-531
+588
 tournament-size
 tournament-size
 0
 100
-7.0
+12.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-29
-538
-201
-571
+35
+592
+204
+625
 selection-pressure
 selection-pressure
 0
@@ -686,10 +658,10 @@ NIL
 HORIZONTAL
 
 SWITCH
-257
-483
-413
-516
+214
+468
+373
+501
 use-config-file?
 use-config-file?
 1
@@ -697,15 +669,37 @@ use-config-file?
 -1000
 
 INPUTBOX
-254
-522
-413
-582
+213
+509
+372
+569
 config-file
 NIL
 1
 0
 String
+
+SWITCH
+384
+468
+548
+501
+verbose?
+verbose?
+0
+1
+-1000
+
+SWITCH
+35
+227
+204
+260
+llm-mutation?
+llm-mutation?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
