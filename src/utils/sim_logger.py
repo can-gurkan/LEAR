@@ -30,7 +30,7 @@ class NetLogoLogger:
         self.base_log_directory = base_log_directory
 
         # Create a new folder with timestamp
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
         self.log_directory = os.path.join(self.base_log_directory, experiment_name, timestamp)
 
         try:

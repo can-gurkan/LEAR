@@ -150,7 +150,8 @@ class NetLogoVerifier:
         self.comparison_operators = {'=', '!=', '>', '<', '>=', '<='}
         self.allowed_variables = {
             'input', 'energy', 'lifetime', 'food-collected', 
-            'xcor', 'ycor', 'heading', 'who'
+            'xcor', 'ycor', 'heading', 'who', 'input-resource-distances', 'input-resource-types',
+            'food-observations', 'poison-observations', '"silver"', '"gold"', '"crystal"'
         }
         
         # Precompile regex patterns for performance
