@@ -1646,13 +1646,11 @@ Return ONLY the evolved NetLogo code with no explanations:
         - DO NOT use while loops or recursive constructs
       
      ERROR PREVENTION:
-        - Ensure all **bracket** pairs match
-        - Ensure all **parenthesis** pairs match
+        - Ensure all bracket pairs match
         - Make sure every movement command has a parameter
         - Keep values within reasonable ranges (-1000 to 1000)
         - Ensure at least one movement command is included
         - There is no such thing as an `else` statement in NetLogo
-        - `ifelse` is not a reporter, so do not treat it as such (ex. starting (ifelse...) )
 
 
      STRATEGIC GOALS:
@@ -1664,7 +1662,8 @@ Return ONLY the evolved NetLogo code with no explanations:
 
      EXAMPLES OF VALID CODE GENERATION:
      Current Code: ```fd 1 rt random 45 fd 2 lt 30```
-     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
+```
      Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
 
 
@@ -1754,7 +1753,8 @@ Return ONLY the evolved NetLogo code with no explanations:
 
      EXAMPLES OF VALID CODE GENERATION:
      Current Code: ```fd 1 rt random 45 fd 2 lt 30```
-     Changed Code: ```ifelse ((item 0 input-resource-distances) != 0) and ((item 0 input-resource-types) = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ]```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
+```
      Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
 
 
@@ -1762,18 +1762,105 @@ Return ONLY the evolved NetLogo code with no explanations:
 
      Current Code:
      ```
-     ifelse (item 0 input-resource-distances != 0) and (item 0 input-resource-types = "gold") [
-  lt 5
-  fd 0.2
-] [
-  ifelse (item 1 input-resource-distances != 0) and (item 1 input-resource-types = "silver") [
-    rt 5
+     ifelse (item 0 input-resource-distances != 0) [
+  ifelse (item 0 input-resource-types = "gold") [
+    lt 5
     fd 0.2
   ] [
-    ifelse (item 2 input-resource-distances != 0) and (item 2 input-resource-types = "crystal") [
+    ifelse (item 1 input-resource-distances != 0) [
+      ifelse (item 1 input-resource-types = "silver") [
+        rt 5
+        fd 0.2
+      ] [
+        ifelse (item 2 input-resource-distances != 0) [
+          ifelse (item 2 input-resource-types = "crystal") [
+            fd 0.2
+          ] [
+            ifelse (random 100 < 50) [
+              fd 2
+              rt random-float 45
+            ] [
+              rt random-float 30
+              fd 5
+            ]
+          ]
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ]
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ]
+] [
+  ifelse (item 1 input-resource-distances != 0) [
+    ifelse (item 1 input-resource-types = "silver") [
+      rt 5
       fd 0.2
     ] [
-      ifelse random 100 < 50 [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ] [
+    ifelse (item 2 input-resource-distances != 0) [
+      ifelse (item 2 input-resource-types = "crystal") [
+        fd 0.2
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ] [
+      ifelse (random 100 < 50) [
         fd 2
         rt random-float 45
       ] [
@@ -1783,14 +1870,13 @@ Return ONLY the evolved NetLogo code with no explanations:
     ]
   ]
 ]
-
-
      
      ```
      Changed Code:
      ```
 ifelse member? "crystal" input-resource-types [
   ifelse any? map [i -> (item i input-resource-types = "crystal") and (item i input-resource-distances != 0)] [0 1 2] [
+
 
     ifelse (item 0 input-resource-types = "crystal") [
       ifelse (item 0 input-resource-distances != 0) [
@@ -1828,9 +1914,11 @@ ifelse member? "crystal" input-resource-types [
       ]
     ]
 
-  ] [
+
+  ] [ ; no valid "crystal"
     ifelse member? "gold" input-resource-types [
       ifelse any? map [i -> (item i input-resource-types = "gold") and (item i input-resource-distances != 0)] [0 1 2] [
+
 
         ifelse (item 0 input-resource-types = "gold") [
           ifelse (item 0 input-resource-distances != 0) [
@@ -1868,9 +1956,11 @@ ifelse member? "crystal" input-resource-types [
           ]
         ]
 
-      ] [
+
+      ] [ ; no valid "gold"
         ifelse member? "silver" input-resource-types [
           ifelse any? map [i -> (item i input-resource-types = "silver") and (item i input-resource-distances != 0)] [0 1 2] [
+
 
             ifelse (item 0 input-resource-types = "silver") [
               ifelse (item 0 input-resource-distances != 0) [
@@ -1908,7 +1998,8 @@ ifelse member? "crystal" input-resource-types [
               ]
             ]
 
-          ] [
+
+          ] [ ; no valid "silver"
             ifelse random 100 < 50 [
               fd 2
               rt random-float 45
@@ -1917,7 +2008,7 @@ ifelse member? "crystal" input-resource-types [
               fd 5
             ]
           ]
-        ] [
+        ] [ ; not even "silver"
           ifelse random 100 < 50 [
             fd 2
             rt random-float 45
@@ -1927,7 +2018,7 @@ ifelse member? "crystal" input-resource-types [
           ]
         ]
       ]
-    ] [
+    ] [ ; not even "gold"
       ifelse random 100 < 50 [
         fd 2
         rt random-float 45
@@ -1946,7 +2037,6 @@ ifelse member? "crystal" input-resource-types [
     fd 5
   ]
 ]
-
 
 
      ```
@@ -2124,7 +2214,8 @@ ifelse member? "crystal" input-resource-types [
 
      EXAMPLES OF VALID CODE GENERATION:
      Current Code: ```fd 1 rt random 45 fd 2 lt 30```
-     Changed Code: ```ifelse (item 0 input-resource-distances) != 0 and (item 0 input-resource-types) = "gold" [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ]```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
+```
      Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
 
 
@@ -2215,158 +2306,27 @@ ifelse member? "crystal" input-resource-types [
 
      EXAMPLES OF VALID CODE GENERATION:
      Current Code: ```fd 1 rt random 45 fd 2 lt 30```
-     Changed Code: ```ifelse (item 0 input-resource-distances) != 0 and (item 0 input-resource-types) = "gold" [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ]```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]```
      Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
 
 
      Current Code:
      ```
-     ifelse first item 0 input != 0 and last item 0 input = “gold” [
-        lt 5
+     ifelse (item 0 input-resource-distances != 0) [
+  ifelse (item 0 input-resource-types = "gold") [
+    lt 5
+    fd 0.2
+  ] [
+    ifelse (item 1 input-resource-distances != 0) [
+      ifelse (item 1 input-resource-types = "silver") [
+        rt 5
         fd 0.2
-        ] [
-        ifelse first item 1 input != 0 and last item 1 input = “silver” [
-           rt 5
-           fd 0.2
-        ] [
-           first item 2 input != 0 and last item 2 input = “crystal” [
-              fd 0.2
-           ] [
-              ifelse random 100 < 50 [
-              fd 2
-              rt random-float 45
-              ] [
-              rt random-float 30
-              fd 5
-              ]
-           ]
-        ]
-     ]     
-     ```
-     Changed Code:
-     ```
-     ;; Prioritize: crystal > gold > silver
-ifelse member? "crystal" input-resource-types [
-  ifelse any? map [i -> (item i input-resource-types = "crystal") and (item i input-resource-distances != 0)] [0 1 2] [
-
-    ifelse (item 0 input-resource-types = "crystal") [
-      ifelse (item 0 input-resource-distances != 0) [
-        ifelse ((item 1 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
-          ifelse ((item 2 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
-            lt 5
-            fd 0.2
-          ] [
-            fd 0.2
-          ]
-        ] [
-          fd 0.2
-        ]
       ] [
-        fd 0.2
-      ]
-    ] [
-      ifelse (item 1 input-resource-types = "crystal") [
-        ifelse (item 1 input-resource-distances != 0) [
-          ifelse ((item 0 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
-            ifelse ((item 2 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
-              rt 5
-              fd 0.2
-            ] [
-              fd 0.2
-            ]
-          ] [
+        ifelse (item 2 input-resource-distances != 0) [
+          ifelse (item 2 input-resource-types = "crystal") [
             fd 0.2
-          ]
-        ] [
-          fd 0.2
-        ]
-      ] [
-        fd 0.2
-      ]
-    ]
-
-  ] [ ; no valid "crystal"
-    ifelse member? "gold" input-resource-types [
-      ifelse any? map [i -> (item i input-resource-types = "gold") and (item i input-resource-distances != 0)] [0 1 2] [
-
-        ifelse (item 0 input-resource-types = "gold") [
-          ifelse (item 0 input-resource-distances != 0) [
-            ifelse ((item 1 input-resource-types != "gold") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
-              ifelse ((item 2 input-resource-types != "gold") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
-                lt 5
-                fd 0.2
-              ] [
-                fd 0.2
-              ]
-            ] [
-              fd 0.2
-            ]
           ] [
-            fd 0.2
-          ]
-        ] [
-          ifelse (item 1 input-resource-types = "gold") [
-            ifelse (item 1 input-resource-distances != 0) [
-              ifelse ((item 0 input-resource-types != "gold") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
-                ifelse ((item 2 input-resource-types != "gold") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
-                  rt 5
-                  fd 0.2
-                ] [
-                  fd 0.2
-                ]
-              ] [
-                fd 0.2
-              ]
-            ] [
-              fd 0.2
-            ]
-          ] [
-            fd 0.2
-          ]
-        ]
-
-      ] [ ; no valid "gold"
-        ifelse member? "silver" input-resource-types [
-          ifelse any? map [i -> (item i input-resource-types = "silver") and (item i input-resource-distances != 0)] [0 1 2] [
-
-            ifelse (item 0 input-resource-types = "silver") [
-              ifelse (item 0 input-resource-distances != 0) [
-                ifelse ((item 1 input-resource-types != "silver") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
-                  ifelse ((item 2 input-resource-types != "silver") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
-                    lt 5
-                    fd 0.2
-                  ] [
-                    fd 0.2
-                  ]
-                ] [
-                  fd 0.2
-                ]
-              ] [
-                fd 0.2
-              ]
-            ] [
-              ifelse (item 1 input-resource-types = "silver") [
-                ifelse (item 1 input-resource-distances != 0) [
-                  ifelse ((item 0 input-resource-types != "silver") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
-                    ifelse ((item 2 input-resource-types != "silver") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
-                      rt 5
-                      fd 0.2
-                    ] [
-                      fd 0.2
-                    ]
-                  ] [
-                    fd 0.2
-                  ]
-                ] [
-                  fd 0.2
-                ]
-              ] [
-                fd 0.2
-              ]
-            ]
-
-          ] [ ; no valid "silver"
-            ifelse random 100 < 50 [
+            ifelse (random 100 < 50) [
               fd 2
               rt random-float 45
             ] [
@@ -2374,8 +2334,8 @@ ifelse member? "crystal" input-resource-types [
               fd 5
             ]
           ]
-        ] [ ; not even "silver"
-          ifelse random 100 < 50 [
+        ] [
+          ifelse (random 100 < 50) [
             fd 2
             rt random-float 45
           ] [
@@ -2384,7 +2344,154 @@ ifelse member? "crystal" input-resource-types [
           ]
         ]
       ]
-    ] [ ; not even "gold"
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ]
+] [
+  ifelse (item 1 input-resource-distances != 0) [
+    ifelse (item 1 input-resource-types = "silver") [
+      rt 5
+      fd 0.2
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ] [
+    ifelse (item 2 input-resource-distances != 0) [
+      ifelse (item 2 input-resource-types = "crystal") [
+        fd 0.2
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ] [
+      ifelse (random 100 < 50) [
+        fd 2
+        rt random-float 45
+      ] [
+        rt random-float 30
+        fd 5
+      ]
+    ]
+  ]
+]
+
+
+     ```
+     Changed Code:
+     ```
+     ;; Prioritize: crystal > gold > silver
+ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-resource-types = "crystal") and (item i input-resource-distances != 0)] [0 1 2] [
+  
+  ;; Find closest crystal
+  ifelse (item 0 input-resource-types = "crystal" and item 0 input-resource-distances != 0) and
+         ((item 1 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
+         ((item 2 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+    lt 5
+    fd 0.2
+  ] [
+    ifelse (item 1 input-resource-types = "crystal" and item 1 input-resource-distances != 0) and
+           ((item 0 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
+           ((item 2 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+      rt 5
+      fd 0.2
+    ] [
+      fd 0.2
+    ]
+  ]
+
+
+] [
+  ifelse member? "gold" input-resource-types and any? map [i -> (item i input-resource-types = "gold") and (item i input-resource-distances != 0)] [0 1 2] [
+
+
+    ;; Find closest gold
+    ifelse (item 0 input-resource-types = "gold" and item 0 input-resource-distances != 0) and
+           ((item 1 input-resource-types != "gold") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
+           ((item 2 input-resource-types != "gold") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+      lt 5
+      fd 0.2
+    ] [
+      ifelse (item 1 input-resource-types = "gold" and item 1 input-resource-distances != 0) and
+             ((item 0 input-resource-types != "gold") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
+             ((item 2 input-resource-types != "gold") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+        rt 5
+        fd 0.2
+      ] [
+        fd 0.2
+      ]
+    ]
+
+
+  ] [
+    ifelse member? "silver" input-resource-types and any? map [i -> (item i input-resource-types = "silver") and (item i input-resource-distances != 0)] [0 1 2] [
+
+
+      ;; Find closest silver
+      ifelse (item 0 input-resource-types = "silver" and item 0 input-resource-distances != 0) and
+             ((item 1 input-resource-types != "silver") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
+             ((item 2 input-resource-types != "silver") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+        lt 5
+        fd 0.2
+      ] [
+        ifelse (item 1 input-resource-types = "silver" and item 1 input-resource-distances != 0) and
+               ((item 0 input-resource-types != "silver") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
+               ((item 2 input-resource-types != "silver") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+          rt 5
+          fd 0.2
+        ] [
+          fd 0.2
+        ]
+      ]
+
+
+    ] [
+      ;; Default random explore behavior
       ifelse random 100 < 50 [
         fd 2
         rt random-float 45
@@ -2394,16 +2501,7 @@ ifelse member? "crystal" input-resource-types [
       ]
     ]
   ]
-] [
-  ifelse random 100 < 50 [
-    fd 2
-    rt random-float 45
-  ] [
-    rt random-float 30
-    fd 5
-  ]
 ]
-
 
 
      ```
