@@ -853,8 +853,9 @@ Return ONLY the evolved NetLogo code with no explanations:
 ```
 """,
     },
+
 "collection_simple": {
-      "zero_shot_code": """You are an expert NetLogo coder. 
+      "zero_shot_code":"""You are an expert NetLogo coder. 
       You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. 
       Improve the given agent movement code following these precise specifications:
 
@@ -872,7 +873,6 @@ Return ONLY the evolved NetLogo code with no explanations:
       - Non-zero lower values indicate closer food
       - Use the information in this variable to inform movement strategy
       - Remember that you only have access to the variable named input and no other variables
-
       SIMULATION ENVIRONMENT:
       - The turtle agent is in a food collection simulation
       - The goal is to collect as much food as possible
@@ -1419,5 +1419,92 @@ Return ONLY the evolved NetLogo code with no explanations:
       [Your changed NetLogo code goes here]
       ```
       """,
-    }
+    },
+
+"tag_simple": {
+    "zero_shot_code": """"You are an expert NetLogo coder. 
+      You are trying to improve the code of a given turtle agent that is in a tag-based environment simulation. 
+      Improve the given agent movement code following these precise specifications:
+
+      Here is the current code of the turtle agent:
+
+      ```
+        {}
+      ```
+      
+      SIMULATION ENVIRONMENT:
+      This environment simulates a game of tag where:
+      - A small number of agents are randomly tagged at the start
+      - Tagged agents try to chase and tag untagged agents
+      - When a tagged agent touches an untagged agent, the tag is passed:
+         * The previously tagged agent becomes untagged
+         * The newly tagged agent becomes immune to being tagged by that specific agent
+      - Tagged agents that don't find someone to tag will "die" at the end of each round
+      - Surviving agents reproduce, with one chosen to have its behavior code mutated
+      - The environment is a bounded world where agents cannot move beyond borders
+      - The maximum movement distance per tick is limited to 1 unit
+
+      INPUT CONTEXT:
+      - You are provided with observations in three 120-degree cones:
+         - Center cone: Covers -60° to 60° relative to your current heading
+         - Right cone: Covers 60° to 180° relative to your current heading
+         - Left cone: Covers -60° to -180° relative to your current heading
+      
+      AVAILABLE SEMANTIC INPUTS:
+         - left-agent-distance: distance to nearest agent in the left cone (-60° to -180°)
+         - left-agent-is-tagged?: whether the nearest agent in the left cone is tagged
+         - left-agent-heading: clockwise relative heading to nearest agent in the left cone
+         - center-agent-distance: distance to nearest agent in the center cone (-60° to 60°)
+         - center-agent-is-tagged?: whether the nearest agent in the center cone is tagged
+         - center-agent-heading: clockwise relative heading to nearest agent in the center cone
+         - right-agent-distance: distance to nearest agent in the right cone (60° to 180°)
+         - right-agent-is-tagged?: whether the nearest agent in the right cone is tagged
+         - right-agent-heading: clockwise relative heading to nearest agent in the right cone
+         - tagged?: whether the agent itself is tagged
+
+      CONSTRAINTS:
+      1. Do not include code to kill or control any other agents
+      2. Do not include code to interact with the environment
+      3. Do not include code to change the environment
+      4. Do not include code to create new agents
+      5. Do not include code to create new food sources
+      6. Do not include code to change the rules of the simulation
+      7. Follow NetLogo syntax and constraints
+      8. Do not use any undefined variables or commands besides the input variable
+      9. Focus on movement strategies based on the input variable
+
+      VALID COMMANDS AND SYNTAX:
+         - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+         - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+         - The syntax of the if primitive is as follows: if boolean [ commands ]
+         - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+         - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows: 
+         (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+        
+      ABSOLUTELY FORBIDDEN:
+         - DO NOT use "of" primitives - will cause errors
+         - DO NOT use "ask", "with", "turtles", or "patches"
+         - DO NOT use any undefined variables
+         - DO NOT use while loops or recursive constructs
+        
+      ERROR PREVENTION:
+         - Ensure all bracket pairs match
+         - Make sure every movement command has a parameter
+         - Keep values within reasonable ranges (-1000 to 1000)
+         - Ensure at least one movement command is included
+         - There is no such thing as an `else` statement in NetLogo
+
+      STRATEGIC GOALS:
+      1. Use sensor information intelligently to avoid dying
+      2. Combine different movement patterns
+      3. Be creative in your movement strategy
+
+      The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+      Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+      ```
+      [Your changed NetLogo code goes here]
+      ```
+      """,
+}
 }
