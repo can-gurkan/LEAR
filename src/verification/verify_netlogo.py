@@ -151,7 +151,11 @@ class NetLogoVerifier:
         self.allowed_variables = {
             'input', 'energy', 'lifetime', 'food-collected', 
             'xcor', 'ycor', 'heading', 'who', 'input-resource-distances', 'input-resource-types',
-            'food-observations', 'poison-observations', '"silver"', '"gold"', '"crystal"'
+            'food-observations', 'poison-observations', '"silver"', '"gold"', '"crystal"',
+            'left-agent-distance', 'left-agent-is-tagged?', 'left-agent-heading',
+            'center-agent-distance', 'center-agent-is-tagged?', 'center-agent-heading',
+            'right-agent-distance', 'right-agent-is-tagged?', 'right-agent-heading',
+            'is-tagged?'
         }
         
         # Precompile regex patterns for performance
