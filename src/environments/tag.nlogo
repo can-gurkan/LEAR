@@ -58,7 +58,7 @@ llm-agents-own [
   rule ;; current rule (llm-generated)
   energy ;; current score
   lifetime ;; age of the agent (in generations)
-  tagged? ;; whether the agent is currently tagged
+  is-tagged? ;; whether the agent is currently tagged
   survival-time ;; how long the agent has survived
   parent-id ;; who number of parent
   parent-rule ;; parent rule
@@ -78,15 +78,15 @@ llm-agents-own [
 
   ;; Direct access to observation data (semantic variable names)
   left-agent-distance     ;; distance to nearest agent on left
-  left-agent-is-tagged?   ;; is the nearest agent on left tagged?
+  left-agent-is-tagged?   ;; is the nearest agent on left is-tagged?
   left-agent-heading      ;; relative heading to nearest agent on left
 
   center-agent-distance   ;; distance to nearest agent in center
-  center-agent-is-tagged? ;; is the nearest agent in center tagged?
+  center-agent-is-tagged? ;; is the nearest agent in center is-tagged?
   center-agent-heading    ;; relative heading to nearest agent in center
 
   right-agent-distance    ;; distance to nearest agent on right
-  right-agent-is-tagged?  ;; is the nearest agent on right tagged?
+  right-agent-is-tagged?  ;; is the nearest agent on right is-tagged?
   right-agent-heading     ;; relative heading to nearest agent on right
 
   ;; potential experimentation: provide multiple agent distances and headings within a radius
@@ -119,7 +119,7 @@ end
 to setup-llm-agents
   create-llm-agents num-llm-agents [
     set color blue
-    set shape "person"  ;; Use person shape instead of default
+    set shape "default"  ;; Use person shape instead of default
     set size 1.5       ;; Make agents a bit larger
     setxy random-xcor random-ycor  ;; Initial random placement (will be re-arranged)
     set rule init-rule
@@ -128,14 +128,14 @@ to setup-llm-agents
     set pseudocode init-pseudocode
     set parent-pseudocode "na"
 
-    set tagged? false
+    set is-tagged? false
     set immunity-timer 0
     init-agent-params
   ]
 
   ;; Randomly tag agents at the start based on slider value
   ask n-of initial-tagged-agents llm-agents [
-    set tagged? true
+    set is-tagged? true
     set color red
   ]
 
@@ -222,7 +222,7 @@ to go
     ifelse immunity-timer > 0 [
       set shape "target"  ;; Use target shape to show immunity
     ] [
-      set shape "person"  ;; Return to person shape when not immune
+      set shape "default"  ;; Return to person shape when not immune
     ]
   ]
 
@@ -231,7 +231,7 @@ to go
     set survival-time survival-time + 1
 
     ;; Update time spent in each state
-    ifelse tagged? [
+    ifelse is-tagged? [
       set time-spent-tagged time-spent-tagged + 1
     ] [
       set time-spent-untagged time-spent-untagged + 1
@@ -283,7 +283,7 @@ to run-rule
       " | Tick: " ticks
       " | Fitness: " fitness
       " | Lifetime: " lifetime
-      " | Tagged: " tagged?
+      " | Tagged: " is-tagged?
       " | Input: " input
     )
     if ticks mod generation-length = 1 [
@@ -295,11 +295,11 @@ end
 
 to check-tagging
   ;; Only tagged agents can tag others
-  if not tagged? [ stop ]
+  if not is-tagged? [ stop ]
 
   ;; Find agents within tagging distance
   let potential-targets llm-agents in-radius tag-distance-threshold with [
-    not tagged? and      ;; only tag untagged agents
+    not is-tagged? and      ;; only tag untagged agents
     immunity-timer = 0   ;; not immune
   ]
 
@@ -309,7 +309,7 @@ to check-tagging
 
     ;; Tag the target
     ask target [
-      set tagged? true
+      set is-tagged? true
       set color red
 
       ;; Store tagger's ID to implement mutual immunity
@@ -328,7 +328,7 @@ to check-tagging
     set tags-made tags-made + 1
 
     ;; Untag the tagger (pass the tag along)
-    set tagged? false
+    set is-tagged? false
     set color blue
   ]
 end
@@ -364,7 +364,7 @@ to evolve-agents
       ask parent [
         let my-parent-id who
         hatch 1 [
-          set tagged? false
+          set is-tagged? false
           set color blue
           set parent-id my-parent-id
           set parent-rule rule
@@ -392,7 +392,7 @@ to evolve-agents
 
     ;; Reset agent states for the next generation
     ask llm-agents [
-      set tagged? false
+      set is-tagged? false
       set color blue
 
       ;; Conditionally reset fitness metrics based on the switch
@@ -407,7 +407,7 @@ to evolve-agents
 
     ;; Tag some agents at random to start the next generation
     ask n-of initial-tagged-agents llm-agents [
-      set tagged? true
+      set is-tagged? true
       set color red
     ]
 
@@ -419,12 +419,12 @@ end
 ;; Position agents with tagged at center and untagged in a surrounding circle
 to arrange-agents-in-formation
   ;; First place tagged agents at the center
-  ask llm-agents with [tagged?] [
+  ask llm-agents with [is-tagged?] [
     setxy 0 0
   ]
 
   ;; Get the untagged agents
-  let untagged-agents llm-agents with [not tagged?]
+  let untagged-agents llm-agents with [not is-tagged?]
   let num-untagged count untagged-agents
 
   if num-untagged > 0 [
@@ -557,7 +557,7 @@ to-report get-observation
   ]
 
   ;; Add tagged state as the 4th element
-  set obs lput tagged? obs
+  set obs lput is-tagged? obs
 
   report obs
 end
@@ -571,7 +571,7 @@ to-report get-agents-in-cone [dist angle]
   ifelse nearest-agent != nobody [
     ;; Return distance to nearest, whether it's tagged, and heading towards/away
     let dist-to-agent distance nearest-agent
-    let agent-tagged? [tagged?] of nearest-agent
+    let agent-tagged? [is-tagged?] of nearest-agent
     let relative-heading 0
 
     ;; Only calculate heading if not at same position (avoid "no heading defined" error)
@@ -603,7 +603,7 @@ to-report get-generation-metrics
       best-rule
       mean-fitness
       max [fitness] of llm-agents
-      ((count llm-agents with [tagged?] / count llm-agents) * 100)
+      ((count llm-agents with [is-tagged?] / count llm-agents) * 100)
       error-log)
   ] [
     (list generation "na" 0 0 0 [])
@@ -617,10 +617,10 @@ to do-plotting
   if ticks mod 10 = 0 [
     set-current-plot "Fitness Metrics"
     set-current-plot-pen "Mean Fitness"
-    plot mean [fitness] of llm-agents
+    plot mean [untagged-fitness + tagged-fitness] of llm-agents
 
     set-current-plot-pen "Max Fitness"
-    plot max [fitness] of llm-agents
+    plot max [untagged-fitness + tagged-fitness] of llm-agents
 
     ;; Update the new plot for tagged/untagged fitness
     set-current-plot "Tagged vs Untagged Fitness (Amortized)"
@@ -635,25 +635,14 @@ to do-plotting
       set-current-plot-pen "Untagged Fitness"
       plot mean-untagged-fitness
     ]
-
-    ;; Plot the ratio of time spent in each state
-    set-current-plot "Time in Each State"
-    let total-agents count llm-agents
-    if total-agents > 0 [
-      set-current-plot-pen "Time Tagged"
-      plot mean [time-spent-tagged] of llm-agents
-
-      set-current-plot-pen "Time Untagged"
-      plot mean [time-spent-untagged] of llm-agents
-    ]
   ]
 end
 
 ;; New procedure to update fitness scores based on distance from tagged agents
 to update-fitness-scores
   ;; For untagged agents: reward them for being far from tagged agents
-  ask llm-agents with [not tagged?] [
-    let nearest-tagged min-one-of (llm-agents with [tagged?]) [distance myself]
+  ask llm-agents with [not is-tagged?] [
+    let nearest-tagged min-one-of (llm-agents with [is-tagged?]) [distance myself]
 
     if nearest-tagged != nobody [
       let dist distance nearest-tagged
@@ -663,8 +652,8 @@ to update-fitness-scores
   ]
 
   ;; For tagged agents: reward them primarily based on proximity to untagged agents
-  ask llm-agents with [tagged?] [
-    let nearest-untagged min-one-of (llm-agents with [not tagged?]) [distance myself]
+  ask llm-agents with [is-tagged?] [
+    let nearest-untagged min-one-of (llm-agents with [not is-tagged?]) [distance myself]
 
     if nearest-untagged != nobody [
       let dist distance nearest-untagged
@@ -817,25 +806,6 @@ PENS
 "Tagged Fitness" 1.0 0 -2674135 true "" ""
 "Untagged Fitness" 1.0 0 -13345367 true "" ""
 
-PLOT
-680
-385
-1090
-535
-Time in Each State
-ticks
-time
-0.0
-1000.0
-0.0
-1000.0
-true
-true
-"" ""
-PENS
-"Time Tagged" 1.0 0 -2674135 true "" ""
-"Time Untagged" 1.0 0 -13345367 true "" ""
-
 SLIDER
 20
 100
@@ -914,7 +884,7 @@ immunity-duration
 immunity-duration
 0
 30
-10.0
+20.0
 1
 1
 ticks
@@ -1044,7 +1014,7 @@ MONITOR
 877
 55
 Tagged Agents
-count llm-agents with [tagged?]
+count llm-agents with [is-tagged?]
 17
 1
 11
@@ -1055,7 +1025,7 @@ MONITOR
 997
 55
 Untagged Agents
-count llm-agents with [not tagged?]
+count llm-agents with [not is-tagged?]
 17
 1
 11
@@ -1118,7 +1088,7 @@ Visual indicators:
 ## THINGS TO NOTICE
 
 - How do agent strategies evolve over time?
-- Do agents develop different behaviors when tagged versus not tagged?
+- Do agents develop different behaviors when tagged versus not is-tagged?
 - What emergent patterns of movement do you observe?
 - Do agents learn to coordinate or develop evasion tactics?
 
