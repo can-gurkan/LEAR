@@ -103,7 +103,9 @@ to setup-resources
     let spawn-location one-of patches with [not any? turtles-here]
     if spawn-location != nobody [
       create-resources 1 [
-        move-to spawn-location
+        ;move-to spawn-location
+        setxy 0 0
+        fd resource-radius
         set resource-kind one-of resource-types
         set shape resource-kind
         set color (ifelse-value (resource-kind = "silver") [gray]
@@ -118,7 +120,8 @@ end
 
 to setup-llm-agents
   create-llm-agents num-llm-agents [
-    setxy random-xcor random-ycor
+    ;setxy random-xcor random-ycor
+    setxy 0 0
     set shape "person"
     set color blue
     set size 1.25
@@ -148,7 +151,9 @@ to replenish-resources
       let spawn-location one-of patches with [not any? turtles-here]
       if spawn-location != nobody [
         create-resources 1 [
-          move-to spawn-location
+          ;move-to spawn-location
+          setxy 0 0
+          fd resource-radius
           set resource-kind one-of ["silver" "gold" "crystal"]
 
           ;; Assign visual properties
@@ -209,7 +214,7 @@ to-report get-observation  ;; returns list of two flat lists (distances and type
 
   ;; Also observe distance/angle to chest
   let chest-dist distancexy 0 0
-  let chest-heading towardsxy 0 0  ;; Angle to face the chest
+  carefully [let chest-heading towardsxy 0 0] [let chest-heading 0]  ;; Angle to face the chest
 
   ;; print(obs)
   report (list distances types)
@@ -354,6 +359,11 @@ to evolve-agents
     let new-dict agent-dict llm-agents with [member? who new-agent-ids]
     update-generation-stats
     log-metrics (list best-dict new-dict kill-dict)
+    ask llm-agents [
+      setxy 0 0
+      set resource-score 0
+      set weight 0
+    ]
   ]
 end
 
@@ -426,8 +436,8 @@ end
 GRAPHICS-WINDOW
 229
 10
-666
-448
+638
+420
 -1
 -1
 12.152
@@ -534,7 +544,7 @@ ticks-per-generation
 ticks-per-generation
 0
 500
-225.0
+500.0
 1
 1
 NIL
@@ -700,6 +710,21 @@ llm-mutation?
 0
 1
 -1000
+
+SLIDER
+35
+425
+205
+458
+resource-radius
+resource-radius
+0
+25
+12.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1098,5 +1123,5 @@ true
 Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
 @#$#@#$#@
-0
+1
 @#$#@#$#@
