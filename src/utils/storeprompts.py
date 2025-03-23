@@ -651,41 +651,119 @@ prompts = {
         """,
         "prompt4": """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
 
-INPUT CONTEXT:
-- Current rule: {}
-- Food sensor readings: 
-  - Input list contains three values representing distances to food in three cone regions of 20 degrees each
-  - The first item in the input list is the distance to the nearest food in the left cone, the second is the right cone, and the third is the front cone
-  - Each value encodes the distance to nearest food source where a value of 0 indicates no food
-  - Non-zero lower values indicate closer food
-  - Use these to inform movement strategy
+         INPUT CONTEXT:
+         - Current rule: {}
+         - Food sensor readings: 
+         - Input list contains three values representing distances to food in three cone regions of 20 degrees each
+         - The first item in the input list is the distance to the nearest food in the left cone, the second is the right cone, and the third is the front cone
+         - Each value encodes the distance to nearest food source where a value of 0 indicates no food
+         - Non-zero lower values indicate closer food
+         - Use these to inform movement strategy
 
-CONSTRAINTS:
-1. Do not include code to kill or control any other agents
-2. Do not include code to interact with the environment
-3. Do not include code to change the environment
-4. Do not include code to create new agents
-5. Do not include code to create new food sources
-6. Do not include code to change the rules of the simulation
+         CONSTRAINTS:
+         1. Do not include code to kill or control any other agents
+         2. Do not include code to interact with the environment
+         3. Do not include code to change the environment
+         4. Do not include code to create new agents
+         5. Do not include code to create new food sources
+         6. Do not include code to change the rules of the simulation
 
-EXAMPLES OF VALID PATTERNS:
-Current Rule: fd 1 rt random 45 fd 2 lt 30
-Valid: ifelse item 0 input != 0 [rt 15 fd 0.5] [rt random 30 lt random 30 fd 5]
-Why: Turns right and goes forward a little to reach food if the first element of input list contains a non-zero value, else moves forward in big steps and turns randomly to explore
+         EXAMPLES OF VALID PATTERNS:
+         Current Rule: fd 1 rt random 45 fd 2 lt 30
+         Valid: ifelse item 0 input != 0 [rt 15 fd 0.5] [rt random 30 lt random 30 fd 5]
+         Why: Turns right and goes forward a little to reach food if the first element of input list contains a non-zero value, else moves forward in big steps and turns randomly to explore
 
-INVALID EXAMPLES:
-❌ ask turtle 1 [die]
-❌ ask other turtles [die]
-❌ set energy 100
-❌ hatch-food 5
-❌ clear-all
+         INVALID EXAMPLES:
+         ❌ ask turtle 1 [die]
+         ❌ ask other turtles [die]
+         ❌ set energy 100
+         ❌ hatch-food 5
+         ❌ clear-all
 
-STRATEGIC GOALS:
-1. Balance exploration and food-seeking behavior
-2. Respond to sensor readings intelligently
-3. Combine different movement patterns
+         STRATEGIC GOALS:
+         1. Balance exploration and food-seeking behavior
+         2. Respond to sensor readings intelligently
+         3. Combine different movement patterns
 
-Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
+         Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle.""",
+
+      "prompt5" : """ You are an expert in NetLogo, designing intelligent agents that collect resources efficiently. 
+        Each agent has a resource-score that decays based on a percentage of their current weight, which increases as they collect resources. 
+        Depositing their resources at the chest in the center of the map will reset their weight to 0.
+
+         Given an agent in a resource-collection environment, generate a NetLogo strategy that balances:
+         1. Collecting resources efficiently (gold, silver, crystals).
+               - Crystals have a higher weight
+         2. Managing weight to optimize movement.
+         3. Depositing resources at the community chest before resource-score decays.
+
+         The strategy should be **compact, effective, and adaptive**. Output only valid NetLogo code.
+
+         ##### EACH AGENT HAS ACCESS TO THE FOLLOWING VARIABLES #########
+         input       ;; observations
+         rule        ;; Movement strategy (mutation variable)
+         inventory        ;; Table mapping resource types to amounts
+         weight          ;; Total weight carried
+         resource-score  ;; Total points (deposited + held)
+         parent-rule
+         parent-id
+         lifetime        ;; age of agent
+
+         EXAMPLES OF VALID PATTERNS:
+         Current Rule: fd 1 rt random 45 fd 2 lt 30
+         Valid:
+         let value0 first item 0 input
+         let resource0 last item 0 input
+
+         let value1 first item 1 input
+         let resource1 last item 1 input
+
+         let value2 first item 2 input
+         let resource2 last item 2 input
+
+         ifelse (weight > 50) [
+         face patch 0 0
+         fd 5
+         ] [
+         ifelse (resource0 = "gold" and value0 > 0) [
+            rt 15
+            fd 0.5
+         ] [
+            ifelse (resource1 = "crystal" and value1 > 0) [
+               rt random 20
+               fd 1
+            ] [
+               ifelse (resource2 = "silver" and value2 > 0) [
+               lt 10
+               fd 2
+               ] [
+               rt random 30
+               lt random 30
+               fd 5
+               ]
+            ]
+         ]
+         ]
+
+         Why: This code extracts both numerical values and resource types from the input list, prioritizes movement based on resource-specific conditions, and ensures agents return to the chest when weight exceeds 10.
+
+         CONSTRAINTS:
+         1. Do not include code to kill or control any other agents
+         2. Do not include code to interact with the environment
+         3. Do not include code to change the environment
+         4. Do not include code to create new agents
+         5. Do not include code to create new resources
+         6. Do not include code to change the rules of the simulation
+         7. Do not include any of the following primitives: ['die', 'kill', 'create', 'hatch', 'sprout', 'ask', 'of', 'with', 'run', 'runresult','file', 'import', 'export', 'clear', 'reset', 'setup', 'go']
+         8. Do not call any variables that the agent does not have access to.
+
+         ###### AGENT DETAILS ######
+         Current Rule of Agent: {}
+
+
+         **Your GOAL is to mutate the strategy so that the agent maximizes resource-score.**
+
+         """
     },
     
     # Claude prompts
@@ -1419,5 +1497,1883 @@ Return ONLY the evolved NetLogo code with no explanations:
       [Your changed NetLogo code goes here]
       ```
       """,
-    }
+    },
+
+    "collection_resource": {
+     "zero_shot_code": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
+
+
+     Improve the given agent movement code following these precise specifications:
+
+
+     Here is the current code of the turtle agent:
+
+
+     ```
+       {}
+     ```
+
+
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+
+
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+
+
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+
+
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+
+
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+     "one_shot_code": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays.
+
+
+     Improve the given agent movement code following these precise specifications:
+
+
+     Here is the current code of the turtle agent:
+
+
+     ```
+       {}
+     ```
+
+
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+
+
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+
+
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+
+
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+
+
+     EXAMPLES OF VALID CODE GENERATION:
+     Current Code: ```fd 1 rt random 45 fd 2 lt 30```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
+```
+     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+
+
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+     "two_shot_code": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays.
+
+
+     Improve the given agent movement code following these precise specifications:
+
+
+     Here is the current code of the turtle agent:
+
+
+     ```
+       {}
+     ```
+
+
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+
+
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+
+
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+
+
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+
+
+     EXAMPLES OF VALID CODE GENERATION:
+     Current Code: ```fd 1 rt random 45 fd 2 lt 30```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
+```
+     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+
+
+
+
+     Current Code:
+     ```
+     ifelse (item 0 input-resource-distances != 0) [
+  ifelse (item 0 input-resource-types = "gold") [
+    lt 5
+    fd 0.2
+  ] [
+    ifelse (item 1 input-resource-distances != 0) [
+      ifelse (item 1 input-resource-types = "silver") [
+        rt 5
+        fd 0.2
+      ] [
+        ifelse (item 2 input-resource-distances != 0) [
+          ifelse (item 2 input-resource-types = "crystal") [
+            fd 0.2
+          ] [
+            ifelse (random 100 < 50) [
+              fd 2
+              rt random-float 45
+            ] [
+              rt random-float 30
+              fd 5
+            ]
+          ]
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ]
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ]
+] [
+  ifelse (item 1 input-resource-distances != 0) [
+    ifelse (item 1 input-resource-types = "silver") [
+      rt 5
+      fd 0.2
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ] [
+    ifelse (item 2 input-resource-distances != 0) [
+      ifelse (item 2 input-resource-types = "crystal") [
+        fd 0.2
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ] [
+      ifelse (random 100 < 50) [
+        fd 2
+        rt random-float 45
+      ] [
+        rt random-float 30
+        fd 5
+      ]
+    ]
+  ]
+]
+     
+     ```
+     Changed Code:
+     ```
+ifelse member? "crystal" input-resource-types [
+  ifelse any? map [i -> (item i input-resource-types = "crystal") and (item i input-resource-distances != 0)] [0 1 2] [
+
+
+    ifelse (item 0 input-resource-types = "crystal") [
+      ifelse (item 0 input-resource-distances != 0) [
+        ifelse ((item 1 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
+          ifelse ((item 2 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+            lt 5
+            fd 0.2
+          ] [
+            fd 0.2
+          ]
+        ] [
+          fd 0.2
+        ]
+      ] [
+        fd 0.2
+      ]
+    ] [
+      ifelse (item 1 input-resource-types = "crystal") [
+        ifelse (item 1 input-resource-distances != 0) [
+          ifelse ((item 0 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
+            ifelse ((item 2 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+              rt 5
+              fd 0.2
+            ] [
+              fd 0.2
+            ]
+          ] [
+            fd 0.2
+          ]
+        ] [
+          fd 0.2
+        ]
+      ] [
+        fd 0.2
+      ]
+    ]
+
+
+  ] [ ; no valid "crystal"
+    ifelse member? "gold" input-resource-types [
+      ifelse any? map [i -> (item i input-resource-types = "gold") and (item i input-resource-distances != 0)] [0 1 2] [
+
+
+        ifelse (item 0 input-resource-types = "gold") [
+          ifelse (item 0 input-resource-distances != 0) [
+            ifelse ((item 1 input-resource-types != "gold") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
+              ifelse ((item 2 input-resource-types != "gold") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+                lt 5
+                fd 0.2
+              ] [
+                fd 0.2
+              ]
+            ] [
+              fd 0.2
+            ]
+          ] [
+            fd 0.2
+          ]
+        ] [
+          ifelse (item 1 input-resource-types = "gold") [
+            ifelse (item 1 input-resource-distances != 0) [
+              ifelse ((item 0 input-resource-types != "gold") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
+                ifelse ((item 2 input-resource-types != "gold") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+                  rt 5
+                  fd 0.2
+                ] [
+                  fd 0.2
+                ]
+              ] [
+                fd 0.2
+              ]
+            ] [
+              fd 0.2
+            ]
+          ] [
+            fd 0.2
+          ]
+        ]
+
+
+      ] [ ; no valid "gold"
+        ifelse member? "silver" input-resource-types [
+          ifelse any? map [i -> (item i input-resource-types = "silver") and (item i input-resource-distances != 0)] [0 1 2] [
+
+
+            ifelse (item 0 input-resource-types = "silver") [
+              ifelse (item 0 input-resource-distances != 0) [
+                ifelse ((item 1 input-resource-types != "silver") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
+                  ifelse ((item 2 input-resource-types != "silver") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+                    lt 5
+                    fd 0.2
+                  ] [
+                    fd 0.2
+                  ]
+                ] [
+                  fd 0.2
+                ]
+              ] [
+                fd 0.2
+              ]
+            ] [
+              ifelse (item 1 input-resource-types = "silver") [
+                ifelse (item 1 input-resource-distances != 0) [
+                  ifelse ((item 0 input-resource-types != "silver") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
+                    ifelse ((item 2 input-resource-types != "silver") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+                      rt 5
+                      fd 0.2
+                    ] [
+                      fd 0.2
+                    ]
+                  ] [
+                    fd 0.2
+                  ]
+                ] [
+                  fd 0.2
+                ]
+              ] [
+                fd 0.2
+              ]
+            ]
+
+
+          ] [ ; no valid "silver"
+            ifelse random 100 < 50 [
+              fd 2
+              rt random-float 45
+            ] [
+              rt random-float 30
+              fd 5
+            ]
+          ]
+        ] [ ; not even "silver"
+          ifelse random 100 < 50 [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ]
+    ] [ ; not even "gold"
+      ifelse random 100 < 50 [
+        fd 2
+        rt random-float 45
+      ] [
+        rt random-float 30
+        fd 5
+      ]
+    ]
+  ]
+] [
+  ifelse random 100 < 50 [
+    fd 2
+    rt random-float 45
+  ] [
+    rt random-float 30
+    fd 5
+  ]
+]
+
+
+     ```
+     Why: This code directs the agent to move toward the closest instance of the highest-value resource it can detect—crystal first, then gold, then silver—based on distances in three vision cones (left, right, front), and defaults to random wandering if no resources are seen.
+
+
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+     "zero_shot_code_wcomments": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays.
+
+
+     Improve the given agent movement code following these precise specifications:
+
+
+     Here is the current code of the turtle agent:
+
+
+     ```
+       {}
+     ```
+
+
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+
+
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+
+
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+
+
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+
+
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Detail your strategy in netlogo code comments (;;) before you generate the implementation. Include comments throughout the code to explain your strategy.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+     "one_shot_code_wcomments": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
+
+
+     Improve the given agent movement code following these precise specifications:
+
+
+     Here is the current code of the turtle agent:
+
+
+     ```
+       {}
+     ```
+
+
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+
+
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+
+
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+
+
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+
+
+     EXAMPLES OF VALID CODE GENERATION:
+     Current Code: ```fd 1 rt random 45 fd 2 lt 30```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
+```
+     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+
+
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Detail your strategy in netlogo code comments (;;) before you generate the implementation. Include comments throughout the code to explain your strategy.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+     "two_shot_code_wcomments": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
+
+
+     Improve the given agent movement code following these precise specifications:
+
+
+     Here is the current code of the turtle agent:
+
+
+     ```
+       {}
+     ```
+
+
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+
+
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+
+
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+
+
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+
+
+     EXAMPLES OF VALID CODE GENERATION:
+     Current Code: ```fd 1 rt random 45 fd 2 lt 30```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]```
+     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+
+
+     Current Code:
+     ```
+     ifelse (item 0 input-resource-distances != 0) [
+  ifelse (item 0 input-resource-types = "gold") [
+    lt 5
+    fd 0.2
+  ] [
+    ifelse (item 1 input-resource-distances != 0) [
+      ifelse (item 1 input-resource-types = "silver") [
+        rt 5
+        fd 0.2
+      ] [
+        ifelse (item 2 input-resource-distances != 0) [
+          ifelse (item 2 input-resource-types = "crystal") [
+            fd 0.2
+          ] [
+            ifelse (random 100 < 50) [
+              fd 2
+              rt random-float 45
+            ] [
+              rt random-float 30
+              fd 5
+            ]
+          ]
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ]
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ]
+] [
+  ifelse (item 1 input-resource-distances != 0) [
+    ifelse (item 1 input-resource-types = "silver") [
+      rt 5
+      fd 0.2
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ] [
+    ifelse (item 2 input-resource-distances != 0) [
+      ifelse (item 2 input-resource-types = "crystal") [
+        fd 0.2
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ] [
+      ifelse (random 100 < 50) [
+        fd 2
+        rt random-float 45
+      ] [
+        rt random-float 30
+        fd 5
+      ]
+    ]
+  ]
+]
+
+
+     ```
+     Changed Code:
+     ```
+     ;; Prioritize: crystal > gold > silver
+ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-resource-types = "crystal") and (item i input-resource-distances != 0)] [0 1 2] [
+  
+  ;; Find closest crystal
+  ifelse (item 0 input-resource-types = "crystal" and item 0 input-resource-distances != 0) and
+         ((item 1 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
+         ((item 2 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+    lt 5
+    fd 0.2
+  ] [
+    ifelse (item 1 input-resource-types = "crystal" and item 1 input-resource-distances != 0) and
+           ((item 0 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
+           ((item 2 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+      rt 5
+      fd 0.2
+    ] [
+      fd 0.2
+    ]
+  ]
+
+
+] [
+  ifelse member? "gold" input-resource-types and any? map [i -> (item i input-resource-types = "gold") and (item i input-resource-distances != 0)] [0 1 2] [
+
+
+    ;; Find closest gold
+    ifelse (item 0 input-resource-types = "gold" and item 0 input-resource-distances != 0) and
+           ((item 1 input-resource-types != "gold") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
+           ((item 2 input-resource-types != "gold") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+      lt 5
+      fd 0.2
+    ] [
+      ifelse (item 1 input-resource-types = "gold" and item 1 input-resource-distances != 0) and
+             ((item 0 input-resource-types != "gold") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
+             ((item 2 input-resource-types != "gold") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+        rt 5
+        fd 0.2
+      ] [
+        fd 0.2
+      ]
+    ]
+
+
+  ] [
+    ifelse member? "silver" input-resource-types and any? map [i -> (item i input-resource-types = "silver") and (item i input-resource-distances != 0)] [0 1 2] [
+
+
+      ;; Find closest silver
+      ifelse (item 0 input-resource-types = "silver" and item 0 input-resource-distances != 0) and
+             ((item 1 input-resource-types != "silver") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
+             ((item 2 input-resource-types != "silver") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+        lt 5
+        fd 0.2
+      ] [
+        ifelse (item 1 input-resource-types = "silver" and item 1 input-resource-distances != 0) and
+               ((item 0 input-resource-types != "silver") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
+               ((item 2 input-resource-types != "silver") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+          rt 5
+          fd 0.2
+        ] [
+          fd 0.2
+        ]
+      ]
+
+
+    ] [
+      ;; Default random explore behavior
+      ifelse random 100 < 50 [
+        fd 2
+        rt random-float 45
+      ] [
+        rt random-float 30
+        fd 5
+      ]
+    ]
+  ]
+]
+
+
+     ```
+     Why: This code directs the agent to move toward the closest instance of the highest-value resource it can detect—crystal first, then gold, then silver—based on distances in three vision cones (left, right, front), and defaults to random wandering if no resources are seen.
+
+
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Detail your strategy in netlogo code comments (;;) before you generate the implementation. Include comments throughout the code to explain your strategy.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+   },
+       "collection_resource": {
+     "zero_shot_code": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
+     Improve the given agent movement code following these precise specifications:
+     Here is the current code of the turtle agent:
+     ```
+       {}
+     ```
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+     "one_shot_code": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays.
+     Improve the given agent movement code following these precise specifications:
+     Here is the current code of the turtle agent:
+     ```
+       {}
+     ```
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+     EXAMPLES OF VALID CODE GENERATION:
+     Current Code: ```fd 1 rt random 45 fd 2 lt 30```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
+```
+     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+     "two_shot_code": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays.
+     Improve the given agent movement code following these precise specifications:
+     Here is the current code of the turtle agent:
+     ```
+       {}
+     ```
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+     EXAMPLES OF VALID CODE GENERATION:
+     Current Code: ```fd 1 rt random 45 fd 2 lt 30```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
+```
+     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+     Current Code:
+     ```
+     ifelse (item 0 input-resource-distances != 0) [
+  ifelse (item 0 input-resource-types = "gold") [
+    lt 5
+    fd 0.2
+  ] [
+    ifelse (item 1 input-resource-distances != 0) [
+      ifelse (item 1 input-resource-types = "silver") [
+        rt 5
+        fd 0.2
+      ] [
+        ifelse (item 2 input-resource-distances != 0) [
+          ifelse (item 2 input-resource-types = "crystal") [
+            fd 0.2
+          ] [
+            ifelse (random 100 < 50) [
+              fd 2
+              rt random-float 45
+            ] [
+              rt random-float 30
+              fd 5
+            ]
+          ]
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ]
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ]
+] [
+  ifelse (item 1 input-resource-distances != 0) [
+    ifelse (item 1 input-resource-types = "silver") [
+      rt 5
+      fd 0.2
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ] [
+    ifelse (item 2 input-resource-distances != 0) [
+      ifelse (item 2 input-resource-types = "crystal") [
+        fd 0.2
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ] [
+      ifelse (random 100 < 50) [
+        fd 2
+        rt random-float 45
+      ] [
+        rt random-float 30
+        fd 5
+      ]
+    ]
+  ]
+]
+     
+     ```
+     Changed Code:
+     ```
+ifelse member? "crystal" input-resource-types [
+  ifelse any? map [i -> (item i input-resource-types = "crystal") and (item i input-resource-distances != 0)] [0 1 2] [
+    ifelse (item 0 input-resource-types = "crystal") [
+      ifelse (item 0 input-resource-distances != 0) [
+        ifelse ((item 1 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
+          ifelse ((item 2 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+            lt 5
+            fd 0.2
+          ] [
+            fd 0.2
+          ]
+        ] [
+          fd 0.2
+        ]
+      ] [
+        fd 0.2
+      ]
+    ] [
+      ifelse (item 1 input-resource-types = "crystal") [
+        ifelse (item 1 input-resource-distances != 0) [
+          ifelse ((item 0 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
+            ifelse ((item 2 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+              rt 5
+              fd 0.2
+            ] [
+              fd 0.2
+            ]
+          ] [
+            fd 0.2
+          ]
+        ] [
+          fd 0.2
+        ]
+      ] [
+        fd 0.2
+      ]
+    ]
+  ] [ ; no valid "crystal"
+    ifelse member? "gold" input-resource-types [
+      ifelse any? map [i -> (item i input-resource-types = "gold") and (item i input-resource-distances != 0)] [0 1 2] [
+        ifelse (item 0 input-resource-types = "gold") [
+          ifelse (item 0 input-resource-distances != 0) [
+            ifelse ((item 1 input-resource-types != "gold") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
+              ifelse ((item 2 input-resource-types != "gold") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+                lt 5
+                fd 0.2
+              ] [
+                fd 0.2
+              ]
+            ] [
+              fd 0.2
+            ]
+          ] [
+            fd 0.2
+          ]
+        ] [
+          ifelse (item 1 input-resource-types = "gold") [
+            ifelse (item 1 input-resource-distances != 0) [
+              ifelse ((item 0 input-resource-types != "gold") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
+                ifelse ((item 2 input-resource-types != "gold") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+                  rt 5
+                  fd 0.2
+                ] [
+                  fd 0.2
+                ]
+              ] [
+                fd 0.2
+              ]
+            ] [
+              fd 0.2
+            ]
+          ] [
+            fd 0.2
+          ]
+        ]
+      ] [ ; no valid "gold"
+        ifelse member? "silver" input-resource-types [
+          ifelse any? map [i -> (item i input-resource-types = "silver") and (item i input-resource-distances != 0)] [0 1 2] [
+            ifelse (item 0 input-resource-types = "silver") [
+              ifelse (item 0 input-resource-distances != 0) [
+                ifelse ((item 1 input-resource-types != "silver") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
+                  ifelse ((item 2 input-resource-types != "silver") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+                    lt 5
+                    fd 0.2
+                  ] [
+                    fd 0.2
+                  ]
+                ] [
+                  fd 0.2
+                ]
+              ] [
+                fd 0.2
+              ]
+            ] [
+              ifelse (item 1 input-resource-types = "silver") [
+                ifelse (item 1 input-resource-distances != 0) [
+                  ifelse ((item 0 input-resource-types != "silver") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
+                    ifelse ((item 2 input-resource-types != "silver") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+                      rt 5
+                      fd 0.2
+                    ] [
+                      fd 0.2
+                    ]
+                  ] [
+                    fd 0.2
+                  ]
+                ] [
+                  fd 0.2
+                ]
+              ] [
+                fd 0.2
+              ]
+            ]
+          ] [ ; no valid "silver"
+            ifelse random 100 < 50 [
+              fd 2
+              rt random-float 45
+            ] [
+              rt random-float 30
+              fd 5
+            ]
+          ]
+        ] [ ; not even "silver"
+          ifelse random 100 < 50 [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ]
+    ] [ ; not even "gold"
+      ifelse random 100 < 50 [
+        fd 2
+        rt random-float 45
+      ] [
+        rt random-float 30
+        fd 5
+      ]
+    ]
+  ]
+] [
+  ifelse random 100 < 50 [
+    fd 2
+    rt random-float 45
+  ] [
+    rt random-float 30
+    fd 5
+  ]
+]
+     ```
+     Why: This code directs the agent to move toward the closest instance of the highest-value resource it can detect—crystal first, then gold, then silver—based on distances in three vision cones (left, right, front), and defaults to random wandering if no resources are seen.
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+     "zero_shot_code_wcomments": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays.
+     Improve the given agent movement code following these precise specifications:
+     Here is the current code of the turtle agent:
+     ```
+       {}
+     ```
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Detail your strategy in netlogo code comments (;;) before you generate the implementation. Include comments throughout the code to explain your strategy.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+     "one_shot_code_wcomments": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
+     Improve the given agent movement code following these precise specifications:
+     Here is the current code of the turtle agent:
+     ```
+       {}
+     ```
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+     EXAMPLES OF VALID CODE GENERATION:
+     Current Code: ```fd 1 rt random 45 fd 2 lt 30```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
+```
+     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Detail your strategy in netlogo code comments (;;) before you generate the implementation. Include comments throughout the code to explain your strategy.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+     "two_shot_code_wcomments": """You are an expert NetLogo coder.
+     You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
+     Improve the given agent movement code following these precise specifications:
+     Here is the current code of the turtle agent:
+     ```
+       {}
+     ```
+     INPUT CONTEXT:
+     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
+     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+     - Non-zero lower values in input-resource-distances indicate closer resources
+     - Use the information in this variable to inform movement strategy
+     - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+     SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+     - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center. 
+     - The turtle agent can detect resources in three cone regions encoded in the input list
+     - The resources are randomly distributed in the environment
+     - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+     CONSTRAINTS:
+     1. Do not include code to kill or control any other agents
+     2. Do not include code to interact with the environment
+     3. Do not include code to change the environment
+     4. Do not include code to create new agents
+     5. Do not include code to create new resources
+     6. Do not include code to change the rules of the simulation
+     7. Do not include code to call pick-up or deposit. They are called automatically
+     8. Follow NetLogo syntax and constraints
+     9. Do not use any undefined variables or commands besides the input and weight variable
+     10. Focus on movement strategies based on the input and weight variables
+     VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      
+     ABSOLUTELY FORBIDDEN:
+        - DO NOT use "of" primitives - will cause errors
+        - DO NOT use "ask", "with", "turtles", or "patches"
+        - DO NOT use any undefined variables
+        - DO NOT use while loops or recursive constructs
+      
+     ERROR PREVENTION:
+        - Ensure all bracket pairs match
+        - Make sure every movement command has a parameter
+        - Keep values within reasonable ranges (-1000 to 1000)
+        - Ensure at least one movement command is included
+        - There is no such thing as an `else` statement in NetLogo
+     STRATEGIC GOALS:
+     1. Balance depositing and resource-seeking behavior 
+     2. Respond to sensor readings intelligently
+     3. Combine different movement patterns
+     4. Be creative in your movement strategy
+     EXAMPLES OF VALID CODE GENERATION:
+     Current Code: ```fd 1 rt random 45 fd 2 lt 30```
+     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]```
+     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+     Current Code:
+     ```
+     ifelse (item 0 input-resource-distances != 0) [
+  ifelse (item 0 input-resource-types = "gold") [
+    lt 5
+    fd 0.2
+  ] [
+    ifelse (item 1 input-resource-distances != 0) [
+      ifelse (item 1 input-resource-types = "silver") [
+        rt 5
+        fd 0.2
+      ] [
+        ifelse (item 2 input-resource-distances != 0) [
+          ifelse (item 2 input-resource-types = "crystal") [
+            fd 0.2
+          ] [
+            ifelse (random 100 < 50) [
+              fd 2
+              rt random-float 45
+            ] [
+              rt random-float 30
+              fd 5
+            ]
+          ]
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ]
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ]
+] [
+  ifelse (item 1 input-resource-distances != 0) [
+    ifelse (item 1 input-resource-types = "silver") [
+      rt 5
+      fd 0.2
+    ] [
+      ifelse (item 2 input-resource-distances != 0) [
+        ifelse (item 2 input-resource-types = "crystal") [
+          fd 0.2
+        ] [
+          ifelse (random 100 < 50) [
+            fd 2
+            rt random-float 45
+          ] [
+            rt random-float 30
+            fd 5
+          ]
+        ]
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ]
+  ] [
+    ifelse (item 2 input-resource-distances != 0) [
+      ifelse (item 2 input-resource-types = "crystal") [
+        fd 0.2
+      ] [
+        ifelse (random 100 < 50) [
+          fd 2
+          rt random-float 45
+        ] [
+          rt random-float 30
+          fd 5
+        ]
+      ]
+    ] [
+      ifelse (random 100 < 50) [
+        fd 2
+        rt random-float 45
+      ] [
+        rt random-float 30
+        fd 5
+      ]
+    ]
+  ]
+]
+     ```
+     Changed Code:
+     ```
+     ;; Prioritize: crystal > gold > silver
+ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-resource-types = "crystal") and (item i input-resource-distances != 0)] [0 1 2] [
+  
+  ;; Find closest crystal
+  ifelse (item 0 input-resource-types = "crystal" and item 0 input-resource-distances != 0) and
+         ((item 1 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
+         ((item 2 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+    lt 5
+    fd 0.2
+  ] [
+    ifelse (item 1 input-resource-types = "crystal" and item 1 input-resource-distances != 0) and
+           ((item 0 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
+           ((item 2 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+      rt 5
+      fd 0.2
+    ] [
+      fd 0.2
+    ]
+  ]
+] [
+  ifelse member? "gold" input-resource-types and any? map [i -> (item i input-resource-types = "gold") and (item i input-resource-distances != 0)] [0 1 2] [
+    ;; Find closest gold
+    ifelse (item 0 input-resource-types = "gold" and item 0 input-resource-distances != 0) and
+           ((item 1 input-resource-types != "gold") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
+           ((item 2 input-resource-types != "gold") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+      lt 5
+      fd 0.2
+    ] [
+      ifelse (item 1 input-resource-types = "gold" and item 1 input-resource-distances != 0) and
+             ((item 0 input-resource-types != "gold") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
+             ((item 2 input-resource-types != "gold") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+        rt 5
+        fd 0.2
+      ] [
+        fd 0.2
+      ]
+    ]
+  ] [
+    ifelse member? "silver" input-resource-types and any? map [i -> (item i input-resource-types = "silver") and (item i input-resource-distances != 0)] [0 1 2] [
+      ;; Find closest silver
+      ifelse (item 0 input-resource-types = "silver" and item 0 input-resource-distances != 0) and
+             ((item 1 input-resource-types != "silver") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
+             ((item 2 input-resource-types != "silver") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
+        lt 5
+        fd 0.2
+      ] [
+        ifelse (item 1 input-resource-types = "silver" and item 1 input-resource-distances != 0) and
+               ((item 0 input-resource-types != "silver") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
+               ((item 2 input-resource-types != "silver") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
+          rt 5
+          fd 0.2
+        ] [
+          fd 0.2
+        ]
+      ]
+    ] [
+      ;; Default random explore behavior
+      ifelse random 100 < 50 [
+        fd 2
+        rt random-float 45
+      ] [
+        rt random-float 30
+        fd 5
+      ]
+    ]
+  ]
+]
+     ```
+     Why: This code directs the agent to move toward the closest instance of the highest-value resource it can detect—crystal first, then gold, then silver—based on distances in three vision cones (left, right, front), and defaults to random wandering if no resources are seen.
+     The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+     Detail your strategy in netlogo code comments (;;) before you generate the implementation. Include comments throughout the code to explain your strategy.
+     Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+     ```
+     [Your changed NetLogo code goes here]
+     ```
+     """,
+   }
+
 }
