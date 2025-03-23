@@ -2,8 +2,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain.chains import LLMChain
 from typing import Optional, Union, Tuple
-from src.utils.logging import setup_logging
-from src.utils.prompts import LEARPrompts
+from src.utils.logging import get_logger
+from src.utils.storeprompts import prompts
 
 from src.generators.base import BaseCodeGenerator
 from src.mutation.text_based_evolution import TextBasedEvolution
@@ -22,8 +22,7 @@ class LangChainCodeGenerator(BaseCodeGenerator):
         super().__init__(verifier)
         self.provider = provider
         self.thought_log = []  # For future agentic capabilities
-        self.logger = setup_logging()
-        self.prompts = LEARPrompts()
+        self.logger = get_logger()
 
     def _build_chain_of_thought_prompt(self, agent_info: list, evolution_description: Optional[str] = None) -> ChatPromptTemplate:
         """Construct chain-of-thought prompt template with optional evolution description."""
@@ -32,14 +31,14 @@ class LangChainCodeGenerator(BaseCodeGenerator):
         if evolution_description:
             
             return ChatPromptTemplate.from_messages([
-                ("system", self.prompts.langchain_system_message),
-                ("user", self.prompts.langchain_user_message_evolution.format(code=agent_info[0], evolution_description=evolution_description))
+                ("system", prompts["langchain"]["cot_system"]),
+                ("user", "This is the evolution description: {evolution_description} Here is the code: {code}".format(evolution_description=evolution_description, code=agent_info[0]))
             ])
         else:
             base_prompt = self.get_base_prompt(agent_info)
             return ChatPromptTemplate.from_messages([
-                ("system", self.prompts.langchain_system_message),
-                ("user", self.prompts.langchain_user_message.format(base_prompt=base_prompt, code=agent_info[0], inputs=agent_info[1]))
+                ("system", prompts["langchain"]["cot_system"]),
+                ("user", prompts["langchain"]["cot_template"].format(base_prompt=base_prompt, code=agent_info[0], inputs=agent_info[1]))
             ])
 
     def _generate_code_internal(self, agent_info: list, error_prompt: Optional[str] = None, use_text_evolution: bool = False) -> str:

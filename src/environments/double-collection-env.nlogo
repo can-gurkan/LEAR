@@ -13,6 +13,7 @@ globals [
   best-rule
   best-rule-fitness
   error-log
+  init-pseudocode
 
   ;selection
   ;num-parents
@@ -35,6 +36,8 @@ llm-agents-own [
   poison-ingested ;; total poison agent has ingested
   parent-id ;; who number of parent
   parent-rule ;; parent rule
+  pseudocode ;; descriptive text rule
+  parent-pseudocode ;; pseudocode associated with the parent
 ]
 
 ;;; Setup Procedures
@@ -49,6 +52,15 @@ to setup-params
   ]
 end
 
+to-report get-additional-params
+  report (list
+    list "num-food-sources" num-food-sources
+    list "init-rule" init-rule
+    list "init-pseudocode" init-pseudocode
+  )
+end
+
+
 to setup-llm-agents
   create-llm-agents num-llm-agents [
     set color red
@@ -56,6 +68,8 @@ to setup-llm-agents
     set rule init-rule
     set parent-id "na"
     set parent-rule "na"
+    set pseudocode init-pseudocode
+    set parent-pseudocode "na"
     init-agent-params ;; Init with zero energy
   ]
 end
@@ -95,6 +109,8 @@ to setup
   py:run "from src.mutation.mutate_code import mutate_code"
 
   set init-rule "lt random 20 rt random 20 fd 1"
+  set init-pseudocode "Take left turn randomly within 0-20 degrees, then take right turn randomly within 0-20 degrees and move forward 1"
+
   set generation-stats []
   set error-log []
   set best-rule-fitness 0
@@ -103,7 +119,7 @@ to setup
   spawn-poison num-poison-sources
   setup-llm-agents
   setup-params
-  if logging? [ setup-logger ]
+  if logging? [ setup-logger get-additional-params ]
   reset-ticks
 end
 
@@ -162,9 +178,12 @@ to evolve-agents
     foreach parents [ parent ->
       ask parent [
         let my-parent-id who
+        let my-rule rule
+        let my-pseudocode pseudocode
         hatch 1 [
           set parent-id my-parent-id
-          set parent-rule rule
+          set parent-rule my-rule
+          set parent-pseudocode my-pseudocode
           set rule mutate-rule
           init-agent-params
           set new-agent-ids lput who new-agent-ids
@@ -582,6 +601,17 @@ num-poison-sources
 1
 NIL
 HORIZONTAL
+
+SWITCH
+420
+470
+532
+503
+verbose?
+verbose?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?

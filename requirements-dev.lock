@@ -64,6 +64,7 @@ httpcore==1.0.7
 httpx==0.27.2
     # via anthropic
     # via groq
+    # via langgraph-sdk
     # via langsmith
     # via lear
     # via openai
@@ -97,6 +98,9 @@ langchain-core==0.3.35
     # via langchain-groq
     # via langchain-openai
     # via langchain-text-splitters
+    # via langgraph
+    # via langgraph-checkpoint
+    # via langgraph-prebuilt
     # via lear
 langchain-deepseek==0.1.2
     # via lear
@@ -106,6 +110,15 @@ langchain-openai==0.3.6
     # via langchain-deepseek
 langchain-text-splitters==0.3.6
     # via langchain
+langgraph==0.3.18
+    # via lear
+langgraph-checkpoint==2.0.21
+    # via langgraph
+    # via langgraph-prebuilt
+langgraph-prebuilt==0.1.4
+    # via langgraph
+langgraph-sdk==0.1.58
+    # via langgraph
 langsmith==0.3.8
     # via langchain
     # via langchain-core
@@ -117,6 +130,8 @@ matplotlib==3.10.0
     # via seaborn
 mdurl==0.1.2
     # via markdown-it-py
+msgpack==1.1.0
+    # via langgraph-checkpoint
 multidict==6.1.0
     # via aiohttp
     # via yarl
@@ -130,6 +145,7 @@ openai==1.63.0
     # via instructor
     # via langchain-openai
 orjson==3.10.15
+    # via langgraph-sdk
     # via langsmith
 packaging==24.2
     # via langchain-core

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import logging
 import gin
 
-from src.utils.prompts import LEARPrompts
+from src.utils.storeprompts import prompts
 from src.utils.retry import CodeRetryHandler
 from src.verification.verify_netlogo import NetLogoVerifier
 
@@ -30,25 +30,21 @@ class BaseCodeGenerator(ABC):
             
         #if not isinstance(agent_info[1], list) or len(agent_info[1]) != 3:
          #   return False, "Second element must be a list with exactly 3 food distances"
+        #if not isinstance(agent_info[1], list) or len(agent_info[1]) != 3:
+        #    return False, "Second element must be a list with exactly 3 food distances"
             
-        #if not all(isinstance(x, (list)) for x in agent_info[1]):
-         #   return False, "All food distances must be numbers"
+        # if not all(isinstance(x, (int, float)) for x in agent_info[1]):
+        #     return False, "All food distances must be numbers"
             
         return True, None
 
     @gin.configurable
-    def get_base_prompt(self, agent_info: list, model_type: str, model_prompt=None) -> str:
+    def get_base_prompt(self, rule: str, prompt_type=None, prompt_name=None) -> str:
         """Construct and return base prompt."""
         
-        # Considering only rule and food input for now
-        # TO DO: get rid of food_input
-        rule = agent_info[0]
-        food_input = agent_info[1]
-        
-        prompt_library = LEARPrompts()
-        prompt = getattr(prompt_library, model_prompt) 
+        prompt = prompts[prompt_type][prompt_name]
                 
-        return prompt.format(rule, food_input)
+        return prompt.format(rule)
     
     @abstractmethod
     def generate_code(self, agent_info: list) -> str:
