@@ -1520,7 +1520,7 @@ Return ONLY the evolved NetLogo code with no explanations:
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -1604,7 +1604,7 @@ Return ONLY the evolved NetLogo code with no explanations:
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -1695,7 +1695,7 @@ Return ONLY the evolved NetLogo code with no explanations:
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2071,7 +2071,7 @@ ifelse member? "crystal" input-resource-types [
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2156,7 +2156,7 @@ ifelse member? "crystal" input-resource-types [
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2248,7 +2248,7 @@ ifelse member? "crystal" input-resource-types [
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2530,7 +2530,7 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2594,7 +2594,7 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2663,7 +2663,7 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2999,7 +2999,7 @@ ifelse member? "crystal" input-resource-types [
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -3072,7 +3072,7 @@ ifelse member? "crystal" input-resource-types [
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -3164,7 +3164,7 @@ ifelse member? "crystal" input-resource-types [
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
