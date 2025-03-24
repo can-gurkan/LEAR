@@ -1,3 +1,5 @@
+from src.utils.prompts import poison_prompts
+
 """Collection of prompts used throughout the LEAR system
 
 PROMPT STRUCTURE:
@@ -1518,7 +1520,7 @@ Return ONLY the evolved NetLogo code with no explanations:
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -1602,7 +1604,7 @@ Return ONLY the evolved NetLogo code with no explanations:
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -1693,7 +1695,7 @@ Return ONLY the evolved NetLogo code with no explanations:
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2069,7 +2071,7 @@ ifelse member? "crystal" input-resource-types [
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2136,7 +2138,7 @@ ifelse member? "crystal" input-resource-types [
      [Your changed NetLogo code goes here]
      ```
      """,
-     "one_shot_code_wcomments": """You are an expert NetLogo coder.
+     "one_shot_code_wcomments": """You are an expert NetLogo coder. 
      You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
 
 
@@ -2154,7 +2156,7 @@ ifelse member? "crystal" input-resource-types [
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2228,7 +2230,7 @@ ifelse member? "crystal" input-resource-types [
      [Your changed NetLogo code goes here]
      ```
      """,
-     "two_shot_code_wcomments": """You are an expert NetLogo coder.
+     "two_shot_code_wcomments": """You are an expert NetLogo coder. 
      You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
 
 
@@ -2246,7 +2248,7 @@ ifelse member? "crystal" input-resource-types [
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2420,8 +2422,7 @@ ifelse member? "crystal" input-resource-types [
     ]
   ]
 ]
-
-
+     
      ```
      Changed Code:
      ```
@@ -2529,7 +2530,7 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2593,7 +2594,7 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2662,7 +2663,7 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -2998,7 +2999,7 @@ ifelse member? "crystal" input-resource-types [
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -3055,19 +3056,29 @@ ifelse member? "crystal" input-resource-types [
      """,
      "one_shot_code_wcomments": """You are an expert NetLogo coder.
      You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
+
+
      Improve the given agent movement code following these precise specifications:
+
+
      Here is the current code of the turtle agent:
+
+
      ```
        {}
      ```
+
+
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
      - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+
+
      SIMULATION ENVIRONMENT:
      - The turtle agent is in a resource collection simulation
      - The turtle has a weight, which increases as it picks up resources
@@ -3075,6 +3086,8 @@ ifelse member? "crystal" input-resource-types [
      - The turtle agent can detect resources in three cone regions encoded in the input list
      - The resources are randomly distributed in the environment
      - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
      CONSTRAINTS:
      1. Do not include code to kill or control any other agents
      2. Do not include code to interact with the environment
@@ -3086,6 +3099,8 @@ ifelse member? "crystal" input-resource-types [
      8. Follow NetLogo syntax and constraints
      9. Do not use any undefined variables or commands besides the input and weight variable
      10. Focus on movement strategies based on the input and weight variables
+
+
      VALID COMMANDS AND SYNTAX:
         - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
         - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
@@ -3106,38 +3121,56 @@ ifelse member? "crystal" input-resource-types [
         - Keep values within reasonable ranges (-1000 to 1000)
         - Ensure at least one movement command is included
         - There is no such thing as an `else` statement in NetLogo
+
+
      STRATEGIC GOALS:
      1. Balance depositing and resource-seeking behavior 
      2. Respond to sensor readings intelligently
      3. Combine different movement patterns
      4. Be creative in your movement strategy
+
+
      EXAMPLES OF VALID CODE GENERATION:
      Current Code: ```fd 1 rt random 45 fd 2 lt 30```
      Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
 ```
      Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+
+
      The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
      Detail your strategy in netlogo code comments (;;) before you generate the implementation. Include comments throughout the code to explain your strategy.
      Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
      ```
      [Your changed NetLogo code goes here]
      ```
      """,
      "two_shot_code_wcomments": """You are an expert NetLogo coder.
      You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
+
+
      Improve the given agent movement code following these precise specifications:
+
+
      Here is the current code of the turtle agent:
+
+
      ```
        {}
      ```
+
+
      INPUT CONTEXT:
      - You have access to variables called input-resource-distances, input-resource-types, and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - input-resource-types is a NetLogo list that contains three resource types that are either "silver", "gold" or "crystal". The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
      - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+
+
      SIMULATION ENVIRONMENT:
      - The turtle agent is in a resource collection simulation
      - The turtle has a weight, which increases as it picks up resources
@@ -3145,6 +3178,8 @@ ifelse member? "crystal" input-resource-types [
      - The turtle agent can detect resources in three cone regions encoded in the input list
      - The resources are randomly distributed in the environment
      - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
      CONSTRAINTS:
      1. Do not include code to kill or control any other agents
      2. Do not include code to interact with the environment
@@ -3156,6 +3191,8 @@ ifelse member? "crystal" input-resource-types [
      8. Follow NetLogo syntax and constraints
      9. Do not use any undefined variables or commands besides the input and weight variable
      10. Focus on movement strategies based on the input and weight variables
+
+
      VALID COMMANDS AND SYNTAX:
         - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
         - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
@@ -3176,15 +3213,21 @@ ifelse member? "crystal" input-resource-types [
         - Keep values within reasonable ranges (-1000 to 1000)
         - Ensure at least one movement command is included
         - There is no such thing as an `else` statement in NetLogo
+
+
      STRATEGIC GOALS:
      1. Balance depositing and resource-seeking behavior 
      2. Respond to sensor readings intelligently
      3. Combine different movement patterns
      4. Be creative in your movement strategy
+
+
      EXAMPLES OF VALID CODE GENERATION:
      Current Code: ```fd 1 rt random 45 fd 2 lt 30```
      Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]```
      Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+
+
      Current Code:
      ```
      ifelse (item 0 input-resource-distances != 0) [
@@ -3295,6 +3338,7 @@ ifelse member? "crystal" input-resource-types [
     ]
   ]
 ]
+     
      ```
      Changed Code:
      ```
@@ -3317,8 +3361,12 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
       fd 0.2
     ]
   ]
+
+
 ] [
   ifelse member? "gold" input-resource-types and any? map [i -> (item i input-resource-types = "gold") and (item i input-resource-distances != 0)] [0 1 2] [
+
+
     ;; Find closest gold
     ifelse (item 0 input-resource-types = "gold" and item 0 input-resource-distances != 0) and
            ((item 1 input-resource-types != "gold") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
@@ -3335,8 +3383,12 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
         fd 0.2
       ]
     ]
+
+
   ] [
     ifelse member? "silver" input-resource-types and any? map [i -> (item i input-resource-types = "silver") and (item i input-resource-distances != 0)] [0 1 2] [
+
+
       ;; Find closest silver
       ifelse (item 0 input-resource-types = "silver" and item 0 input-resource-distances != 0) and
              ((item 1 input-resource-types != "silver") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
@@ -3353,6 +3405,8 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
           fd 0.2
         ]
       ]
+
+
     ] [
       ;; Default random explore behavior
       ifelse random 100 < 50 [
@@ -3365,15 +3419,34 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
     ]
   ]
 ]
+
+
      ```
      Why: This code directs the agent to move toward the closest instance of the highest-value resource it can detect—crystal first, then gold, then silver—based on distances in three vision cones (left, right, front), and defaults to random wandering if no resources are seen.
+
+
      The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
      Detail your strategy in netlogo code comments (;;) before you generate the implementation. Include comments throughout the code to explain your strategy.
      Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
      ```
      [Your changed NetLogo code goes here]
      ```
      """,
-   }
-
+   },
+  "collection_poison": {
+      # Now define the actual prompts using string concatenation
+      "zero_shot_code": poison_prompts.base_prompt,
+      
+      "one_shot_code": poison_prompts.base_prompt + poison_prompts.one_shot_example,
+      
+      "two_shot_code": poison_prompts.base_prompt + poison_prompts.one_shot_example + poison_prompts.two_shot_example,
+      
+      "zero_shot_code_wcomments": poison_prompts.base_prompt + poison_prompts.comment_instruction,
+      
+      "one_shot_code_wcomments": poison_prompts.base_prompt + poison_prompts.one_shot_example + poison_prompts.comment_instruction,
+      
+      "two_shot_code_wcomments": poison_prompts.base_prompt + poison_prompts.one_shot_example + poison_prompts.two_shot_example + poison_prompts.comment_instruction,
+    }
 }

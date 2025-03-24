@@ -29,10 +29,12 @@ class BaseCodeGenerator(ABC):
             return False, "First element must be a string containing NetLogo code"
             
         #if not isinstance(agent_info[1], list) or len(agent_info[1]) != 3:
+         #   return False, "Second element must be a list with exactly 3 food distances"
+        #if not isinstance(agent_info[1], list) or len(agent_info[1]) != 3:
         #    return False, "Second element must be a list with exactly 3 food distances"
             
-        #if not all(isinstance(x, (int, float)) for x in agent_info[1]):
-        #    return False, "All food distances must be numbers"
+        # if not all(isinstance(x, (int, float)) for x in agent_info[1]):
+        #     return False, "All food distances must be numbers"
             
         return True, None
 
