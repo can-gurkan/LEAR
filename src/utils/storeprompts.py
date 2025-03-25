@@ -14,10 +14,10 @@ PROMPT STRUCTURE:
 prompts = {
     # Evolution goals used in text-based evolution
     "evolution_goals": """Evolution Goals:
-    1. Optimize movement for efficient food collection
+    1. Optimize movement for efficient resource collection
     2. Balance exploration and exploitation
     3. Maintain simple, efficient NetLogo commands
-    4. Consider both immediate food sources and long-term survival""",
+    4. Consider both immediate resources and long-term survival""",
     
     # Evolution strategies for different approaches to code evolution
     "evolution_strategies": {
@@ -814,6 +814,629 @@ fd 1
     ```
 """
         },
+
+        "collection_resource_text_zero_shot": {
+           "pseudocode_prompt": """You are an expert NetLogo pseudocode creator specializing in complex turtle agent movement.
+           You are trying to improve the given pseudocode of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays.
+
+
+
+
+   Here is the current pseudocode of the turtle agent:
+   ```
+   {}
+   ```
+
+
+   Improve the given agent movement pseudocode following these precise specifications:
+
+
+  INPUT CONTEXT:
+     - The agent has ONLY access to variables called input-resource-distances, input-resource-types, and weight
+     - When writing the pseudocode, you can only use the variables named input-resource-distances, input-resource-types, and weight. There are no other variables.
+     - input-resource-distances is a NetLogo list that contains three values representing distances to resources in three cone regions of 20 degrees each.
+    - input-resource-types is a NetLogo list that contains three resource types that are either “silver” (1 point), “gold” (2 points) or “crystal (4 points). The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+    - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+    - Non-zero lower values in input-resource-distances indicate closer resources
+    - Use the information in this variable to inform movement strategy
+
+
+  SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+    - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center.
+    - The turtle agent can detect resources in three cone regions encoded in the input list
+    - The resources are randomly distributed in the environment
+    - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
+   EVOLUTIONARY ADVANCEMENT OBJECTIVES:
+
+
+   1. PROGRESSIVE COMPLEXITY ENHANCEMENT:
+      - Build upon the existing pseudocode's core logic
+      - Add advanced movement concepts or conditional behaviors
+      - Incorporate more sophisticated decision-making based on resource sensor inputs (input-resource-distances and input-resource-types)
+
+
+   2. INNOVATION GUIDELINES:
+      - Introduce adaptive movement that responds to changing environments
+      - Create multi-stage movement sequences that balance local and global exploration
+      - Develop intelligent turning behaviors that optimize path trajectories
+      - Implement resource collecting efficient movement strategies that minimize unnecessary actions and maximize resource-score
+      - Consider emergent swarm-like behaviors when multiple agents use this rule
+
+
+   3. VALID MOVEMENT CONCEPTS ONLY:
+      - "Move forward" (will become fd or forward in NetLogo)
+      - "Turn right" (will become rt or right in NetLogo)
+      - "Turn left" (will become lt or left in NetLogo)
+      - "Move backward" (will become bk or back in NetLogo)
+      - Conditional movements based on resource sensor readings (the "input-resource-distances" list)
+
+
+   4. ABSOLUTELY FORBIDDEN CONCEPTS:
+      - DO NOT include any reference to "of" relationships between agents
+      - DO NOT create or reference any variables that don't exist
+      - DO NOT ask other agents to perform actions
+      - DO NOT create or kill any agents
+      - DO NOT change the environment environment or any variables
+      - DO NOT use loops or recursive patterns
+
+
+   5. ALLOWED STRUCTURE:
+      - Do not use any variables other than “input-resource-distances”, “input-resource-types”, and “weight”
+. For example, do not say "if resource is detected on the left" - use "if the first item of input-resource-distances is greater than 0"
+      - You may include "if/else" logic based on the “input-resource-distances” list values
+      - You may combine multiple movement commands in sequence
+
+
+   6. FORMATTING:
+      - Keep the pseudocode readable and focused on movement logic
+      - Use plain English descriptions of movement patterns
+      - Be specific about how resource sensor readings influence movement
+
+
+   Present your evolved pseudocode enclosed in triple backticks. You may include comments in the pseudocode detailing your strategy. Do not include any explanations outside the code block:
+
+
+   ```
+   [Your evolved pseudocode here]
+   ```
+
+
+   """,      
+           "code_prompt": """You are an expert NetLogo programmer tasked with converting pseudocode into valid, executable NetLogo code.
+           Your goal is to faithfully implement the pseudocode while ensuring the code adheres to NetLogo syntax and execution constraints.
+
+
+   PSEUDOCODE TO TRANSLATE:
+   ```
+   {}
+   ```
+
+
+   TRANSLATION REQUIREMENTS:
+
+
+   1. UNDERSTANDING THE PSEUDOCODE:
+      - Focus on understanding the FUNCTIONALITY described in the pseudocode
+      - DO NOT use variable names from the pseudocode directly in your NetLogo code
+      - Translate conceptual descriptions into valid NetLogo syntax
+      - The pseudocode is a guideline for behavior, not a direct translation template
+
+
+   2. CONSTRAINTS:
+      - Do not include code to kill or control any other agents
+      - Do not include code to interact with the environment
+      - Do not include code to change the environment
+      - Do not include code to create new agents
+      - Do not include code to create new resources
+      - Do not include code to change the rules of the simulation
+      - Follow NetLogo syntax and constraints
+      - Do not use any undefined variables or commands besides the input variable
+      - Focus on movement strategies based on the input variable
+
+
+   3. VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+
+
+   4. COMPLEXITY IMPLEMENTATION:
+      - Accurately implement all described movement patterns
+      - Translate conditional logic to ifelse statements with proper brackets
+      - Implement sensor-responsive behavior using the “input-resource-distances”, “input-resource-types” list only
+      - Do not use any variables other than “input-resource-distances”, “input-resource-types”, and “weight” in your code
+      - Convert multi-stage movements into appropriate command sequences
+
+
+   4. ABSOLUTELY FORBIDDEN:
+      - DO NOT use the "of" primitive/reporter - this will cause errors
+      - DO NOT use any non-existent or undefined variables
+      - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
+      - DO NOT use "set", "let", or create any variables
+      - DO NOT include any infinite loops - avoid "while" or "loop" constructs
+      - DO NOT copy variable names from pseudocode and do not use any variables other than "input"
+
+
+   5. ALLOWED STRUCTURE:
+      - You may use "if/ifelse" statements with item checks on the “input-resource-distances” list
+      - For complex or nested conditions, ensure proper bracket nesting and balance
+      - Make sure every opening bracket '[' has a matching closing bracket ']'
+      - Remember “input-resource-distances”, “input-resource-types”, and “weight” are the only valid variables you can reference
+
+
+   6. ERROR PREVENTION:
+      - Ensure each condition has both true and false branches in ifelse statements
+      - Verify that each command has a valid parameter
+      - Make sure bracket pairs are properly matched and nested
+      - Keep all numeric values between -1000 and 1000
+
+
+   7. ROBUST IMPLEMENTATION:
+      - Generate code that is resilient to edge cases
+      - If pseudocode mentions a variable that doesn't exist in NetLogo, translate its purpose
+        without using the variable name (e.g., if pseudocode contains "resource ahead", use the value of the last item in the input-resource-distances list)
+      - Focus on capturing the intent and behavior, not the exact syntax
+
+
+   Your task is to carefully analyze the provided pseudocode and translate it into well-formed NetLogo code that represents the described movement strategy.
+   The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+   Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
+   Present your generated NetLogo code enclosed in triple backticks:
+
+
+   ```
+   [Your generated NetLogo code here]
+   ```
+"""
+       },
+
+
+     "collection_resource_text_one_shot": {
+           "pseudocode_prompt": """You are an expert NetLogo pseudocode creator specializing in complex turtle agent movement.
+           You are trying to improve the given pseudocode of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays.
+
+
+
+
+   Here is the current pseudocode of the turtle agent:
+   ```
+   {}
+   ```
+
+
+   Improve the given agent movement pseudocode following these precise specifications:
+
+
+  INPUT CONTEXT:
+     - The agent has ONLY access to variables called input-resource-distances, input-resource-types, and weight
+     - When writing the pseudocode, you can only use the variables named input-resource-distances, input-resource-types, and weight. There are no other variables.
+     - input-resource-distances is a NetLogo list that contains three values representing distances to resources in three cone regions of 20 degrees each.
+    - input-resource-types is a NetLogo list that contains three resource types that are either “silver” (1 point), “gold” (2 points) or “crystal (4 points). The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+    - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+    - Non-zero lower values in input-resource-distances indicate closer resources
+    - Use the information in this variable to inform movement strategy
+
+
+
+
+  SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+    - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center.
+    - The turtle agent can detect resources in three cone regions encoded in the input list
+    - The resources are randomly distributed in the environment
+    - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
+   EVOLUTIONARY ADVANCEMENT OBJECTIVES:
+
+
+   1. PROGRESSIVE COMPLEXITY ENHANCEMENT:
+      - Build upon the existing pseudocode's core logic
+      - Add advanced movement concepts or conditional behaviors
+      - Incorporate more sophisticated decision-making based on resource sensor inputs (input-resource-distances and input-resource-types)
+
+
+   2. INNOVATION GUIDELINES:
+      - Introduce adaptive movement that responds to changing environments
+      - Create multi-stage movement sequences that balance local and global exploration
+      - Develop intelligent turning behaviors that optimize path trajectories
+      - Implement resource collecting efficient movement strategies that minimize unnecessary actions and maximize resource-score
+      - Consider emergent swarm-like behaviors when multiple agents use this rule
+
+
+   3. VALID MOVEMENT CONCEPTS ONLY:
+      - "Move forward" (will become fd or forward in NetLogo)
+      - "Turn right" (will become rt or right in NetLogo)
+      - "Turn left" (will become lt or left in NetLogo)
+      - "Move backward" (will become bk or back in NetLogo)
+      - Conditional movements based on resource sensor readings (the "input-resource-distances" list)
+
+
+   4. ABSOLUTELY FORBIDDEN CONCEPTS:
+      - DO NOT include any reference to "of" relationships between agents
+      - DO NOT create or reference any variables that don't exist
+      - DO NOT ask other agents to perform actions
+      - DO NOT create or kill any agents
+      - DO NOT change the environment environment or any variables
+      - DO NOT use loops or recursive patterns
+
+
+   5. ALLOWED STRUCTURE:
+      - Do not use any variables other than input-resource-distances”, “input-resource-types”, and “weight”. For example, do not say "if resource is detected on the left" - use "if the first item of input-resource-distances is greater than 0"
+      - You may include "if/else" logic based on the "input-resource-distances" list values
+      - You may combine multiple movement commands in sequence
+
+
+   6. FORMATTING:
+      - Keep the pseudocode readable and focused on movement logic
+      - Use plain English descriptions of movement patterns
+      - Be specific about how resource sensor readings influence movement
+
+
+   7. EXAMPLES:
+      - "If all values in the input-resource-distances list are 0, move forward randomly. Otherwise, identify the smallest value in the input-resource-distances list and turn towards that direction."
+
+
+   Present your evolved pseudocode enclosed in triple backticks. You may include comments in the pseudocode detailing your strategy. Do not include any explanations outside the code block:
+
+
+   ```
+   [Your evolved pseudocode here]
+   ```
+
+
+   """,      
+           "code_prompt": """You are an expert NetLogo programmer tasked with converting pseudocode into valid, executable NetLogo code.
+           Your goal is to faithfully implement the pseudocode while ensuring the code adheres to NetLogo syntax and execution constraints.
+
+
+   PSEUDOCODE TO TRANSLATE:
+   ```
+   {}
+   ```
+
+
+   TRANSLATION REQUIREMENTS:
+
+
+   1. UNDERSTANDING THE PSEUDOCODE:
+      - Focus on understanding the FUNCTIONALITY described in the pseudocode
+      - DO NOT use variable names from the pseudocode directly in your NetLogo code
+      - Translate conceptual descriptions into valid NetLogo syntax
+      - The pseudocode is a guideline for behavior, not a direct translation template
+
+
+   2. CONSTRAINTS:
+      - Do not include code to kill or control any other agents
+      - Do not include code to interact with the environment
+      - Do not include code to change the environment
+      - Do not include code to create new agents
+      - Do not include code to create new resources
+      - Do not include code to change the rules of the simulation
+      - Follow NetLogo syntax and constraints
+      - Do not use any undefined variables or commands besides the input variable
+      - Focus on movement strategies based on the input variable
+
+
+   3. VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+
+
+   4. COMPLEXITY IMPLEMENTATION:
+      - Accurately implement all described movement patterns
+      - Translate conditional logic to ifelse statements with proper brackets
+      - Implement sensor-responsive behavior using the "input" list only
+      - Do not use any variables other than "input" in your code
+      - Convert multi-stage movements into appropriate command sequences
+
+
+   4. ABSOLUTELY FORBIDDEN:
+      - DO NOT use the "of" primitive/reporter - this will cause errors
+      - DO NOT use any non-existent or undefined variables
+      - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
+      - DO NOT use "set", "let", or create any variables
+      - DO NOT include any infinite loops - avoid "while" or "loop" constructs
+      - DO NOT copy variable names from pseudocode and do not use any variables other than "input"
+
+
+   5. ALLOWED STRUCTURE:
+      - You may use "if/ifelse" statements with item checks on the "input" list
+      - For complex or nested conditions, ensure proper bracket nesting and balance
+      - Make sure every opening bracket '[' has a matching closing bracket ']'
+      - Remember "input" is the only valid variable you can reference
+
+
+   6. ERROR PREVENTION:
+      - Ensure each condition has both true and false branches in ifelse statements
+      - Verify that each command has a valid parameter
+      - Make sure bracket pairs are properly matched and nested
+      - Keep all numeric values between -1000 and 1000
+
+
+   7. ROBUST IMPLEMENTATION:
+      - Generate code that is resilient to edge cases
+      - If pseudocode mentions a variable that doesn't exist in NetLogo, translate its purpose
+        without using the variable name (e.g., if pseudocode contains "resource ahead", use the value of the last item in the input-resource-distances list)
+      - Focus on capturing the intent and behavior, not the exact syntax
+
+
+   8. EXAMPLES:
+      - If the given pseudocode says "If no resources are detected, move forward randomly. Otherwise, identify the smallest value in the input-resource-distances list and turn towards that direction.", you should implement this logic in NetLogo code as follows:
+        ```
+ifelse (input-resource-distances = [ 0 0 0 ]) [
+ lt random 20
+ rt random 20
+ fd 5
+] [
+ (ifelse min input-resource-distances = item 0 input-resource-distances [ lt 20 ]
+         min input-resource-distances = item 1 input-resource-distances [ rt 20 ]
+         [ fd 3] )
+]
+        ```
+
+
+   Your task is to carefully analyze the provided pseudocode and translate it into well-formed NetLogo code that represents the described movement strategy.
+   The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+   Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
+   Present your generated NetLogo code enclosed in triple backticks:
+
+
+   ```
+   [Your generated NetLogo code here]
+   ```
+"""
+       },
+
+
+     "collection_resource_text_two_shot": {
+           "pseudocode_prompt": """You are an expert NetLogo pseudocode creator specializing in complex turtle agent movement.
+           You are trying to improve the given pseudocode of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays.
+
+
+   Here is the current pseudocode of the turtle agent:
+   ```
+   {}
+   ```
+
+
+   Improve the given agent movement pseudocode following these precise specifications:
+
+
+  INPUT CONTEXT:
+     - The agent has ONLY access to variables called input-resource-distances, input-resource-types, and weight
+     - When writing the pseudocode, you can only use the variables named input-resource-distances, input-resource-types, and weight. There are no other variables.
+     - input-resource-distances is a NetLogo list that contains three values representing distances to resources in three cone regions of 20 degrees each.
+    - input-resource-types is a NetLogo list that contains three resource types that are either “silver” (1 point), “gold” (2 points) or “crystal (4 points). The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+    - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
+    - Non-zero lower values in input-resource-distances indicate closer resources
+    - Use the information in this variable to inform movement strategy
+
+
+  SIMULATION ENVIRONMENT:
+     - The turtle agent is in a resource collection simulation
+     - The turtle has a weight, which increases as it picks up resources
+    - The goal is to maximize the efficiency at which resources are collected while depositing them in a chest in the center.
+    - The turtle agent can detect resources in three cone regions encoded in the input list
+    - The resources are randomly distributed in the environment
+    - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
+   EVOLUTIONARY ADVANCEMENT OBJECTIVES:
+
+
+   1. PROGRESSIVE COMPLEXITY ENHANCEMENT:
+      - Build upon the existing pseudocode's core logic
+      - Add advanced movement concepts or conditional behaviors
+      - Incorporate more sophisticated decision-making based on resource sensor inputs (input-resource-distances and input-resource-types)
+
+
+   2. INNOVATION GUIDELINES:
+      - Introduce adaptive movement that responds to changing environments
+      - Create multi-stage movement sequences that balance local and global exploration
+      - Develop intelligent turning behaviors that optimize path trajectories
+      - Implement resource collecting efficient movement strategies that minimize unnecessary actions and maximize resource-score
+      - Consider emergent swarm-like behaviors when multiple agents use this rule
+
+
+   3. VALID MOVEMENT CONCEPTS ONLY:
+      - "Move forward" (will become fd or forward in NetLogo)
+      - "Turn right" (will become rt or right in NetLogo)
+      - "Turn left" (will become lt or left in NetLogo)
+      - "Move backward" (will become bk or back in NetLogo)
+      - Conditional movements based on resource sensor readings (the "input-resource-distances" list)
+
+
+   4. ABSOLUTELY FORBIDDEN CONCEPTS:
+      - DO NOT include any reference to "of" relationships between agents
+      - DO NOT create or reference any variables that don't exist
+      - DO NOT ask other agents to perform actions
+      - DO NOT create or kill any agents
+      - DO NOT change the environment environment or any variables
+      - DO NOT use loops or recursive patterns
+
+
+   5. ALLOWED STRUCTURE:
+      - Do not use any variables other than "input". For example, do not say "if resource is detected on the left" - use "if the first item of input-resources-distances is greater than 0"
+      - You may include "if/else" logic based on the "input-resource-distances" list values
+      - You may combine multiple movement commands in sequence
+
+
+   6. FORMATTING:
+      - Keep the pseudocode readable and focused on movement logic
+      - Use plain English descriptions of movement patterns
+      - Be specific about how resource sensor readings influence movement
+
+
+   7. EXAMPLES:
+      - "If all values in the input-resource-distances list are 0, move forward randomly. Otherwise, identify the smallest value in the input-resource-distances list and turn towards that direction."
+      - " If the third item of input-resource-distances is not zero, move forward towards resource.
+          If the third item of input-resource-distances is zero,
+              and if first item of input-resource-distances is greater than the second item, turn left and move towards the resource.
+              Otherwise, if the second item of input-resource-distances is greater than the first item, turn right and move towards the resource.
+           Otherwise, move randomly.
+        "
+
+
+   Present your evolved pseudocode enclosed in triple backticks. You may include comments in the pseudocode detailing your strategy. Do not include any explanations outside the code block:
+
+
+   ```
+   [Your evolved pseudocode here]
+   ```
+
+
+   """,      
+           "code_prompt": """You are an expert NetLogo programmer tasked with converting pseudocode into valid, executable NetLogo code.
+           Your goal is to faithfully implement the pseudocode while ensuring the code adheres to NetLogo syntax and execution constraints.
+
+
+   PSEUDOCODE TO TRANSLATE:
+   ```
+   {}
+   ```
+
+
+   TRANSLATION REQUIREMENTS:
+
+
+   1. UNDERSTANDING THE PSEUDOCODE:
+      - Focus on understanding the FUNCTIONALITY described in the pseudocode
+      - DO NOT use variable names from the pseudocode directly in your NetLogo code
+      - Translate conceptual descriptions into valid NetLogo syntax
+      - The pseudocode is a guideline for behavior, not a direct translation template
+
+
+   2. CONSTRAINTS:
+      - Do not include code to kill or control any other agents
+      - Do not include code to interact with the environment
+      - Do not include code to change the environment
+      - Do not include code to create new agents
+      - Do not include code to create new resources
+      - Do not include code to change the rules of the simulation
+      - Follow NetLogo syntax and constraints
+      - Do not use any undefined variables or commands besides the input variable
+      - Focus on movement strategies based on the input variable
+
+
+   3. VALID COMMANDS AND SYNTAX:
+        - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
+        - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
+        - The syntax of the if primitive is as follows: if boolean [ commands ]
+        - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+        - An ifelse block  that contains multiple boolean conditions must be enclosed in parentheses as follows:
+        (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+
+
+   4. COMPLEXITY IMPLEMENTATION:
+      - Accurately implement all described movement patterns
+      - Translate conditional logic to ifelse statements with proper brackets
+      - Implement sensor-responsive behavior using the "input-resource-distances" and “input-resource-types” list only
+      - Do not use any variables other than "input-resource-distances", “input-resource-types”, and “weight” in your code
+      - Convert multi-stage movements into appropriate command sequences
+
+
+   4. ABSOLUTELY FORBIDDEN:
+      - DO NOT use the "of" primitive/reporter - this will cause errors
+      - DO NOT use any non-existent or undefined variables
+      - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
+      - DO NOT use "set", "let", or create any variables
+      - DO NOT include any infinite loops - avoid "while" or "loop" constructs
+      - DO NOT copy variable names from pseudocode and do not use any variables other than "input-resource-distances", “input-resource-types”, and “weight”
+
+
+   5. ALLOWED STRUCTURE:
+      - You may use "if/ifelse" statements with item checks on the "input-resource-distances" and “input-resource-types” list
+      - For complex or nested conditions, ensure proper bracket nesting and balance
+      - Make sure every opening bracket '[' has a matching closing bracket ']'
+      - Remember "input" is the only valid variable you can reference
+
+
+   6. ERROR PREVENTION:
+      - Ensure each condition has both true and false branches in ifelse statements
+      - Verify that each command has a valid parameter
+      - Make sure bracket pairs are properly matched and nested
+      - Keep all numeric values between -1000 and 1000
+
+
+   7. ROBUST IMPLEMENTATION:
+      - Generate code that is resilient to edge cases
+      - If pseudocode mentions a variable that doesn't exist in NetLogo, translate its purpose
+        without using the variable name (e.g., if pseudocode contains "resource ahead", use the value of the last item in the input-resources-distances list)
+      - Focus on capturing the intent and behavior, not the exact syntax
+
+
+   8. EXAMPLES:
+      - If the given pseudocode says "If no resource is detected, move forward randomly. Otherwise, identify the smallest value in the input-resource-distances list and turn towards that direction.", you should implement this logic in NetLogo code as follows:
+        ```
+ifelse (input-resource-distances = [ 0 0 0 ]) [
+ lt random 20
+ rt random 20
+ fd 5
+] [
+ (ifelse min input-resource-distances = item 0 input-resource-distances [ lt 20 ]
+         min input-resource-distances = item 1 input-resource-distances [ rt 20 ]
+         [ fd 3] )
+]
+        ```
+     - If the given pseudocode says
+     " If the third item of input-resource-distances is not zero, move forward towards resource.
+       If the third item of input-resource-distances is zero,
+           and if first item of input-resource-distances is greater than the second item, turn left and move towards resources.
+           Otherwise, if the second item of input-resource-distances is greater than the first item, turn right and move towards resource.
+       Otherwise, move randomly.", you should implement this logic in NetLogo code as follows:
+     ```
+if item 2 input-resource-distances != 0 [
+ fd item 2 input-resource-distances
+]
+if item 2 input-resource-distances = 0 [
+ if item 0 input-resource-distances > input-resource-distances 1 input [
+   lt 15
+   fd item 0 input-resource-distances
+ ]
+ if item 1 input-resource-distances > input-resource-distances 0 input [
+   rt 15
+   fd item 1 input-resource-distances
+ ]
+]
+ifelse random 2 = 0 [
+ rt 45
+] [
+ lt 45
+]
+fd 1
+     ```
+
+
+   Your task is to carefully analyze the provided pseudocode and translate it into well-formed NetLogo code that represents the described movement strategy.
+   The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
+   Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+
+
+   Present your generated NetLogo code enclosed in triple backticks:
+
+
+   ```
+   [Your generated NetLogo code here]
+   ```
+"""
+       },
 
         # Add more evolution strategies as needed...
     },

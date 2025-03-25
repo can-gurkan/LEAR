@@ -59,6 +59,7 @@ to setup
   clear-all
 
   py:setup py:python
+  py:setup "/Users/rudydanda/.rye/shims/python"
   py:run "import os"
   py:run "import sys"
   py:run "from pathlib import Path"
@@ -103,10 +104,10 @@ to setup-resources
     let spawn-location one-of patches with [not any? turtles-here]
     if spawn-location != nobody [
       create-resources 1 [
-        ;move-to spawn-location
-        setxy 0 0
-        fd resource-radius
-        set resource-kind one-of resource-types
+        move-to spawn-location
+;        setxy 0 0
+;        fd resource-radius
+        set resource-kind weighted-resource-kind
         set shape resource-kind
         set color (ifelse-value (resource-kind = "silver") [gray]
                               (resource-kind = "gold") [yellow]
@@ -117,6 +118,14 @@ to setup-resources
     ]
   ]
 end
+
+to-report weighted-resource-kind
+  let r random-float 1
+  if r < 0.5 [ report "silver" ]
+  if r < 0.85 [ report "gold" ]  ;; 0.5 to 0.85
+  report "crystal"               ;; 0.85 to 1
+end
+
 
 to setup-llm-agents
   create-llm-agents num-llm-agents [
@@ -151,10 +160,10 @@ to replenish-resources
       let spawn-location one-of patches with [not any? turtles-here]
       if spawn-location != nobody [
         create-resources 1 [
-          ;move-to spawn-location
-          setxy 0 0
-          fd resource-radius
-          set resource-kind one-of ["silver" "gold" "crystal"]
+          move-to spawn-location
+;          setxy 0 0
+;          fd resource-radius
+          set resource-kind weighted-resource-kind
 
           ;; Assign visual properties
           if resource-kind = "silver" [ set shape "silver" set color gray ]
@@ -175,8 +184,8 @@ to go
   ask llm-agents [
     set lifetime lifetime + 1
     set distance-from-center distancexy 0 0
-    set resource-score resource-score - (weight * 0.25)  ;; Lose resource-score at a rate of 25% of total weight
-    set resource-deposited resource-deposited - (weight * 0.25)  ;; Lose resource-deposited at a rate of 25% of total weight
+    set resource-score resource-score - (weight * 0.03)  ;; Lose resource-score at a rate of 10% of total weight
+    set resource-deposited resource-deposited - (weight * 0.03)  ;; Lose resource-deposited at a rate of 10% of total weight
 
     ;; set resource-score resource-score - (weight ^ 1.5 * 0.1) ;; exponential loss (higher weights are punished more)
     ;; if weight > 2 [ set resource-score resource-score - ((weight - 2) * 0.3) ] ;; start losing weight once over a threshold
@@ -293,12 +302,6 @@ to pick-up
     ;; ----- Resource Score calculation: incremented when picking up
     set resource-score resource-score + value
     ;; print (word "PICKED UP: " kind " | New Score: " resource-score) ## DEBUGGING!!!
-
-;    let keys table:keys inventory
-;    foreach keys [ key ->
-;      let val (ifelse-value (key = "silver") [1] (key = "gold") [2] [4])
-;      set resource-score resource-score + (table:get inventory key) * val
-;    ]
 
     set weight weight + weight-addition
 
@@ -608,7 +611,7 @@ SWITCH
 299
 text-based-evolution
 text-based-evolution
-1
+0
 1
 -1000
 
@@ -696,7 +699,7 @@ SWITCH
 501
 verbose?
 verbose?
-1
+0
 1
 -1000
 
@@ -720,7 +723,7 @@ resource-radius
 resource-radius
 0
 25
-12.0
+19.0
 1
 1
 NIL
@@ -1100,7 +1103,7 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="one-shot-code-exp" repetitions="5" runMetricsEveryStep="false">
+  <experiment name="zero-shot-code-wcomments-exp" repetitions="5" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <timeLimit steps="150000"/>
