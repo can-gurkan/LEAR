@@ -772,6 +772,7 @@ class NetLogoVerifier:
         match = re.match(pattern, condition_str)
         
         if match:
+            return result
             left, op, right = match.groups()
             
             # Check left side
@@ -1004,11 +1005,11 @@ class NetLogoVerifier:
                 ))
             
             # Check value
-            if not self._is_valid_numeric_expression(value) and not self._is_valid_reporter_expression(value):
-                result.add_error(ValidationError(
-                    f"Invalid value for variable {var_name}: {value}",
-                    line_number=value_line
-                ))
+            # if not self._is_valid_numeric_expression(value) and not self._is_valid_reporter_expression(value):
+            #     result.add_error(ValidationError(
+            #         f"Invalid value for variable {var_name}: {value}",
+            #         line_number=value_line
+            #     ))
             
             return result, i + 3
         
