@@ -3,7 +3,7 @@ import os
 
 _logger = None  # Initialize the global logger variable
 
-def setup_logging(log_file_path='../../Logs/debug.log', level=logging.DEBUG):
+def setup_logging(log_file_path='../../Logs/debug2.log', level=logging.DEBUG):
     """Sets up logging configuration."""
     # Create log directory if it doesn't exist
     os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
