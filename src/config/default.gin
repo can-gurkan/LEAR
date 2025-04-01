@@ -3,7 +3,6 @@
 # Shared prompt config
 prompt_type = 'groq'            # claude, simple, complex   
 prompt_name = 'prompt3'         # prompt1        
-evolution_strategy = 'simple'   # complex
 
 # Import necessary modules
 from src.generators import base
