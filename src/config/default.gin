@@ -16,11 +16,11 @@ GraphProviderBase.retry_max_attempts = 2
 GraphProviderBase.retry_prompt = 'generate_code_with_error'
 
 # Text evolution configuration
-GraphProviderBase.evolution_strategy = 'collection_simple_text_two_shot' 
+GraphProviderBase.evolution_strategy = 'collection_poison_avoidance_zero_shot' 
 
 # Prompt configuration - Check storeprompts.py dict 
-GraphProviderBase.prompt_type = 'collection_simple' #'collection_resource' #'collection_simple'  # groq, complex
-GraphProviderBase.prompt_name = 'two_shot_code_wcomments' #'one_shot_code' #'zero_shot_code_wcomments'  # prompt2, prompt1
+GraphProviderBase.prompt_type = 'collection_poison'  # groq, complex
+GraphProviderBase.prompt_name = 'zero_shot_code_wcomments'  # prompt2, prompt1
 
 # Model-specific configurations
 GraphUnifiedProvider.temperature = 0.65
@@ -31,6 +31,4 @@ GraphUnifiedProvider.groq_model_name = "llama-3.3-70b-versatile" #"llama-3.1-8b-
 GraphUnifiedProvider.claude_model_name = "claude-3-5-haiku-latest" #"claude-3-5-sonnet-20241022" #claude-3-5-haiku-latest #claude-3-haiku-20240307
 GraphUnifiedProvider.openai_model_name = "gpt-4o"
 GraphUnifiedProvider.deepseek_model_name = "deepseek-chat"
-
-
 

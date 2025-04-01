@@ -115,6 +115,70 @@ STRATEGIC GOALS:
 
 Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
 
+
+        self.groq_prompt = """You are an expert NetLogo movement code generator. Generate code:
+- Movement: fd/forward, rt/right, lt/left
+- Reporters: random, random-float, sin, cos
+Format: [command] [number | reporter]
+
+INPUT CONTEXT:
+- Current rule: {}
+- Food: {} (0 = no food, lower = closer)
+
+Generate ONLY the code."""
+
+        self.groq_prompt1 = """Modify NetLogo movement rule:
+1. Use only existing variables
+2. Use only fd, rt, lt
+3. Consider food distances (0 = no food)
+4. Only movement commands
+5. < 100 chars, no comments
+
+rule: {} 
+input: {}"""
+        
+        self.groq_prompt_leif = """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible and avoid running into poison deposits. Improve the given agent movement code following these precise specifications:
+
+INPUT CONTEXT:
+- Current rule: {}
+- The agent has access to two variables containing information about its environment: {}
+  - food-observations is a list that contains three elements representing distances to food in three cone regions of 20 degrees each.
+  - poison-observations is a list that contains three elements representing distances to poison in three cone regions of 20 degrees each.
+  - The first item in these lists gives the distances to the nearest food or poison in the left cone, the second is the right cone, and the third is the front cone
+  - Each value encodes the distance to nearest food or poison source where a value of 0 indicates no food or poison
+  - Non-zero lower values indicate closer to food or poison
+  - Use these to inform movement strategy
+
+CONSTRAINTS:
+1. Do not include code to kill or control any other agents
+2. Do not include code to interact with the environment
+3. Do not include code to change the environment
+4. Do not include code to create new agents
+5. Do not include code to create new food sources
+6. Do not include code to change the rules of the simulation
+
+EXAMPLES OF VALID PATTERNS:
+Current Rule: fd 1 rt random 45 fd 2 lt 30
+Valid: ifelse item 0 input != 0 [rt 15 fd 0.5] [rt random 30 lt random 30 fd 5]
+Why: Turns right and goes forward a little to reach food if the first element of input list contains a non-zero value, else moves forward in big steps and turns randomly to explore
+
+INVALID EXAMPLES:
+❌ ask turtle 1 [die]
+❌ ask other turtles [die]
+❌ set energy 100
+❌ hatch-food 5
+❌ clear-all
+
+STRATEGIC GOALS:
+1. Balance exploration and food-seeking behavior
+2. Respond to sensor readings intelligently
+3. Combine different movement patterns
+
+Generate ONLY the movement code. Code must be runnable in NetLogo in the context of a turtle."""
+
+
+
+
         self.groq_prompt_resource = """ You are an expert in NetLogo, designing intelligent agents that collect resources efficiently. 
         Each agent has a resource-score that decays based on a percentage of their current weight, which increases as they collect resources. 
         Depositing their resources at the chest in the center of the map will reset their weight to 0.
