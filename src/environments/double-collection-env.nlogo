@@ -484,7 +484,7 @@ SWITCH
 218
 logging?
 logging?
-1
+0
 1
 -1000
 
@@ -529,7 +529,7 @@ num-parents
 num-parents
 0
 10
-2.0
+1.0
 1
 1
 NIL
@@ -544,7 +544,7 @@ tournament-size
 tournament-size
 0
 50
-7.0
+8.0
 1
 1
 NIL
@@ -959,6 +959,303 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="zeroshot with comments" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="150000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max [fitness] of llm-agents</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="0.8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;default&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-food-sources">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;groq&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;evotest&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-poison-sources">
+      <value value="50"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="zeroshot no comments" repetitions="5" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="150000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max [fitness] of llm-agents</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="0.8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;default&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-food-sources">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;groq&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;evotest&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-poison-sources">
+      <value value="50"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="twoshot w/ comments" repetitions="5" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="150000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max [fitness] of llm-agents</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="0.8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;default&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-food-sources">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;groq&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;evotest&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-poison-sources">
+      <value value="50"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="oneshot w comments" repetitions="5" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="150000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max [fitness] of llm-agents</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="0.8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;default&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-food-sources">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;groq&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;evotest&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-poison-sources">
+      <value value="50"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="oneshot no comments" repetitions="5" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="150000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max [fitness] of llm-agents</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="0.8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;default&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-food-sources">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;groq&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;evotest&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-poison-sources">
+      <value value="50"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default

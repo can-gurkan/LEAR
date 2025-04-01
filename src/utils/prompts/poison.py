@@ -57,7 +57,7 @@ ERROR PREVENTION:
     - Make sure every movement command has a parameter
     - Keep values within reasonable ranges (-1000 to 1000)
     - Ensure at least one movement command is included
-    - There is no such thing as an `else` statement in NetLogo
+    - There is no such thing as an `else` statement in NetLogo. You MUST use ifelse to handle else cases.
 
 STRATEGIC GOALS:
 1. Balance exploration, food-seeking, and poison avoidance behavior
@@ -75,7 +75,16 @@ Return ONLY the changed NetLogo code. Do not include any explanations or outside
 one_shot_example = """
 Example:
 Current Rule: fd 1 rt random 45
-Updated Rule: ifelse (item 0 food-observations > 0) and (item 0 poison-observations = 0) [lt 10 fd 1] [ifelse (item 1 food-observations > 0) and (item 1 poison-observations = 0) [rt 10 fd 1] [fd 1 rt random 20]]
+Updated Rule:
+ifelse (item 0 food-observations > 0) and (item 0 poison-observations = 0) [
+  lt 10 fd 1
+  ] [
+    ifelse (item 1 food-observations > 0) and (item 1 poison-observations = 0) [
+      rt 10 fd 1
+    ] [
+      fd 1 rt random 20
+    ]
+]
 Explanation: This rule checks if there's food in the left cone with no poison, turning left to approach it. If not, it checks the right cone. If neither condition is met, it moves forward with some random turning."""
 
 two_shot_example = """
