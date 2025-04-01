@@ -15,7 +15,9 @@ class GroqCodeGenerator(BaseCodeGenerator):
         self.api_key = api_key
         try:
             self.client = instructor.from_groq(
-                Groq(api_key=self.api_key), 
+                Groq(api_key=self.api_key,
+                     timeout=20,
+                     ), 
                 mode=instructor.Mode.JSON
             )
         except Exception as e:
