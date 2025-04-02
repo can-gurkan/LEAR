@@ -770,9 +770,9 @@ class NetLogoVerifier:
         # 1. Simple comparisons: <value> <operator> <value>
         pattern = r'^(.+?)\s*(=|!=|>|<|>=|<=)\s*(.+)$'
         match = re.match(pattern, condition_str)
-        
+        #return result ## DEBUGGINGNJGNGG
         if match:
-            return result
+            return result # DEBUGGINGGGGGG
             left, op, right = match.groups()
             
             # Check left side

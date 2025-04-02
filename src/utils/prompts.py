@@ -4,7 +4,7 @@ class LEARPrompts:
     def __init__(self):
         # Evolution goals used in text-based evolution
         self.evolution_goals = (
-            "Optimize movement for food, balance exploration, keep commands simple."
+            "Optimize movement, balance depositing and resource collecting behavior, keep commands simple."
         )
 
         # Chain of thought prompt for langchain providers

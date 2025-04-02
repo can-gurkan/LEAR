@@ -857,7 +857,7 @@ fd 1
       - Build upon the existing pseudocode's core logic
       - Add advanced movement concepts or conditional behaviors
       - Incorporate more sophisticated decision-making based on resource sensor inputs (input-resource-distances and input-resource-types)
-
+      - Optimize movement, balancing depositing and resource collecting behavior
 
    2. INNOVATION GUIDELINES:
       - Introduce adaptive movement that responds to changing environments
@@ -961,7 +961,7 @@ fd 1
       - DO NOT use "ask", "with", "turtles", "patches" - these are not allowed
       - DO NOT use "set", "let", or create any variables
       - DO NOT include any infinite loops - avoid "while" or "loop" constructs
-      - DO NOT copy variable names from pseudocode and do not use any variables other than "input"
+      - DO NOT copy variable names from pseudocode and do not use any variables other than “input-resource-distances”, “input-resource-types”, and “weight”
 
 
    5. ALLOWED STRUCTURE:
@@ -976,6 +976,8 @@ fd 1
       - Verify that each command has a valid parameter
       - Make sure bracket pairs are properly matched and nested
       - Keep all numeric values between -1000 and 1000
+      - Do not put brackets around input-resource-distances and input-resource-types when trying to call an item. Correct Example: item 2 input-resource-distances
+      - Lists are 0-indexed based
 
 
    7. ROBUST IMPLEMENTATION:
@@ -1166,7 +1168,8 @@ fd 1
       - Verify that each command has a valid parameter
       - Make sure bracket pairs are properly matched and nested
       - Keep all numeric values between -1000 and 1000
-
+      - Do not put brackets around input-resource-distances and input-resource-types when trying to call an item. Correct Example: item 2 input-resource-distances
+      - Lists are 0-indexed based
 
    7. ROBUST IMPLEMENTATION:
       - Generate code that is resilient to edge cases
@@ -1176,16 +1179,34 @@ fd 1
 
 
    8. EXAMPLES:
-      - If the given pseudocode says "If no resources are detected, move forward randomly. Otherwise, identify the smallest value in the input-resource-distances list and turn towards that direction.", you should implement this logic in NetLogo code as follows:
+      - If the given pseudocode says "f the agent’s weight is over 50, it turns toward the center of the map based on its position and moves forward quickly. Otherwise, it checks which direction has the closest resource and turns accordingly—slightly adjusting if the resource is very close. If no nearby resources are detected in any direction, it again turns toward the center. After all turning decisions, it moves forward at a slower speed.", you should implement this logic in NetLogo code as follows:
         ```
-ifelse (input-resource-distances = [ 0 0 0 ]) [
- lt random 20
- rt random 20
- fd 5
-] [
- (ifelse min input-resource-distances = item 0 input-resource-distances [ lt 20 ]
-         min input-resource-distances = item 1 input-resource-distances [ rt 20 ]
-         [ fd 3] )
+ifelse weight > 50 [
+  if xcor > 0 [ rt 10 ]
+  if xcor < 0 [ lt 10 ]
+  if ycor > 0 [ rt 10 ]
+  if ycor < 0 [ lt 10 ]
+  fd 2
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 5 [ rt 5 ]
+    lt 20
+  ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 5 [ lt 5 ]
+    rt 20
+  ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 5 [ rt 5 ]
+    rt 10
+  ]
+  if item 0 input-resource-distances > 10 and item 1 input-resource-distances > 10 and item 2 input-resource-distances > 10 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+  ]
+  fd 1
 ]
         ```
 
@@ -1373,7 +1394,8 @@ ifelse (input-resource-distances = [ 0 0 0 ]) [
       - Verify that each command has a valid parameter
       - Make sure bracket pairs are properly matched and nested
       - Keep all numeric values between -1000 and 1000
-
+      - Do not put brackets around input-resource-distances and input-resource-types when trying to call an item. Correct Example: item 2 input-resource-distances
+      - Lists are 0-indexed based
 
    7. ROBUST IMPLEMENTATION:
       - Generate code that is resilient to edge cases
@@ -1383,44 +1405,67 @@ ifelse (input-resource-distances = [ 0 0 0 ]) [
 
 
    8. EXAMPLES:
-      - If the given pseudocode says "If no resource is detected, move forward randomly. Otherwise, identify the smallest value in the input-resource-distances list and turn towards that direction.", you should implement this logic in NetLogo code as follows:
+      - If the given pseudocode says "f the agent’s weight is over 50, it turns toward the center of the map based on its position and moves forward quickly. Otherwise, it checks which direction has the closest resource and turns accordingly—slightly adjusting if the resource is very close. If no nearby resources are detected in any direction, it again turns toward the center. After all turning decisions, it moves forward at a slower speed.", you should implement this logic in NetLogo code as follows:
         ```
-ifelse (input-resource-distances = [ 0 0 0 ]) [
- lt random 20
- rt random 20
- fd 5
-] [
- (ifelse min input-resource-distances = item 0 input-resource-distances [ lt 20 ]
-         min input-resource-distances = item 1 input-resource-distances [ rt 20 ]
-         [ fd 3] )
+ifelse weight > 50 [
+  if xcor > 0 [ rt 10 ]
+  if xcor < 0 [ lt 10 ]
+  if ycor > 0 [ rt 10 ]
+  if ycor < 0 [ lt 10 ]
+  fd 2
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 5 [ rt 5 ]
+    lt 20
+  ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 5 [ lt 5 ]
+    rt 20
+  ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 5 [ rt 5 ]
+    rt 10
+  ]
+  if item 0 input-resource-distances > 10 and item 1 input-resource-distances > 10 and item 2 input-resource-distances > 10 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+  ]
+  fd 1
 ]
         ```
+        
      - If the given pseudocode says
-     " If the third item of input-resource-distances is not zero, move forward towards resource.
-       If the third item of input-resource-distances is zero,
-           and if first item of input-resource-distances is greater than the second item, turn left and move towards resources.
-           Otherwise, if the second item of input-resource-distances is greater than the first item, turn right and move towards resource.
-       Otherwise, move randomly.", you should implement this logic in NetLogo code as follows:
+     " If the agent’s weight is over 50, it turns sharply toward the center of the map and moves quickly to deposit resources. Otherwise, it checks which direction has the closest resource: if it’s the left, it turns left; if it’s the right, it turns right; if it’s the front, it turns slightly and moves forward. The turning is more pronounced if the resource is very close. If all resources are far away (beyond 15 units), the agent turns back toward the center to avoid wandering too far. After deciding, it moves forward moderately to continue searching.", you should implement this logic in NetLogo code as follows:
      ```
-if item 2 input-resource-distances != 0 [
- fd item 2 input-resource-distances
+ifelse weight > 50 [
+  if xcor > 0 [ rt 20 ]
+  if xcor < 0 [ lt 20 ]
+  if ycor > 0 [ rt 20 ]
+  if ycor < 0 [ lt 20 ]
+  fd 3
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 7 [ rt 10 ]
+    lt 30
+  ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 7 [ lt 10 ]
+    rt 30
+  ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 7 [ rt 10 ]
+    rt 20
+  ]
+  if item 0 input-resource-distances > 15 and item 1 input-resource-distances > 15 and item 2 input-resource-distances > 15 [
+    if xcor > 0 [ rt 20 ]
+    if xcor < 0 [ lt 20 ]
+    if ycor > 0 [ rt 20 ]
+    if ycor < 0 [ lt 20 ]
+  ]
+  fd 1.5
 ]
-if item 2 input-resource-distances = 0 [
- if item 0 input-resource-distances > input-resource-distances 1 input [
-   lt 15
-   fd item 0 input-resource-distances
- ]
- if item 1 input-resource-distances > input-resource-distances 0 input [
-   rt 15
-   fd item 1 input-resource-distances
- ]
-]
-ifelse random 2 = 0 [
- rt 45
-] [
- lt 45
-]
-fd 1
      ```
 
 
@@ -2645,7 +2690,7 @@ Return ONLY the evolved NetLogo code with no explanations:
       """,
     },
 
-    "collection_resource": {
+    "collection_resource1": {
      "zero_shot_code": """You are an expert NetLogo coder.
      You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
 
@@ -3664,22 +3709,28 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      ```
      """,
    },
-       "collection_resource": {
+       "collection_resource2": {
      "zero_shot_code": """You are an expert NetLogo coder.
      You are trying to improve the code of a given turtle agent that is trying to collect as many resources as possible and efficiently deposit them in a chest in the center. Collecting resources adds weight to the agent, which causes resource-score to decay at a percentage of weight. Depositing resources in the chest sets the weight of the agent back to 0 and thus resets the rate at which resource-score decays. 
+     
+     
      Improve the given agent movement code following these precise specifications:
+
      Here is the current code of the turtle agent:
      ```
        {}
      ```
+
+
      INPUT CONTEXT:
-     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - You have access to variables called input-resource-distances and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
      - Remember that you only have access to the variables named input-resource-distances, input-resource-types, and weight and no other variables
+
+
      SIMULATION ENVIRONMENT:
      - The turtle agent is in a resource collection simulation
      - The turtle has a weight, which increases as it picks up resources
@@ -3687,6 +3738,8 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      - The turtle agent can detect resources in three cone regions encoded in the input list
      - The resources are randomly distributed in the environment
      - The chest to deposit resources and set weight to 0 is in the center of the map (patch 0 0)
+
+
      CONSTRAINTS:
      1. Do not include code to kill or control any other agents
      2. Do not include code to interact with the environment
@@ -3698,6 +3751,7 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      8. Follow NetLogo syntax and constraints
      9. Do not use any undefined variables or commands besides the input and weight variable
      10. Focus on movement strategies based on the input and weight variables
+
      VALID COMMANDS AND SYNTAX:
         - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
         - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
@@ -3718,6 +3772,7 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
         - Keep values within reasonable ranges (-1000 to 1000)
         - Ensure at least one movement command is included
         - There is no such thing as an `else` statement in NetLogo
+
      STRATEGIC GOALS:
      1. Balance depositing and resource-seeking behavior 
      2. Respond to sensor readings intelligently
@@ -3725,6 +3780,7 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      4. Be creative in your movement strategy
      The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
      Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
+     
      ```
      [Your changed NetLogo code goes here]
      ```
@@ -3737,9 +3793,8 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
        {}
      ```
      INPUT CONTEXT:
-     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - You have access to variables called input-resource-distances and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -3789,9 +3844,34 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      4. Be creative in your movement strategy
      EXAMPLES OF VALID CODE GENERATION:
      Current Code: ```fd 1 rt random 45 fd 2 lt 30```
-     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
-```
-     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+     Changed Code: ```ifelse weight > 50 [
+  if xcor > 0 [ rt 10 ]
+  if xcor < 0 [ lt 10 ]
+  if ycor > 0 [ rt 10 ]
+  if ycor < 0 [ lt 10 ]
+  fd 2
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 5 [ rt 5 ]
+    lt 20
+  ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 5 [ lt 5 ]
+    rt 20
+  ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 5 [ rt 5 ]
+    rt 10
+  ]
+  if item 0 input-resource-distances > 10 and item 1 input-resource-distances > 10 and item 2 input-resource-distances > 10 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+  ]
+  fd 1
+]```
+     Why: Code controls a movement based on agent weight and input-resource-distances. If the agent is heavy (weight > 30), it returns to the center (for depositing) by turning based on its position and moving forward quickly. If it is light (weight < 30), it seeks the closest resource by comparing distances in the list and turning toward the nearest one with a small angle adjustment, then moves forward slowly. This creates a simple foraging-return behavior.
      The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
      Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
      ```
@@ -3806,9 +3886,8 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
        {}
      ```
      INPUT CONTEXT:
-     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - You have access to variables called input-resource-distances and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -3858,276 +3937,156 @@ ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-r
      4. Be creative in your movement strategy
      EXAMPLES OF VALID CODE GENERATION:
      Current Code: ```fd 1 rt random 45 fd 2 lt 30```
-     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
-```
-     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+     Changed Code: ```ifelse weight > 50 [
+  if xcor > 0 [ rt 10 ]
+  if xcor < 0 [ lt 10 ]
+  if ycor > 0 [ rt 10 ]
+  if ycor < 0 [ lt 10 ]
+  fd 2
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 5 [ rt 5 ]
+    lt 20
+  ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 5 [ lt 5 ]
+    rt 20
+  ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 5 [ rt 5 ]
+    rt 10
+  ]
+  if item 0 input-resource-distances > 10 and item 1 input-resource-distances > 10 and item 2 input-resource-distances > 10 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+  ]
+  fd 1
+]```
+     Why: The code controls the movement based on agent weight and input-resource-distances. If the agent is heavy (weight > 30), it returns to the center (for depositing) by turning based on its position and moving forward quickly. If it is light (weight < 30), it seeks the closest resource by comparing distances in the list and turning toward the nearest one with a small angle adjustment, then moves forward slowly. This creates a simple foraging-return behavior.
      Current Code:
      ```
-     ifelse (item 0 input-resource-distances != 0) [
-  ifelse (item 0 input-resource-types = "gold") [
-    lt 5
-    fd 0.2
-  ] [
-    ifelse (item 1 input-resource-distances != 0) [
-      ifelse (item 1 input-resource-types = "silver") [
-        rt 5
-        fd 0.2
-      ] [
-        ifelse (item 2 input-resource-distances != 0) [
-          ifelse (item 2 input-resource-types = "crystal") [
-            fd 0.2
-          ] [
-            ifelse (random 100 < 50) [
-              fd 2
-              rt random-float 45
-            ] [
-              rt random-float 30
-              fd 5
-            ]
-          ]
-        ] [
-          ifelse (random 100 < 50) [
-            fd 2
-            rt random-float 45
-          ] [
-            rt random-float 30
-            fd 5
-          ]
-        ]
-      ]
-    ] [
-      ifelse (item 2 input-resource-distances != 0) [
-        ifelse (item 2 input-resource-types = "crystal") [
-          fd 0.2
-        ] [
-          ifelse (random 100 < 50) [
-            fd 2
-            rt random-float 45
-          ] [
-            rt random-float 30
-            fd 5
-          ]
-        ]
-      ] [
-        ifelse (random 100 < 50) [
-          fd 2
-          rt random-float 45
-        ] [
-          rt random-float 30
-          fd 5
-        ]
-      ]
-    ]
+     ifelse weight > 50 [
+  if xcor > 0 [ rt 10 ]
+  if xcor < 0 [ lt 10 ]
+  if ycor > 0 [ rt 10 ]
+  if ycor < 0 [ lt 10 ]
+  fd 2
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 5 [ rt 5 ]
+    lt 20
   ]
-] [
-  ifelse (item 1 input-resource-distances != 0) [
-    ifelse (item 1 input-resource-types = "silver") [
-      rt 5
-      fd 0.2
-    ] [
-      ifelse (item 2 input-resource-distances != 0) [
-        ifelse (item 2 input-resource-types = "crystal") [
-          fd 0.2
-        ] [
-          ifelse (random 100 < 50) [
-            fd 2
-            rt random-float 45
-          ] [
-            rt random-float 30
-            fd 5
-          ]
-        ]
-      ] [
-        ifelse (random 100 < 50) [
-          fd 2
-          rt random-float 45
-        ] [
-          rt random-float 30
-          fd 5
-        ]
-      ]
-    ]
-  ] [
-    ifelse (item 2 input-resource-distances != 0) [
-      ifelse (item 2 input-resource-types = "crystal") [
-        fd 0.2
-      ] [
-        ifelse (random 100 < 50) [
-          fd 2
-          rt random-float 45
-        ] [
-          rt random-float 30
-          fd 5
-        ]
-      ]
-    ] [
-      ifelse (random 100 < 50) [
-        fd 2
-        rt random-float 45
-      ] [
-        rt random-float 30
-        fd 5
-      ]
-    ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 5 [ lt 5 ]
+    rt 20
   ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 5 [ rt 5 ]
+    rt 10
+  ]
+  if item 0 input-resource-distances > 10 and item 1 input-resource-distances > 10 and item 2 input-resource-distances > 10 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+  ]
+  fd 1
 ]
      
      ```
      Changed Code:
      ```
-ifelse member? "crystal" input-resource-types [
-  ifelse any? map [i -> (item i input-resource-types = "crystal") and (item i input-resource-distances != 0)] [0 1 2] [
-    ifelse (item 0 input-resource-types = "crystal") [
-      ifelse (item 0 input-resource-distances != 0) [
-        ifelse ((item 1 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
-          ifelse ((item 2 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
-            lt 5
-            fd 0.2
-          ] [
-            fd 0.2
-          ]
-        ] [
-          fd 0.2
-        ]
-      ] [
-        fd 0.2
-      ]
-    ] [
-      ifelse (item 1 input-resource-types = "crystal") [
-        ifelse (item 1 input-resource-distances != 0) [
-          ifelse ((item 0 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
-            ifelse ((item 2 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
-              rt 5
-              fd 0.2
-            ] [
-              fd 0.2
-            ]
-          ] [
-            fd 0.2
-          ]
-        ] [
-          fd 0.2
-        ]
-      ] [
-        fd 0.2
-      ]
+ifelse weight > 50 [
+  if xcor > 0 [ rt 10 ]
+  if xcor < 0 [ lt 10 ]
+  if ycor > 0 [ rt 10 ]
+  if ycor < 0 [ lt 10 ]
+  fd 2
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 5 [ rt 5 ]
+    lt 20
+    fd 1.5
+  ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 5 [ lt 5 ]
+    rt 20
+    fd 1.5
+  ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 5 [ rt 5 ]
+    rt 10
+    fd 1.5
+  ]
+  if item 0 input-resource-distances > 10 and item 1 input-resource-distances > 10 and item 2 input-resource-distances > 10 [
+    if abs(xcor) > abs(ycor) [ 
+      if xcor > 0 [ rt 10 ]
+      if xcor < 0 [ lt 10 ]
     ]
-  ] [ ; no valid "crystal"
-    ifelse member? "gold" input-resource-types [
-      ifelse any? map [i -> (item i input-resource-types = "gold") and (item i input-resource-distances != 0)] [0 1 2] [
-        ifelse (item 0 input-resource-types = "gold") [
-          ifelse (item 0 input-resource-distances != 0) [
-            ifelse ((item 1 input-resource-types != "gold") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
-              ifelse ((item 2 input-resource-types != "gold") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
-                lt 5
-                fd 0.2
-              ] [
-                fd 0.2
-              ]
-            ] [
-              fd 0.2
-            ]
-          ] [
-            fd 0.2
-          ]
-        ] [
-          ifelse (item 1 input-resource-types = "gold") [
-            ifelse (item 1 input-resource-distances != 0) [
-              ifelse ((item 0 input-resource-types != "gold") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
-                ifelse ((item 2 input-resource-types != "gold") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
-                  rt 5
-                  fd 0.2
-                ] [
-                  fd 0.2
-                ]
-              ] [
-                fd 0.2
-              ]
-            ] [
-              fd 0.2
-            ]
-          ] [
-            fd 0.2
-          ]
-        ]
-      ] [ ; no valid "gold"
-        ifelse member? "silver" input-resource-types [
-          ifelse any? map [i -> (item i input-resource-types = "silver") and (item i input-resource-distances != 0)] [0 1 2] [
-            ifelse (item 0 input-resource-types = "silver") [
-              ifelse (item 0 input-resource-distances != 0) [
-                ifelse ((item 1 input-resource-types != "silver") or (item 0 input-resource-distances <= item 1 input-resource-distances)) [
-                  ifelse ((item 2 input-resource-types != "silver") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
-                    lt 5
-                    fd 0.2
-                  ] [
-                    fd 0.2
-                  ]
-                ] [
-                  fd 0.2
-                ]
-              ] [
-                fd 0.2
-              ]
-            ] [
-              ifelse (item 1 input-resource-types = "silver") [
-                ifelse (item 1 input-resource-distances != 0) [
-                  ifelse ((item 0 input-resource-types != "silver") or (item 1 input-resource-distances <= item 0 input-resource-distances)) [
-                    ifelse ((item 2 input-resource-types != "silver") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
-                      rt 5
-                      fd 0.2
-                    ] [
-                      fd 0.2
-                    ]
-                  ] [
-                    fd 0.2
-                  ]
-                ] [
-                  fd 0.2
-                ]
-              ] [
-                fd 0.2
-              ]
-            ]
-          ] [ ; no valid "silver"
-            ifelse random 100 < 50 [
-              fd 2
-              rt random-float 45
-            ] [
-              rt random-float 30
-              fd 5
-            ]
-          ]
-        ] [ ; not even "silver"
-          ifelse random 100 < 50 [
-            fd 2
-            rt random-float 45
-          ] [
-            rt random-float 30
-            fd 5
-          ]
-        ]
-      ]
-    ] [ ; not even "gold"
-      ifelse random 100 < 50 [
-        fd 2
-        rt random-float 45
-      ] [
-        rt random-float 30
-        fd 5
-      ]
+    if abs(xcor) < abs(ycor) [ 
+      if ycor > 0 [ rt 10 ]
+      if ycor < 0 [ lt 10 ]
+    ]
+    if abs(xcor) = 0 and abs(ycor) = 0 [ fd 1 ]
+    fd 1
+  ]
+  if item 0 input-resource-distances > 5 and item 1 input-resource-distances > 5 and item 2 input-resource-distances > 5 [
+    if xcor > 0 [ rt 5 ]
+    if xcor < 0 [ lt 5 ]
+    if ycor > 0 [ rt 5 ]
+    if ycor < 0 [ lt 5 ]
+    fd 1
+  ]
+  if xcor = 0 and ycor = 0 [
+    if item 0 input-resource-distances < item 1 input-resource-distances and item 0 input-resource-distances < item 2 input-resource-distances [
+      if item 0 input-resource-distances < 5 [ rt 5 ]
+      lt 20
+      fd 1.5
+    ]
+    if item 1 input-resource-distances < item 0 input-resource-distances and item 1 input-resource-distances < item 2 input-resource-distances [
+      if item 1 input-resource-distances < 5 [ lt 5 ]
+      rt 20
+      fd 1.5
+    ]
+    if item 2 input-resource-distances < item 0 input-resource-distances and item 2 input-resource-distances < item 1 input-resource-distances [
+      if item 2 input-resource-distances < 5 [ rt 5 ]
+      rt 10
+      fd 1.5
     ]
   ]
-] [
-  ifelse random 100 < 50 [
+  if abs(xcor) < 5 and abs(ycor) < 5 and weight > 10 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
     fd 2
-    rt random-float 45
-  ] [
-    rt random-float 30
-    fd 5
+  ]
+  if abs(xcor) < 10 and abs(ycor) < 10 and weight > 20 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+    fd 2
+  ]
+  if abs(xcor) > 10 or abs(ycor) > 10 and weight < 10 [
+    if xcor > 0 [ lt 5 ]
+    if xcor < 0 [ rt 5 ]
+    if ycor > 0 [ lt 5 ]
+    if ycor < 0 [ rt 5 ]
+    fd 1
+  ]
+  if weight > 30 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+    fd 2
   ]
 ]
      ```
-     Why: This code directs the agent to move toward the closest instance of the highest-value resource it can detect—crystal first, then gold, then silver—based on distances in three vision cones (left, right, front), and defaults to random wandering if no resources are seen.
+     Why: The evolved code adds more nuanced behaviors based on the agent's position, weight, and proximity to resources. It introduces finer movement control (fd 1.5), special cases for being near or at the center, and multiple fallback strategies to improve adaptability. These changes help the agent navigate more intelligently, avoid getting stuck, and better balance between exploring and returning behavior.
      The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
      Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
      ```
@@ -4142,9 +4101,8 @@ ifelse member? "crystal" input-resource-types [
        {}
      ```
      INPUT CONTEXT:
-     - You have access to variables called input-resource-distances, input-resource-types, and weight
+     - You have access to variables called input-resource-distances and weight
      - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -4207,9 +4165,8 @@ ifelse member? "crystal" input-resource-types [
        {}
      ```
      INPUT CONTEXT:
-     - You have access to variables called input-resource-distances, input-resource-types, and weight
-     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each. 
-     - input-resource-types is a NetLogo list that contains three resource types that are either “silver”, “gold” or “crystal. The input-resource-types list is parallel to the input-resource-distances list, which means their element indices correspond to the same resource.
+     - You have access to variables called input-resource-distances and weight
+     - input-resource-distances is a NetLogo list that contains three values representing distances to food in three cone regions of 20 degrees each.
      - The first item in input-resource-distances is the distance to the nearest resource in the left cone, the second is the right cone, and the third is the front cone
      - Non-zero lower values in input-resource-distances indicate closer resources
      - Use the information in this variable to inform movement strategy
@@ -4259,9 +4216,34 @@ ifelse member? "crystal" input-resource-types [
      4. Be creative in your movement strategy
      EXAMPLES OF VALID CODE GENERATION:
      Current Code: ```fd 1 rt random 45 fd 2 lt 30```
-     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]
-```
-     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+     Changed Code: ```ifelse weight > 50 [
+  if xcor > 0 [ rt 10 ]
+  if xcor < 0 [ lt 10 ]
+  if ycor > 0 [ rt 10 ]
+  if ycor < 0 [ lt 10 ]
+  fd 2
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 5 [ rt 5 ]
+    lt 20
+  ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 5 [ lt 5 ]
+    rt 20
+  ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 5 [ rt 5 ]
+    rt 10
+  ]
+  if item 0 input-resource-distances > 10 and item 1 input-resource-distances > 10 and item 2 input-resource-distances > 10 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+  ]
+  fd 1
+]```
+     Why: The code controls the movement based on its weight and input-resource-distances. If the agent is heavy (weight > 30), it returns to the center (for depositing) by turning based on its position and moving forward quickly. If it is light (weight < 30), it seeks the closest resource by comparing distances in the list and turning toward the nearest one with a small angle adjustment, then moves forward slowly. This creates a simple foraging-return behavior.
      The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
      Detail your strategy in netlogo code comments (;;) before you generate the implementation. Include comments throughout the code to explain your strategy.
      Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
@@ -4329,190 +4311,156 @@ ifelse member? "crystal" input-resource-types [
      4. Be creative in your movement strategy
      EXAMPLES OF VALID CODE GENERATION:
      Current Code: ```fd 1 rt random 45 fd 2 lt 30```
-     Changed Code: ```ifelse (item 0 input-resource-distances != 0) [ ifelse (item 0 input-resource-types = "gold") [ rt 15 fd 0.5 ] [ rt random 30 lt random 30 fd 5 ] ] [ rt random 30 lt random 30 fd 5 ]```
-     Why: This code uses two parallel lists—input-resource-distances and input-resource-types—to guide movement based on what's detected in the left cone. If a resource is present (non-zero distance) and it's "gold", the agent turns slightly and moves forward to approach it. Otherwise, it turns randomly and moves further to explore the environment.
+     Changed Code: ```ifelse weight > 50 [
+  if xcor > 0 [ rt 10 ]
+  if xcor < 0 [ lt 10 ]
+  if ycor > 0 [ rt 10 ]
+  if ycor < 0 [ lt 10 ]
+  fd 2
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 5 [ rt 5 ]
+    lt 20
+  ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 5 [ lt 5 ]
+    rt 20
+  ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 5 [ rt 5 ]
+    rt 10
+  ]
+  if item 0 input-resource-distances > 10 and item 1 input-resource-distances > 10 and item 2 input-resource-distances > 10 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+  ]
+  fd 1
+]```
+     Why: The code controls movement based on agent weight and input-resource-distances. If the agent is heavy (weight > 30), it returns to the center (for depositing) by turning based on its position and moving forward quickly. If it is light (weight < 30), it seeks the closest resource by comparing distances in the list and turning toward the nearest one with a small angle adjustment, then moves forward slowly. This creates a simple foraging-return behavior.
      Current Code:
      ```
-     ifelse (item 0 input-resource-distances != 0) [
-  ifelse (item 0 input-resource-types = "gold") [
-    lt 5
-    fd 0.2
-  ] [
-    ifelse (item 1 input-resource-distances != 0) [
-      ifelse (item 1 input-resource-types = "silver") [
-        rt 5
-        fd 0.2
-      ] [
-        ifelse (item 2 input-resource-distances != 0) [
-          ifelse (item 2 input-resource-types = "crystal") [
-            fd 0.2
-          ] [
-            ifelse (random 100 < 50) [
-              fd 2
-              rt random-float 45
-            ] [
-              rt random-float 30
-              fd 5
-            ]
-          ]
-        ] [
-          ifelse (random 100 < 50) [
-            fd 2
-            rt random-float 45
-          ] [
-            rt random-float 30
-            fd 5
-          ]
-        ]
-      ]
-    ] [
-      ifelse (item 2 input-resource-distances != 0) [
-        ifelse (item 2 input-resource-types = "crystal") [
-          fd 0.2
-        ] [
-          ifelse (random 100 < 50) [
-            fd 2
-            rt random-float 45
-          ] [
-            rt random-float 30
-            fd 5
-          ]
-        ]
-      ] [
-        ifelse (random 100 < 50) [
-          fd 2
-          rt random-float 45
-        ] [
-          rt random-float 30
-          fd 5
-        ]
-      ]
-    ]
+     ifelse weight > 50 [
+  if xcor > 0 [ rt 10 ]
+  if xcor < 0 [ lt 10 ]
+  if ycor > 0 [ rt 10 ]
+  if ycor < 0 [ lt 10 ]
+  fd 2
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 5 [ rt 5 ]
+    lt 20
   ]
-] [
-  ifelse (item 1 input-resource-distances != 0) [
-    ifelse (item 1 input-resource-types = "silver") [
-      rt 5
-      fd 0.2
-    ] [
-      ifelse (item 2 input-resource-distances != 0) [
-        ifelse (item 2 input-resource-types = "crystal") [
-          fd 0.2
-        ] [
-          ifelse (random 100 < 50) [
-            fd 2
-            rt random-float 45
-          ] [
-            rt random-float 30
-            fd 5
-          ]
-        ]
-      ] [
-        ifelse (random 100 < 50) [
-          fd 2
-          rt random-float 45
-        ] [
-          rt random-float 30
-          fd 5
-        ]
-      ]
-    ]
-  ] [
-    ifelse (item 2 input-resource-distances != 0) [
-      ifelse (item 2 input-resource-types = "crystal") [
-        fd 0.2
-      ] [
-        ifelse (random 100 < 50) [
-          fd 2
-          rt random-float 45
-        ] [
-          rt random-float 30
-          fd 5
-        ]
-      ]
-    ] [
-      ifelse (random 100 < 50) [
-        fd 2
-        rt random-float 45
-      ] [
-        rt random-float 30
-        fd 5
-      ]
-    ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 5 [ lt 5 ]
+    rt 20
   ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 5 [ rt 5 ]
+    rt 10
+  ]
+  if item 0 input-resource-distances > 10 and item 1 input-resource-distances > 10 and item 2 input-resource-distances > 10 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+  ]
+  fd 1
 ]
+     
      ```
      Changed Code:
      ```
-     ;; Prioritize: crystal > gold > silver
-ifelse member? "crystal" input-resource-types and any? map [i -> (item i input-resource-types = "crystal") and (item i input-resource-distances != 0)] [0 1 2] [
-  
-  ;; Find closest crystal
-  ifelse (item 0 input-resource-types = "crystal" and item 0 input-resource-distances != 0) and
-         ((item 1 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
-         ((item 2 input-resource-types != "crystal") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
-    lt 5
-    fd 0.2
-  ] [
-    ifelse (item 1 input-resource-types = "crystal" and item 1 input-resource-distances != 0) and
-           ((item 0 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
-           ((item 2 input-resource-types != "crystal") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
-      rt 5
-      fd 0.2
-    ] [
-      fd 0.2
+ifelse weight > 50 [
+  if xcor > 0 [ rt 10 ]
+  if xcor < 0 [ lt 10 ]
+  if ycor > 0 [ rt 10 ]
+  if ycor < 0 [ lt 10 ]
+  fd 2
+][
+  if item 0 input-resource-distances <= item 1 input-resource-distances and item 0 input-resource-distances <= item 2 input-resource-distances [
+    if item 0 input-resource-distances < 5 [ rt 5 ]
+    lt 20
+    fd 1.5
+  ]
+  if item 1 input-resource-distances <= item 0 input-resource-distances and item 1 input-resource-distances <= item 2 input-resource-distances [
+    if item 1 input-resource-distances < 5 [ lt 5 ]
+    rt 20
+    fd 1.5
+  ]
+  if item 2 input-resource-distances <= item 0 input-resource-distances and item 2 input-resource-distances <= item 1 input-resource-distances [
+    if item 2 input-resource-distances < 5 [ rt 5 ]
+    rt 10
+    fd 1.5
+  ]
+  if item 0 input-resource-distances > 10 and item 1 input-resource-distances > 10 and item 2 input-resource-distances > 10 [
+    if abs(xcor) > abs(ycor) [ 
+      if xcor > 0 [ rt 10 ]
+      if xcor < 0 [ lt 10 ]
+    ]
+    if abs(xcor) < abs(ycor) [ 
+      if ycor > 0 [ rt 10 ]
+      if ycor < 0 [ lt 10 ]
+    ]
+    if abs(xcor) = 0 and abs(ycor) = 0 [ fd 1 ]
+    fd 1
+  ]
+  if item 0 input-resource-distances > 5 and item 1 input-resource-distances > 5 and item 2 input-resource-distances > 5 [
+    if xcor > 0 [ rt 5 ]
+    if xcor < 0 [ lt 5 ]
+    if ycor > 0 [ rt 5 ]
+    if ycor < 0 [ lt 5 ]
+    fd 1
+  ]
+  if xcor = 0 and ycor = 0 [
+    if item 0 input-resource-distances < item 1 input-resource-distances and item 0 input-resource-distances < item 2 input-resource-distances [
+      if item 0 input-resource-distances < 5 [ rt 5 ]
+      lt 20
+      fd 1.5
+    ]
+    if item 1 input-resource-distances < item 0 input-resource-distances and item 1 input-resource-distances < item 2 input-resource-distances [
+      if item 1 input-resource-distances < 5 [ lt 5 ]
+      rt 20
+      fd 1.5
+    ]
+    if item 2 input-resource-distances < item 0 input-resource-distances and item 2 input-resource-distances < item 1 input-resource-distances [
+      if item 2 input-resource-distances < 5 [ rt 5 ]
+      rt 10
+      fd 1.5
     ]
   ]
-] [
-  ifelse member? "gold" input-resource-types and any? map [i -> (item i input-resource-types = "gold") and (item i input-resource-distances != 0)] [0 1 2] [
-    ;; Find closest gold
-    ifelse (item 0 input-resource-types = "gold" and item 0 input-resource-distances != 0) and
-           ((item 1 input-resource-types != "gold") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
-           ((item 2 input-resource-types != "gold") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
-      lt 5
-      fd 0.2
-    ] [
-      ifelse (item 1 input-resource-types = "gold" and item 1 input-resource-distances != 0) and
-             ((item 0 input-resource-types != "gold") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
-             ((item 2 input-resource-types != "gold") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
-        rt 5
-        fd 0.2
-      ] [
-        fd 0.2
-      ]
-    ]
-  ] [
-    ifelse member? "silver" input-resource-types and any? map [i -> (item i input-resource-types = "silver") and (item i input-resource-distances != 0)] [0 1 2] [
-      ;; Find closest silver
-      ifelse (item 0 input-resource-types = "silver" and item 0 input-resource-distances != 0) and
-             ((item 1 input-resource-types != "silver") or (item 0 input-resource-distances <= item 1 input-resource-distances)) and
-             ((item 2 input-resource-types != "silver") or (item 0 input-resource-distances <= item 2 input-resource-distances)) [
-        lt 5
-        fd 0.2
-      ] [
-        ifelse (item 1 input-resource-types = "silver" and item 1 input-resource-distances != 0) and
-               ((item 0 input-resource-types != "silver") or (item 1 input-resource-distances <= item 0 input-resource-distances)) and
-               ((item 2 input-resource-types != "silver") or (item 1 input-resource-distances <= item 2 input-resource-distances)) [
-          rt 5
-          fd 0.2
-        ] [
-          fd 0.2
-        ]
-      ]
-    ] [
-      ;; Default random explore behavior
-      ifelse random 100 < 50 [
-        fd 2
-        rt random-float 45
-      ] [
-        rt random-float 30
-        fd 5
-      ]
-    ]
+  if abs(xcor) < 5 and abs(ycor) < 5 and weight > 10 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+    fd 2
+  ]
+  if abs(xcor) < 10 and abs(ycor) < 10 and weight > 20 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+    fd 2
+  ]
+  if abs(xcor) > 10 or abs(ycor) > 10 and weight < 10 [
+    if xcor > 0 [ lt 5 ]
+    if xcor < 0 [ rt 5 ]
+    if ycor > 0 [ lt 5 ]
+    if ycor < 0 [ rt 5 ]
+    fd 1
+  ]
+  if weight > 30 [
+    if xcor > 0 [ rt 10 ]
+    if xcor < 0 [ lt 10 ]
+    if ycor > 0 [ rt 10 ]
+    if ycor < 0 [ lt 10 ]
+    fd 2
   ]
 ]
      ```
-     Why: This code directs the agent to move toward the closest instance of the highest-value resource it can detect—crystal first, then gold, then silver—based on distances in three vision cones (left, right, front), and defaults to random wandering if no resources are seen.
+     Why: The evolved code adds more nuanced behaviors based on the agent's position, weight, and proximity to resources. It introduces finer movement control (fd 1.5), special cases for being near or at the center, and multiple fallback strategies to improve adaptability. These changes help the agent navigate more intelligently, avoid getting stuck, and better balance between exploring and returning behavior.
      The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
      Detail your strategy in netlogo code comments (;;) before you generate the implementation. Include comments throughout the code to explain your strategy.
      Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.

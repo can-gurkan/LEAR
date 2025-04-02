@@ -699,7 +699,7 @@ SWITCH
 501
 verbose?
 verbose?
-0
+1
 1
 -1000
 
@@ -1103,7 +1103,7 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 <experiments>
-  <experiment name="zero-shot-code-wcomments-exp" repetitions="5" runMetricsEveryStep="false">
+  <experiment name="zero-shot-code-exp" repetitions="5" runMetricsEveryStep="false">
     <setup>setup</setup>
     <go>go</go>
     <timeLimit steps="150000"/>
@@ -1145,6 +1145,65 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="text-based-evolution">
       <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;groq&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;resources_test&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-resources">
+      <value value="30"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="text-two-shot-exp" repetitions="1" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="150000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max [fitness] of llm-agents</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="0.8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="resource-radius">
+      <value value="19"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="llm-type">
       <value value="&quot;groq&quot;"/>

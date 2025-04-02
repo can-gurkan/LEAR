@@ -19,8 +19,8 @@ GraphProviderBase.retry_prompt = 'generate_code_with_error'
 GraphProviderBase.evolution_strategy = 'collection_resource_text_zero_shot' 
 
 # Prompt configuration - Check storeprompts.py dict 
-GraphProviderBase.prompt_type = 'collection_resource' #'collection_resource' #'collection_simple'  # groq, complex
-GraphProviderBase.prompt_name = 'two_shot_code' #'one_shot_code' #'zero_shot_code_wcomments'  # prompt2, prompt1
+GraphProviderBase.prompt_type = 'collection_resource1' #'collection_resource' #'collection_simple'  # groq, complex
+GraphProviderBase.prompt_name = 'zero_shot_code' #'one_shot_code' #'zero_shot_code_wcomments'  # prompt2, prompt1
 
 # Model-specific configurations
 GraphUnifiedProvider.temperature = 0.65
