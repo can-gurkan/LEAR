@@ -8,6 +8,7 @@ prompt_name = 'prompt3'         # prompt1
 from src.generators import base
 from src.graph_providers import unified_provider
 from src.graph_providers import base as graph_base
+from src.mutation import text_based_evolution
 
 # Retry configuration
 CodeRetryHandler.max_attempts = 2
@@ -16,6 +17,7 @@ GraphProviderBase.retry_prompt = 'generate_code_with_error'
 
 # Text evolution configuration
 GraphProviderBase.evolution_strategy = 'collection_poison_avoidance_zero_shot' 
+TextBasedEvolution.evolution_strategy = 'collection_poison_avoidance_zero_shot'
 
 # Prompt configuration - Check storeprompts.py dict 
 GraphProviderBase.prompt_type = 'collection_poison'  # groq, complex

@@ -21,14 +21,14 @@ class EnvironmentContext:
     parent_rule: Optional[str]
     ticks: int
 
-
+@gin.configurable
 class TextBasedEvolution:
     """Handles text-based description generation for NetLogo code evolution"""
     
     def __init__(
         self, 
         provider: Optional[LangchainProviderBase] = None,
-        evolution_strategy: str = "simple"  # Default to simple evolution strategy
+        evolution_strategy: str = "simple"  # Default to simple evolution strategy simple 
     ):
         """
         Initialize TextBasedEvolution.
@@ -41,6 +41,7 @@ class TextBasedEvolution:
         self.logger = logging.getLogger(__name__)
         self.provider = provider
         self.evolution_strategy = evolution_strategy
+        print(self.evolution_strategy)
         self.logger.info(f"Initialized TextBasedEvolution with strategy: {evolution_strategy}")
     
     # def _analyze_performance(self, context: EnvironmentContext) -> str:
@@ -167,7 +168,7 @@ class TextBasedEvolution:
             
         try:
             # Use appropriate prompt based on the configured evolution strategy
-            system_prompt = prompts["langchain"]["cot_system"]
+            # system_prompt = prompts["langchain"]["cot_system"]
             
             # Check if the evolution strategy exists
             if "evolution_strategies" not in prompts or self.evolution_strategy not in prompts["evolution_strategies"]:
@@ -185,9 +186,11 @@ class TextBasedEvolution:
                 user_prompt = prompts["evolution_strategies"][self.evolution_strategy]["pseudocode_prompt"].format(current_text)
             
             prompt = ChatPromptTemplate.from_messages([
-                ("system", system_prompt),
+                ("system", ""),
                 ("user", user_prompt)
             ])
+            
+            print(f"Prompt: {prompt}")
             
             chain = prompt | self.provider.initialize_model() | StrOutputParser()
             pseudocode_response = chain.invoke({"input": ""})
