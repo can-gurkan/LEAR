@@ -1027,6 +1027,12 @@ class NetLogoVerifier:
         """
         expr = expr.strip().lower()
         
+        try:
+            if type(eval(expr)) in (int, float):
+                return True
+        except (NameError, SyntaxError):
+            pass
+        
         # Direct number match
         if self.number_pattern.fullmatch(expr):
             return True
