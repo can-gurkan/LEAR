@@ -5,7 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
-
+*.csv
 # logs
 Logs/
 *.log
@@ -21,3 +21,4 @@ Logs/
 
 # macOS
 .DS_Store
+
