@@ -16,8 +16,8 @@ GraphProviderBase.retry_max_attempts = 2
 GraphProviderBase.retry_prompt = 'generate_code_with_error'
 
 # Text evolution configuration
-GraphProviderBase.evolution_strategy = 'collection_poison_avoidance_zero_shot' 
-TextBasedEvolution.evolution_strategy = 'collection_poison_avoidance_zero_shot'
+GraphProviderBase.evolution_strategy = 'collection_poison_avoidance_two_shot' 
+TextBasedEvolution.evolution_strategy = 'collection_poison_avoidance_two_shot'
 
 # Prompt configuration - Check storeprompts.py dict 
 GraphProviderBase.prompt_type = 'collection_poison'  # groq, complex
