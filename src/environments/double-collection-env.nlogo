@@ -495,7 +495,7 @@ SWITCH
 358
 text-based-evolution
 text-based-evolution
-1
+0
 1
 -1000
 
@@ -959,6 +959,67 @@ NetLogo 6.4.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="twoshot-psuedocode" repetitions="5" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="150000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max [fitness] of llm-agents</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="7"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="0.8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;default&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-poison-sources">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;evotest&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-food-sources">
+      <value value="30"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;groq&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default

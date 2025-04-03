@@ -15,6 +15,13 @@ from src.utils.logging import get_logger
 logger = get_logger()
 
 
+def truncate_for_log(text, max_length=500):
+    """Helper function to truncate large strings for logging."""
+    if text and len(text) > max_length:
+        return text[:max_length] + "... [truncated]"
+    return text
+
+
 def evolve_pseudocode(
     state: GenerationState,
     provider: GraphProviderBase,
@@ -34,9 +41,11 @@ def evolve_pseudocode(
     use_text_evolution = state.get("use_text_evolution", False)
     logger.info(f"Evolving pseudocode, use_text_evolution: {use_text_evolution}")
 
-    
-    logger.info(f"Original code: {state['original_code']}")
-    logger.info(f"Initial pseudocode: {state['initial_pseudocode']}")
+    # Log truncated versions of potentially large strings
+    original_code_sample = truncate_for_log(state.get('original_code', ''))
+    initial_pseudocode_sample = truncate_for_log(state.get('initial_pseudocode', ''))
+    logger.info(f"Original code (sample): {original_code_sample}")
+    logger.info(f"Initial pseudocode (sample): {initial_pseudocode_sample}")
     
     if not state["use_text_evolution"]:
         logger.info("Text evolution disabled, skipping pseudocode generation")
@@ -49,7 +58,10 @@ def evolve_pseudocode(
         state["initial_pseudocode"], 
         state["original_code"]
     )
-    logger.info(f"Generated modified pseudocode: \n{modified_pseudocode}")
+    
+    # Log truncated version of modified pseudocode
+    modified_pseudocode_sample = truncate_for_log(modified_pseudocode)
+    logger.info(f"Generated modified pseudocode (sample): \n{modified_pseudocode_sample}")
     
     state["modified_pseudocode"] = modified_pseudocode
     # state["text_evolution_instance"] = text_evolution  # Store the instance for later use
@@ -69,8 +81,9 @@ def generate_code(
     Returns:
         Updated generation state with new code
     """
-    logger.info(f"Generating code, retry_count: {state['retry_count']}, error_message: {state['error_message']}")
-    logger.info(f"NODE: generate_code")
+    retry_count = state.get('retry_count', 0)
+    error_msg = truncate_for_log(state.get('error_message', None))
+    logger.info(f"NODE: generate_code - retry_count: {retry_count}, error_message: {error_msg}")
     
     try:
         # Check if we have both modified_pseudocode and error_message for retry scenario
@@ -88,14 +101,15 @@ def generate_code(
         logger.error(f"Error generating code: {str(e)}")
         new_code = state["current_code"]
     
-    logger.info(f"Generated new code: {new_code}")
+    # Don't log the entire code - it could be very large
+    code_sample = truncate_for_log(new_code)
+    logger.info(f"Generated new code (sample): {code_sample}")
     return {**state, "current_code": new_code}
 
 def verify_code(
     state: GenerationState, 
     verifier: NetLogoVerifier
 ) -> GenerationState:
-    logger.info(f"Verifying code, current retry count: {state['retry_count']}")
     """
     Verify the generated code.
     
@@ -106,10 +120,14 @@ def verify_code(
     Returns:
         Updated generation state with verification results
     """
-    logger.info(f"NODE: verify_code")
-    # logger.info(f"Code to verify: {state['current_code']}")
+    logger.info(f"NODE: verify_code - current retry count: {state.get('retry_count', 0)}")
+    # Don't log the full code - sample is enough
+    # code_sample = truncate_for_log(state.get('current_code', '')) 
+    # logger.info(f"Code to verify (sample): {code_sample}")
+    
     is_safe, error_message = verifier.is_safe(state["current_code"])
-    logger.info(f"Verification result: is_safe={is_safe}, error_message={error_message}")
+    error_msg_sample = truncate_for_log(error_message) if error_message else None
+    logger.info(f"Verification result: is_safe={is_safe}, error_message={error_msg_sample}")
     
     result = {
         **state, 
@@ -118,7 +136,7 @@ def verify_code(
     
     # If verification failed, increment retry count and update initial_pseudocode
     if result["error_message"]:
-        logger.info(f"Verification failed with error: {result['error_message']}, incrementing retry count")
+        logger.info(f"Verification failed with error: {error_msg_sample}, incrementing retry count")
         result["retry_count"] = state["retry_count"] + 1
         
         # Update initial_pseudocode with modified_pseudocode if available
