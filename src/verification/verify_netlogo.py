@@ -149,8 +149,9 @@ class NetLogoVerifier:
             'xcor', 'ycor', 'heading',
             # Agent sensing
             'any?', 'in-radius', 'distance', 'towards',
-            # Logic
-            'and', 'or', 'not'
+            # Logic operators are handled by the parser, not as reporters
+            # List constructor
+            'list'
         }
         
         self.dangerous_primitives = {
@@ -602,73 +603,131 @@ class NetLogoVerifier:
                  ))
             # Valid allowed string is a primary term
 
-        # --- Handle Parentheses ---
+        # --- Handle Parentheses OR Parenthesized List Constructor ---
         elif current_token.type == TokenType.LPAREN:
-            # Parse the expression inside parentheses, starting with lowest operator precedence.
-            inner_result, inner_end_index = self._validate_expression(tokens, i + 1, min_precedence=-1) # Use -1 base precedence
-            if not inner_result.is_valid:
-                result.merge(inner_result)
-                next_index = inner_end_index # Advance past invalid inner part
-            else:
-                # Check for the closing parenthesis.
-                if inner_end_index < len(tokens) and tokens[inner_end_index].type == TokenType.RPAREN:
-                    next_index = inner_end_index + 1 # Consume the RPAREN
-                else:
-                    expected_line = tokens[inner_end_index - 1].line if inner_end_index > 0 else current_token.line
-                    result.add_error(ValidationError(
-                        f"Expected ')' to close parenthesis opened on line {current_token.line}",
-                        line_number=expected_line
-                    ))
-                    next_index = inner_end_index # Don't consume potentially missing RPAREN
+            paren_token = current_token
+            # Check if it's the variadic list constructor: (list ...)
+            if i + 1 < len(tokens) and tokens[i+1].type == TokenType.REPORTER and tokens[i+1].value.lower() == 'list':
+                i += 2 # Consume '(' and 'list'
+                list_start_index = i
+                # Loop to parse zero or more arguments
+                while True:
+                    if i >= len(tokens) or tokens[i].type == TokenType.EOF:
+                        result.add_error(ValidationError(f"Expected ')' to close '(list ...)' opened on line {paren_token.line}, found end of input", line_number=paren_token.line))
+                        next_index = i
+                        return result, next_index # Stop processing this list
 
-        # --- Handle Reporters ---
-        elif current_token.type == TokenType.REPORTER:
-            reporter_name = current_token.value.lower()
-            arity = self.REPORTER_ARITY.get(reporter_name)
+                    # Check for closing parenthesis
+                    if tokens[i].type == TokenType.RPAREN:
+                        break # End of list arguments
 
-            if arity is None:
-                # This case should ideally be caught by the tokenizer or allowed_reporters check,
-                # but serves as a safeguard within the expression parser.
-                result.add_error(ValidationError(
-                    f"Unknown or disallowed reporter '{current_token.value}' used in expression",
-                    line_number=current_token.line, code_snippet=current_token.value
-                ))
-                # Consume the token to avoid loops, but mark as invalid.
-                next_index = i + 1
-            else:
-                # Consume the reporter token itself
-                current_arg_index = i + 1
-                # Parse the expected number of arguments
-                for arg_num in range(arity):
-                    if current_arg_index >= len(tokens) or tokens[current_arg_index].type == TokenType.EOF:
-                        result.add_error(ValidationError(
-                            f"Expected argument {arg_num + 1} for reporter '{reporter_name}', but found end of input",
-                            line_number=current_token.line
-                        ))
-                        current_arg_index = len(tokens) # Move index to end
-                        break # Stop parsing args for this reporter
-
-                    # Parse the argument expression recursively using the main validator.
-                    # Start with lowest operator precedence for each argument.
-                    arg_result, arg_end_index = self._validate_expression(tokens, current_arg_index, min_precedence=-1) # Use -1 base precedence
-
+                    # Parse the next argument expression
+                    arg_result, arg_end_index = self._validate_expression(tokens, i, min_precedence=-1)
                     if not arg_result.is_valid:
                         result.merge(arg_result)
-                        # Add context to the *first* error reported for this argument
-                        if result.errors:
-                            # Find the most recent error added by the recursive call and prepend context
-                            # This assumes merge adds errors to the end.
-                            result.errors[-1].message = f"Invalid argument {arg_num + 1} for '{reporter_name}': {result.errors[-1].message}"
-                        # Continue parsing subsequent args even if one fails, to catch more structural errors,
-                        # but the overall result for the reporter call is now invalid.
+                        # Add context if needed
+                        if result.errors and "'(list ...)'" not in result.errors[-1].message:
+                             result.errors[-1].message = f"Invalid argument within '(list ...)' starting on line {paren_token.line}: {result.errors[-1].message}"
+                        # Attempt to recover by finding RPAREN, but stop parsing args for this list
+                        temp_i = arg_end_index
+                        paren_level = 1 # Start inside the (list ...)
+                        while temp_i < len(tokens):
+                             if tokens[temp_i].type == TokenType.LPAREN: paren_level += 1
+                             elif tokens[temp_i].type == TokenType.RPAREN:
+                                 paren_level -= 1
+                                 if paren_level == 0: break
+                             elif tokens[temp_i].type == TokenType.EOF: break
+                             temp_i += 1
+                        next_index = temp_i + 1 if temp_i < len(tokens) and tokens[temp_i].type == TokenType.RPAREN else temp_i
+                        return result, next_index # Return after error in argument
 
-                    # Move to the start of the next potential argument
-                    current_arg_index = arg_end_index
+                    # Argument was valid, update index
+                    i = arg_end_index
 
-                # After parsing all expected arguments, the next_index is where the reporter call ends.
-                next_index = current_arg_index
+                # Loop finished, check if we are at the closing parenthesis
+                if i < len(tokens) and tokens[i].type == TokenType.RPAREN:
+                    next_index = i + 1 # Consume ')'
+                else:
+                    # Should have been caught by EOF check inside loop, but safeguard
+                    result.add_error(ValidationError(f"Expected ')' to close '(list ...)' opened on line {paren_token.line}", line_number=tokens[i-1].line if i > 0 else paren_token.line))
+                    next_index = i # Don't consume missing ')'
+            else:
+                # --- Standard Parenthesized Expression ---
+                # Parse the expression inside parentheses, starting with lowest operator precedence.
+                inner_result, inner_end_index = self._validate_expression(tokens, i + 1, min_precedence=-1) # Use -1 base precedence
+                if not inner_result.is_valid:
+                    result.merge(inner_result)
+                    next_index = inner_end_index # Advance past invalid inner part
+                else:
+                    # Check for the closing parenthesis.
+                    if inner_end_index < len(tokens) and tokens[inner_end_index].type == TokenType.RPAREN:
+                        next_index = inner_end_index + 1 # Consume the RPAREN
+                    else:
+                        expected_line = tokens[inner_end_index - 1].line if inner_end_index > 0 else current_token.line
+                        result.add_error(ValidationError(
+                            f"Expected ')' to close parenthesis opened on line {current_token.line}",
+                            line_number=expected_line
+                        ))
+                        next_index = inner_end_index # Don't consume potentially missing RPAREN
 
-        # --- Handle Unexpected Tokens ---
+        # --- Handle Reporters (excluding 'list' which is handled above if parenthesized) ---
+        elif current_token.type == TokenType.REPORTER:
+            reporter_name = current_token.value.lower()
+
+            # Explicitly disallow bare 'list' reporter in expression contexts
+            if reporter_name == 'list':
+                 result.add_error(ValidationError(
+                     f"Unsupported syntax: Bare 'list' reporter found. Use parenthesized '(list ...)' form within expressions.",
+                     line_number=current_token.line, code_snippet=current_token.value
+                 ))
+                 next_index = i + 1 # Consume 'list' token
+            else:
+                 # --- Handle other reporters with fixed arity ---
+                 arity = self.REPORTER_ARITY.get(reporter_name)
+
+                 if arity is None:
+                     # This case should ideally be caught by the tokenizer or allowed_reporters check,
+                     # but serves as a safeguard within the expression parser.
+                     result.add_error(ValidationError(
+                         f"Unknown or disallowed reporter '{current_token.value}' used in expression",
+                         line_number=current_token.line, code_snippet=current_token.value
+                     ))
+                     # Consume the token to avoid loops, but mark as invalid.
+                     next_index = i + 1
+                 else:
+                     # Consume the reporter token itself
+                     current_arg_index = i + 1
+                     # Parse the expected number of arguments
+                     for arg_num in range(arity):
+                         if current_arg_index >= len(tokens) or tokens[current_arg_index].type == TokenType.EOF:
+                             result.add_error(ValidationError(
+                                 f"Expected argument {arg_num + 1} for reporter '{reporter_name}', but found end of input",
+                                 line_number=current_token.line
+                             ))
+                             current_arg_index = len(tokens) # Move index to end
+                             break # Stop parsing args for this reporter
+
+                         # Parse the argument expression recursively using the main validator.
+                         # Start with lowest operator precedence for each argument.
+                         arg_result, arg_end_index = self._validate_expression(tokens, current_arg_index, min_precedence=-1) # Use -1 base precedence
+
+                         if not arg_result.is_valid:
+                             result.merge(arg_result)
+                             # Add context to the *first* error reported for this argument
+                             if result.errors:
+                                 # Find the most recent error added by the recursive call and prepend context
+                                 # This assumes merge adds errors to the end.
+                                 result.errors[-1].message = f"Invalid argument {arg_num + 1} for '{reporter_name}': {result.errors[-1].message}"
+                             # Continue parsing subsequent args even if one fails, to catch more structural errors,
+                             # but the overall result for the reporter call is now invalid.
+
+                         # Move to the start of the next potential argument
+                         current_arg_index = arg_end_index
+
+                     # After parsing all expected arguments, the next_index is where the reporter call ends.
+                     next_index = current_arg_index
+
+        # --- Handle Unexpected Tokens --- (This block was correctly placed outside the REPORTER elif)
         else:
             result.add_error(ValidationError(
                 f"Unexpected token when expecting an expression term or prefix operator: {current_token.type.name} ('{current_token.value}')",
@@ -821,8 +880,12 @@ class NetLogoVerifier:
                 true_branch_end_i = i
                 i += 1 # Move past ']'
 
-            # Validate true branch contents
-            true_branch_result = self._validate_branch_contents(tokens[true_branch_start_i:true_branch_end_i])
+            # Validate true branch contents, passing the statement type
+            true_branch_result = self._validate_branch_contents(
+                tokens[true_branch_start_i:true_branch_end_i],
+                statement_type,
+                tokens[true_branch_start_i-1].line # Line number of opening bracket for context
+            )
             if not true_branch_result.is_valid: result.merge(true_branch_result)
 
         # Handle false branch for ifelse/ifelse-value
@@ -848,11 +911,16 @@ class NetLogoVerifier:
                     false_branch_end_i = i
                     i += 1 # Move past ']'
 
-                # Validate false branch contents
-                false_branch_result = self._validate_branch_contents(tokens[false_branch_start_i:false_branch_end_i])
+                # Validate false branch contents, passing the statement type
+                false_branch_result = self._validate_branch_contents(
+                    tokens[false_branch_start_i:false_branch_end_i],
+                    statement_type,
+                    tokens[false_branch_start_i-1].line # Line number of opening bracket for context
+                )
                 if not false_branch_result.is_valid: result.merge(false_branch_result)
 
-        return result, i
+        # Return the result and the number of tokens consumed by the entire if/ifelse statement
+        return result, i - start_idx
 
     def _validate_multi_conditional(self, tokens: List[Token], start_idx: int, statement_type: str) -> Tuple[ValidationResult, int]:
         """Validate multi-conditional ifelse/ifelse-value using tokens."""
@@ -910,7 +978,12 @@ class NetLogoVerifier:
                     else_branch_end_i = i
                     i += 1 # Move past ']'
 
-                else_branch_result = self._validate_branch_contents(tokens[else_branch_start_i:else_branch_end_i])
+                # Validate else branch contents, passing the statement type
+                else_branch_result = self._validate_branch_contents(
+                    tokens[else_branch_start_i:else_branch_end_i],
+                    statement_type,
+                    tokens[else_branch_start_i-1].line # Line number of opening bracket for context
+                )
                 if not else_branch_result.is_valid: result.merge(else_branch_result)
 
                 # After the final else branch, we MUST find the closing parenthesis
@@ -961,7 +1034,12 @@ class NetLogoVerifier:
                      branch_end_i = i
                      i += 1 # Move past ']'
 
-                 branch_result = self._validate_branch_contents(tokens[branch_start_i:branch_end_i])
+                 # Validate condition branch contents, passing the statement type
+                 branch_result = self._validate_branch_contents(
+                     tokens[branch_start_i:branch_end_i],
+                     statement_type,
+                     tokens[branch_start_i-1].line # Line number of opening bracket for context
+                 )
                  if not branch_result.is_valid: result.merge(branch_result)
                  # Loop continues to check for RPAREN, LBRACKET, or next condition
 
@@ -980,20 +1058,51 @@ class NetLogoVerifier:
              result.add_error(ValidationError(f"Multi-conditional {statement_type} must have at least one condition/branch pair", line_number=paren_token.line))
 
 
-        return result, i # Return the index *after* the closing parenthesis (or where parsing stopped)
+        # Return the result and the number of tokens consumed by the entire multi-conditional statement
+        return result, i - start_idx
 
-    def _validate_branch_contents(self, tokens: List[Token]) -> ValidationResult:
-        """Validate the contents of an if/ifelse branch using tokens."""
+    def _validate_branch_contents(self, tokens: List[Token], statement_type: str, opening_bracket_line: int) -> ValidationResult:
+        """
+        Validate the contents of an if/ifelse/ifelse-value branch using tokens.
+        Distinguishes between command blocks (ifelse) and expression blocks (ifelse-value).
+        """
         result = ValidationResult(True)
+        branch_start_line = tokens[0].line if tokens else opening_bracket_line
+
         if not tokens:
-            # Empty branches are allowed, maybe add warning later if desired
-            # result.add_error(ValidationError("Empty branch", severity=ErrorSeverity.WARNING))
+            # Empty branches are generally allowed for ifelse, but maybe not for ifelse-value?
+            # NetLogo allows `ifelse-value true [] [1]` -> reports 1 (empty reporter block is error at runtime)
+            # NetLogo allows `ifelse true [] [fd 1]` -> runs fd 1 (empty command block is okay)
+            # For simplicity, we'll allow empty blocks for both, runtime errors are separate.
+            # If strictness is needed for ifelse-value, add check here.
+            # result.add_error(ValidationError("Empty branch", severity=ErrorSeverity.WARNING, line_number=branch_start_line))
             return result
 
-        # Use the main syntax checker for the branch content
-        branch_result = self._check_syntax_tokenized(tokens + [Token(TokenType.EOF, '', -1, -1)]) # Add EOF for checker
-        if not branch_result.is_valid:
-             result.merge(branch_result)
+        if statement_type == 'ifelse-value':
+            # Expect exactly one valid expression that consumes all tokens in the branch
+            expr_result, end_idx = self._validate_expression(tokens, 0, min_precedence=-1)
+            if not expr_result.is_valid:
+                result.merge(expr_result)
+                # Add context if the error message doesn't already have it
+                if result.errors and "ifelse-value branch" not in result.errors[-1].message:
+                     result.errors[-1].message = f"Invalid expression in ifelse-value branch: {result.errors[-1].message}"
+            elif end_idx != len(tokens):
+                # Expression was valid but didn't consume the whole block
+                result.add_error(ValidationError(
+                    f"Unexpected token '{tokens[end_idx].value}' after expression in ifelse-value branch. Branch should contain only one expression.",
+                    line_number=tokens[end_idx].line
+                ))
+            # If valid and consumed all, result remains valid.
+        else: # Default to ifelse command block validation
+            # Use the main syntax checker for the branch content
+            # Add EOF token to signal the end of the branch to the checker
+            eof_token = Token(TokenType.EOF, '', tokens[-1].line, tokens[-1].column + 1) if tokens else Token(TokenType.EOF, '', branch_start_line, 1)
+            branch_result = self._check_syntax_tokenized(tokens + [eof_token])
+            if not branch_result.is_valid:
+                 # Add context to errors from the branch validation
+                 for error in branch_result.errors:
+                      error.message = f"Invalid command sequence in {statement_type} branch: {error.message}"
+                 result.merge(branch_result)
 
         return result
 
@@ -1016,7 +1125,11 @@ class NetLogoVerifier:
             num_expected_args = 2
 
         consumed_args = 0
+        # Initialize arg_start_index before the loop to track the start of the current argument
+        arg_start_index = i
         while consumed_args < num_expected_args:
+            # Update arg_start_index at the beginning of each argument's processing
+            arg_start_index = i
             if i >= len(tokens) or tokens[i].type == TokenType.EOF:
                  result.add_error(ValidationError(f"Command '{command_lower}' expects {num_expected_args} arg(s), found end", line_number=command_token.line))
                  break
@@ -1042,12 +1155,28 @@ class NetLogoVerifier:
                      result.merge(arg_result)
                      # Add context to the error message
                      if result.errors: # Ensure there's an error to modify
+                         # Find the most recent error related to this argument parse
+                         # This assumes merge adds to the end. A more robust way might be needed
+                         # if merge logic changes or multiple errors occur in _validate_expression.
+                         # Find the first error added since arg_start_index? For now, assume last.
                          result.errors[-1].message = f"Invalid arg {consumed_args + 1} for '{command_lower}': {result.errors[-1].message}"
 
+            # --- CRITICAL FIX ---
+            # Update the loop index 'i' to point after the consumed argument
             i = next_i
+            # --- END FIX ---
+
             consumed_args += 1
 
-        return result, i
+            # If the argument parsing failed severely and didn't advance the index, break to prevent infinite loop
+            if i == arg_start_index and not result.is_valid:
+                 # Add a generic error if not already present from _validate_expression
+                 if not any(e.line_number == tokens[arg_start_index].line for e in result.errors):
+                      result.add_error(ValidationError(f"Failed to parse argument {consumed_args} for '{command_lower}'", line_number=tokens[i].line)) # Use current index i for line number
+                 break
+
+        # Return the result and the *number of tokens consumed* by this command and its args
+        return result, i - start_idx
 
     # --- Removed Old/Redundant Expression/Condition Validators ---
     # The functionality of _is_valid_numeric_expression, _is_valid_reporter_expression,
