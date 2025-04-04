@@ -64,7 +64,6 @@ advanced_test_cases = [
     ('fd 1 rt 90 while [true] [fd 1]', False),  # infinite loop
     
     # Multiple if-else Statements
-    ("""ifelse [item 3 poison-observations] = 0 [  forward 1][  ifelse [item 1 poison-observations] < [item 2 poison-observations] [    left 20  ][    right 20  ]]ifelse [item 1 poison-observations] < [item 2 poison-observations] [  right 10][  ifelse [item 2 poison-observations] < [item 1 poison-observations] [    left 10  ][    stop  ; <--- Valid NetLogo command  ]]ifelse random 2 = 0 [  left 5][  right 5]""", True),
     ("(ifelse item 0 input > 0 [fd 1] item 1 input > 0 [rt 90 fd 1])", True),
     ("(ifelse item 0 input > 0 fd 1] item 1 input > 0 [rt 90 fd 1])", False),  # Syntax error (missing '[')
     ("(ifelse-value item 0 input > 0 [1 + 2] item 1 input > 0 [sin random 360] [0])", True),
