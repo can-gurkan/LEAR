@@ -132,10 +132,12 @@ class NetLogoVerifier:
             'rt', 'right',
             'lt', 'left',
             'bk', 'back',
+            'stop',
             # Control structures
             'if', 'ifelse', 'ifelse-value',
             # Variable operations
             'set', 'let'
+            
         }
         
         self.allowed_reporters = {
@@ -670,6 +672,27 @@ class NetLogoVerifier:
                         ))
                         next_index = inner_end_index # Don't consume potentially missing RPAREN
 
+        # --- Handle Bracketed Expressions --- (Similar to Parentheses)
+        elif current_token.type == TokenType.LBRACKET:
+            # Parse the expression inside brackets, starting with lowest operator precedence.
+            inner_result, inner_end_index = self._validate_expression(tokens, i + 1, min_precedence=-1) # Use -1 base precedence
+            if not inner_result.is_valid:
+                result.merge(inner_result)
+                next_index = inner_end_index # Advance past invalid inner part
+            else:
+                # Check for the closing bracket.
+                if inner_end_index < len(tokens) and tokens[inner_end_index].type == TokenType.RBRACKET:
+                    next_index = inner_end_index + 1 # Consume the RBRACKET
+                else:
+                    expected_line = tokens[inner_end_index - 1].line if inner_end_index > 0 else current_token.line
+                    result.add_error(ValidationError(
+                        f"Expected ']' to close bracket opened on line {current_token.line}",
+                        line_number=expected_line # Moved closing parenthesis up
+                    ))
+                    next_index = inner_end_index # Don't consume potentially missing RBRACKET
+            # Return the result and the index after the bracketed expression
+            return result, next_index
+
         # --- Handle Reporters (excluding 'list' which is handled above if parenthesized) ---
         elif current_token.type == TokenType.REPORTER:
             reporter_name = current_token.value.lower()
@@ -1178,11 +1201,6 @@ class NetLogoVerifier:
         # Return the result and the *number of tokens consumed* by this command and its args
         return result, i - start_idx
 
-    # --- Removed Old/Redundant Expression/Condition Validators ---
-    # The functionality of _is_valid_numeric_expression, _is_valid_reporter_expression,
-    # _is_valid_complex_expression, _validate_condition, and _validate_simple_condition
-    # is now handled comprehensively by the Pratt parser in _validate_expression.
-
     # --- Value Range Validator (Tokenized) ---
     def _check_value_ranges(self, tokens: List[Token]) -> ValidationResult:
         """
@@ -1288,111 +1306,5 @@ class NetLogoVerifier:
         else:
             return CodeComplexity.EXPERT
 
-# Usage Example
-def test_verifier():
-    """Test the verifier with various inputs."""
-    verifier = NetLogoVerifier()
-    
-    test_cases = [
-        # Safe cases
-        ("fd 0.5", True),
-        ("fd random 10", True),
-        ("rt random-float 90 fd 5", True),
-        
-        # Control structure cases
-        ("ifelse item 0 input != 0 [rt 15 fd 0.5] [fd 1]", True),
-        ("if item 1 input = 0 [lt 45 fd 1]", True),
-        
-        # Unsafe cases
-        ("ask neighbors [fd 1]", False),
-        ("fd 1 die", False),
-        ("rt 90 python:run", False),
-        ("fd (1", False),
-        ("fd -9999", False),
-        ("", False),
-        
-        # Edge cases
-        ("fd 1 + 2", True),
-        ("rt random 360 * 0.5", True),
-        ("FD 1 RT 90", True),  # Case insensitive
-        
-        # Additional decimal test cases
-        ("fd 0.25", True),
-        ("rt 45.5", True),
-        ("lt -0.75", True),
-        
-         # Complex control structure case
-        ("""ifelse item 0 input != 0 [rt 15 fd 0.5] [ifelse item 2 input != 0 [fd 1] [ifelse item 1 input != 0 [lt 15 fd 0.5] [rt random 30 lt random 30 fd 5]]]""", True),
-        # Corrected: Added missing closing parenthesis and whitespace for clarity (parser should handle lack of whitespace now)
-        ("""(ifelse item 2 input != 0 [ fd 1 ] item 0 input != 0 and item 0 input < item 1 input [ lt 15 fd 0.5 ] item 1 input != 0 [ rt 15 fd 0.5 ] [ fd 1 ])""", True),
-
-        ("lt random 20 rt random 20 fd (1 + random-float 0.5)", True),
-
-        # Multi-conditional format test cases
-        ("(ifelse item 0 input > 0 [fd 1] item 1 input > 0 [rt 90 fd 1] [lt 90 fd 1])", True),
-        ("(ifelse-value item 0 input > 0 [1] item 1 input > 0 [2] [0])", True),
-        # Corrected: Final else is optional, so this is valid
-        ("(ifelse item 0 input > 0 [fd 1] item 1 input > 0 [rt 90 fd 1])", True),
-        ("(ifelse item 0 input > 0 fd 1] item 1 input > 0 [rt 90 fd 1])", False),  # Syntax error (missing '[')
-        ("(ifelse-value item 0 input > 0 [1 + 2] item 1 input > 0 [sin random 360] [0])", True),
-        ("(ifelse item 0 input > 10 and item 1 input < 5 [fd 1] item 2 input != 0 [rt 45 fd 2] [lt 45 fd 1])", True), # Complex condition with logical operator
-        # Corrected: Added missing closing parenthesis and whitespace
-        ("(ifelse item 2 input != 0 [ fd 1 ] item 0 input != 0 and item 0 input < item 1 input [ lt 15 fd 0.5 ] item 1 input != 0 [ rt 15 fd 0.5 ] [ fd 1 ])", True),
-
-        # --- New Test Cases for Pratt Parser ---
-        # Operator Precedence
-        ("fd 1 + 2 * 3", True), # 1 + (2*3) = 7
-        ("fd 1 * 2 + 3", True), # (1*2) + 3 = 5
-        ("fd 1 + 2 > 3 - 1", True), # (1+2) > (3-1) => 3 > 2
-        # Parentheses
-        ("fd (1 + 2) * 3", True), # (1+2)*3 = 9
-        ("fd 1 + (2 * 3)", True), # 1 + (2*3) = 7 (Same as without parens)
-        ("fd ((1 + 2))", True), # Extra parens
-        # Unary Operators
-        ("fd -xcor", True),
-        ("fd -5", True),
-        ("fd 1 + -5", True), # Binary plus, unary minus
-        ("if not (xcor > 0) [ fd 1 ]", True),
-        # Nested Reporters
-        ("fd random (random 10)", True),
-        ("fd item (random 2) (list 10 20)", True), # item needs 2 args
-        # Logical Operators
-        ("if xcor > 0 and ycor < 0 [ fd 1 ]", True),
-        ("if xcor > 0 or ycor < 0 [ fd 1 ]", True),
-        ("if (xcor > 0 and ycor < 0) or heading = 0 [ fd 1 ]", True),
-        # Error Cases
-        ("fd 1 +", False), # Missing right operand
-        ("fd * 2", False), # Missing left operand for binary *
-        ("fd -", False), # Missing operand for unary -
-        ("fd random 10 20", False), # Too many args for random
-        ("fd item 1", False), # Too few args for item
-        ("fd (1 + 2", False), # Unclosed parenthesis
-        ("fd 1 + )", False), # Unexpected closing parenthesis
-        ("if 1 and [ fd 1 ]", False), # Incomplete condition
-        ("set xcor", False), # Missing value for set
-        ("set 1 10", False), # Invalid variable name for set
-    ]
-
-    all_passed = True
-    for code, expected_safe in test_cases:
-        is_safe, message = verifier.is_safe(code)
-        print(f"\nTesting: {code}")
-        print(f"Expected safe: {expected_safe}, Got: {is_safe}")
-        if not is_safe:
-            print(f"Message: {message}")
-        assert is_safe == expected_safe, f"Test failed for: {code}"
-        
-        # Also test complexity measurement
-        complexity = verifier.measure_complexity(code)
-        print(f"Complexity: {complexity.name} ({complexity.value})")
-        if is_safe != expected_safe:
-            all_passed = False
-
-    if all_passed:
-        print("\n✅ All test cases passed!")
-    else:
-        print("\n❌ Some test cases failed.")
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO) # Show logs during testing if needed
-    test_verifier()
+# Note: The test_verifier() function and its associated test cases
+# have been moved to the separate test_verifier.py file for better organization.
