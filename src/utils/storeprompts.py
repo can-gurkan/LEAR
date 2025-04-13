@@ -155,7 +155,7 @@ prompts = {
 
     CURRENT PSEUDOCODE TO EVOLVE:
     ```
-    {current_pseudocode}
+    {pseudocode}
     ```
 
     EVOLUTIONARY ADVANCEMENT OBJECTIVES:

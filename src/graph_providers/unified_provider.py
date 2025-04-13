@@ -190,14 +190,12 @@ class GraphUnifiedProvider(GraphProviderBase):
 
             elif modified_pseudocode:
                 # Use code generation prompt with modified pseudocode
-                # Use explicitly stored prompt_type and prompt_name
-                self.logger.info(f"Using code generation prompt '{self.prompt_type}/{self.prompt_name}' with modified pseudocode.")
-                prompt_template = prompts.get(self.prompt_type, {}).get(self.prompt_name, "Generate NetLogo code based on this pseudocode:\n{pseudocode}\n\nOriginal code for context:\n```netlogo\n{original_code}\n```") # Default template
-                user_content = prompt_template.format(pseudocode=modified_pseudocode, original_code=original_code)
+                self.logger.info(f"Using {self.evolution_strategy} for Code Generation with modified pseudocode.")
+                prompt_template = prompts.get("evolution_strategies", {}).get(self.evolution_strategy, "Generate NetLogo code based on this pseudocode:\n{pseudocode}\n\nOriginal code for context:\n```netlogo\n{original_code}\n```").get("code_prompt") # Default template
+                user_content = prompt_template.format(pseudocode=modified_pseudocode)
+                
                 # Add necessary inputs for the prompt template
-                invoke_input["pseudocode"] = modified_pseudocode
-                if '{original_code}' in prompt_template:
-                    invoke_input["original_code"] = original_code
+                invoke_input["initial_pseudocode"] = modified_pseudocode
 
             else:
                 self.logger.info(f"Using code generation/evolution prompt '{self.prompt_type}/{self.prompt_name}' with original code only.")

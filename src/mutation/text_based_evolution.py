@@ -66,7 +66,7 @@ class TextBasedEvolution:
             else:
                 # Use the configured evolution strategy
                 self.logger.info(f"Using evolution strategy: {self.evolution_strategy} for pseudocode generation")
-                user_prompt = prompts["evolution_strategies"][self.evolution_strategy]["pseudocode_prompt"].format(initial_pseudocode=current_text)
+                user_prompt = prompts["evolution_strategies"][self.evolution_strategy]["pseudocode_prompt"].format(pseudocode=current_text)
             
             prompt = ChatPromptTemplate.from_messages([
                 ("system", ""),

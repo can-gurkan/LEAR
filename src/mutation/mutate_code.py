@@ -70,13 +70,13 @@ if __name__ == "__main__":
         "original_code",
         "current_code",
         "agent_info",
-        "error_message",
+        None,
         0,
         "initial_pseudocode"
     ]
     
     model_type = "groq"  # or any other model type
-    use_text_evolution = False
+    use_text_evolution = True
     
     new_rule, text = mutate_code(agent_info, model_type, use_text_evolution)
     print(f"New Rule: {new_rule}")
