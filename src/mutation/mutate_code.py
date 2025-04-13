@@ -40,7 +40,6 @@ def mutate_code(agent_info: list, model_type: str = "groq", use_text_evolution: 
     """
     logger.info(f"Starting code generation with model type: {model_type}, use_text_evolution: {use_text_evolution}")
 
-    # print(f"Agent info: {agent_info}")
     
     # Extract current text from agent_info if available (at index 5)
     current_text = ""
@@ -55,8 +54,6 @@ def mutate_code(agent_info: list, model_type: str = "groq", use_text_evolution: 
     if isinstance(result, tuple) and len(result) == 2:
         new_rule, text = result
     else:
-        # For backward compatibility, if result is just a string (the code),
-        # then use the current text as the text value
         new_rule = result
         text = current_text
     
@@ -64,3 +61,23 @@ def mutate_code(agent_info: list, model_type: str = "groq", use_text_evolution: 
     logger.info(f"Text: {text}")
     
     return (new_rule, text)
+
+
+
+if __name__ == "__main__":
+    # Example usage
+    agent_info = [
+        "original_code",
+        "current_code",
+        "agent_info",
+        "error_message",
+        0,
+        "initial_pseudocode"
+    ]
+    
+    model_type = "groq"  # or any other model type
+    use_text_evolution = False
+    
+    new_rule, text = mutate_code(agent_info, model_type, use_text_evolution)
+    print(f"New Rule: {new_rule}")
+    print(f"Text: {text}")

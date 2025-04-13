@@ -14,9 +14,7 @@ from src.netlogo_code_generator.nodes import (
     evolve_pseudocode,
     generate_code,
     verify_code,
-    should_retry,
-    increment_retry_count
-)
+    should_retry)
 
 class NetLogoCodeGenerator(BaseCodeGenerator):
     """

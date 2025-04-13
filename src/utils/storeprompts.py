@@ -35,7 +35,7 @@ prompts = {
       You will be given this initial pseudocode to improve:
 
       <initial_pseudocode>
-      {}
+      {initial_pseudocode}
       </initial_pseudocode>
 
       STRICT GUIDELINES FOR PSEUDOCODE CREATION:
@@ -82,7 +82,7 @@ prompts = {
     Here is the pseudocode you will be working with:
     
     <pseudocode>
-    {}
+    {pseudocode}
     </pseudocode>
     
     STRICT GUIDELINES FOR CODE GENERATION:
@@ -155,7 +155,7 @@ prompts = {
 
     CURRENT PSEUDOCODE TO EVOLVE:
     ```
-    {}
+    {current_pseudocode}
     ```
 
     EVOLUTIONARY ADVANCEMENT OBJECTIVES:
@@ -219,7 +219,7 @@ prompts = {
 
     PSEUDOCODE TO TRANSLATE:
     ```
-    {}
+    {pseudocode}
     ```
 
     TRANSLATION REQUIREMENTS:
@@ -297,7 +297,7 @@ prompts = {
 
         Here is the current pseudocode of the turtle agent:
         ```
-        {}
+        {current_pseudocode}
         ```
 
         Improve the given agent movement pseudocode following these precise specifications:
@@ -368,7 +368,7 @@ prompts = {
 
         PSEUDOCODE TO TRANSLATE:
         ```
-        {}
+        {pseudocode}
         ```
 
         TRANSLATION REQUIREMENTS:
@@ -448,7 +448,7 @@ prompts = {
 
         Here is the current pseudocode of the turtle agent:
         ```
-        {}
+        {current_pseudocode}
         ```
 
         Improve the given agent movement pseudocode following these precise specifications:
@@ -522,7 +522,7 @@ prompts = {
 
         PSEUDOCODE TO TRANSLATE:
         ```
-        {}
+        {pseudocode}
         ```
 
         TRANSLATION REQUIREMENTS:
@@ -616,7 +616,7 @@ ifelse (item 0 food-observations > 0) and (item 0 poison-observations = 0) [
 
         Here is the current pseudocode of the turtle agent:
         ```
-        {}
+        {current_pseudocode}
         ```
 
         Improve the given agent movement pseudocode following these precise specifications:
@@ -691,7 +691,7 @@ ifelse (item 0 food-observations > 0) and (item 0 poison-observations = 0) [
 
         PSEUDOCODE TO TRANSLATE:
         ```
-        {}
+        {pseudocode}
         ```
 
         TRANSLATION REQUIREMENTS:
@@ -815,7 +815,7 @@ ifelse (item 2 poison-observations > 0) and (item 2 poison-observations < 3) [ ;
 
       CURRENT RULE TO EVOLVE:
       ```
-      {}
+      {code}
       ```
 
       EVOLUTIONARY ADVANCEMENT OBJECTIVES:
@@ -877,10 +877,10 @@ ifelse (item 2 poison-observations > 0) and (item 2 poison-observations < 3) [ ;
         "generate_code_with_error": """You are an expert NetLogo coder tasked with fixing a movement code error for a turtle agent. Your goal is to update the provided NetLogo movement code to fix the error message shown below.
 
       Here is the current rule:
-      {}
+      {original_code}
 
       Here is the error message:
-      {}
+      {error_message}
       
       STRICT GUIDELINES FOR FIXING THE CODE:
       
@@ -925,17 +925,17 @@ ifelse (item 2 poison-observations > 0) and (item 2 poison-observations < 3) [ ;
 
       **Code with Error:**
       ```netlogo
-      {}
+      {code}
       ```
 
       **Error Message:**
       ```
-      {}
+      {error}
       ```
       
       **Guiding Pseudocode:**
       ```pseudocode
-      {}
+      {pseudocode}
       ```
       
       **STRICT GUIDELINES FOR CODE CORRECTION & TRANSLATION:**
@@ -991,7 +991,7 @@ ifelse (item 2 poison-observations > 0) and (item 2 poison-observations < 3) [ ;
     # Chain of thought prompts for langchain providers
     "langchain": {
         "cot_system": "You are a NetLogo code evolution expert. Think step-by-step.",
-        "cot_template": """{}
+        "cot_template": """{context}
             
         Current code block to evolve:
         ```netlogo
@@ -1024,8 +1024,8 @@ ifelse (item 2 poison-observations > 0) and (item 2 poison-observations < 3) [ ;
         6. Code must be a single line with no comments
         
         INPUT CONTEXT:
-        - Current rule: {}
-        - Food sensor readings: {}
+        - Current rule: {current_rule}
+        - Food sensor readings: {food_sensor_readings}
           - Each value is distance to nearest food (0 = no food)
           - Lower values indicate closer food
           - Use these to inform movement strategy
@@ -1074,14 +1074,14 @@ ifelse (item 2 poison-observations > 0) and (item 2 poison-observations < 3) [ ;
         - Consider trade-offs between exploration and exploitation
         - Design for both immediate and long-term survival
 
-        rule: {} 
-        input: {}
+        rule: {rule} 
+        input: {input}
 
         Remember, the goal is to create an efficient movement rule that balances exploration and exploitation, aiming to find food in both the short and long term.""",
         "prompt2": """You are an expert NetLogo coder tasked with refining a turtle agent's movement code through small, incremental improvements. Your objective is to evolve the existing rule slightly rather than redesigning it entirely.
 
       **Current Rule to Evolve:**
-      {}
+      {code}
       
       **Evolution Guidelines:**
       
@@ -1126,7 +1126,7 @@ ifelse (item 2 poison-observations > 0) and (item 2 poison-observations < 3) [ ;
         "prompt3": """You are an expert NetLogo programmer tasked with evolving the movement code for a turtle agent in a food-collection simulation. Your goal is to enhance and improve the previous agent rule through small, incremental modifications rather than complete rewrites.
 
         Here is the current rule for the turtle's movement:
-        {}
+        {code}
         
         ENHANCEMENT GUIDELINES:
         
@@ -1173,7 +1173,7 @@ ifelse (item 2 poison-observations > 0) and (item 2 poison-observations < 3) [ ;
         "prompt4": """You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to collect as much food as possible. Improve the given agent movement code following these precise specifications:
 
          INPUT CONTEXT:
-         - Current rule: {}
+         - Current rule: {current_rule}
          - Food sensor readings: 
          - Input list contains three values representing distances to food in three cone regions of 20 degrees each
          - The first item in the input list is the distance to the nearest food in the left cone, the second is the right cone, and the third is the front cone
@@ -1278,7 +1278,7 @@ ifelse (item 2 poison-observations > 0) and (item 2 poison-observations < 3) [ ;
          8. Do not call any variables that the agent does not have access to.
 
          ###### AGENT DETAILS ######
-         Current Rule of Agent: {}
+         Current Rule of Agent: {current_rule}
 
 
          **Your GOAL is to mutate the strategy so that the agent maximizes resource-score.**
@@ -1303,8 +1303,8 @@ CONSTRAINTS:
 6. Code must be a single line with no comments
 
 INPUT CONTEXT:
-- Current rule: {}
-- Food sensor readings: {}
+- Current rule: {current_rule}
+- Food sensor readings: {food_sensor_readings}
   
   - Each value is distance to nearest food (0 = no food)
   - Lower values indicate closer food
@@ -1347,8 +1347,8 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
            - random-float N (e.g., "lt random-float 45")
 
         CURRENT STATE:
-        - Current rule: {}
-        - Food distances: {}
+        - Current rule: {current_rule}
+        - Food distances: {food_distances}
         
         EXAMPLES OF VALID CODE:
         - fd 1 rt random 30
@@ -1408,7 +1408,7 @@ Generate ONLY the movement code with no explanations or comments. Code must be r
 
 CURRENT RULE TO EVOLVE:
 ```
-{}
+{code}
 ```
 
 EVOLUTION APPROACH:
@@ -1458,7 +1458,7 @@ Return ONLY the evolved NetLogo code with no explanations:
       Here is the current code of the turtle agent:
 
       ```
-        {}
+        {current_code}
       ```
 
       INPUT CONTEXT:
@@ -1528,7 +1528,7 @@ Return ONLY the evolved NetLogo code with no explanations:
       Here is the current code of the turtle agent:
 
       ```
-        {}
+        {current_code}
       ```
 
       INPUT CONTEXT:
@@ -1603,7 +1603,7 @@ Return ONLY the evolved NetLogo code with no explanations:
       Here is the current code of the turtle agent:
 
       ```
-        {}
+        {current_code}
       ```
 
       INPUT CONTEXT:
@@ -1739,7 +1739,7 @@ Return ONLY the evolved NetLogo code with no explanations:
       Here is the current code of the turtle agent:
 
       ```
-        {}
+        {current_code}
       ```
 
       INPUT CONTEXT:
@@ -1810,7 +1810,7 @@ Return ONLY the evolved NetLogo code with no explanations:
       Here is the current code of the turtle agent:
 
       ```
-        {}
+        {current_code}
       ```
 
       INPUT CONTEXT:
@@ -1886,7 +1886,7 @@ Return ONLY the evolved NetLogo code with no explanations:
       Here is the current code of the turtle agent:
 
       ```
-        {}
+        {current_code}
       ```
 
       INPUT CONTEXT:
@@ -2029,7 +2029,7 @@ Return ONLY the evolved NetLogo code with no explanations:
 
 
      ```
-       {}
+       {current_code}
      ```
 
 
@@ -2113,7 +2113,7 @@ Return ONLY the evolved NetLogo code with no explanations:
 
 
      ```
-       {}
+       {current_code}
      ```
 
 
@@ -2204,7 +2204,7 @@ Return ONLY the evolved NetLogo code with no explanations:
 
 
      ```
-       {}
+       {current_code}
      ```
 
 
@@ -2580,7 +2580,7 @@ ifelse member? "crystal" input-resource-types [
 
 
      ```
-       {}
+       {current_code}
      ```
 
 
@@ -2665,7 +2665,7 @@ ifelse member? "crystal" input-resource-types [
 
 
      ```
-       {}
+       {current_code}
      ```
 
 
@@ -2757,7 +2757,7 @@ ifelse member? "crystal" input-resource-types [
 
 
      ```
-       {}
+       {current_code}
      ```
 
 

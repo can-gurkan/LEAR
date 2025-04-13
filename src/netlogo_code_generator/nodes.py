@@ -64,7 +64,6 @@ def evolve_pseudocode(
     logger.info(f"Generated modified pseudocode (sample): \n{modified_pseudocode_sample}")
     
     state["modified_pseudocode"] = modified_pseudocode
-    # state["text_evolution_instance"] = text_evolution  # Store the instance for later use
     return state
 
 def generate_code(
@@ -89,14 +88,16 @@ def generate_code(
         # Check if we have both modified_pseudocode and error_message for retry scenario
         if state.get("modified_pseudocode") and state.get("error_message"):
             logger.info("Using both modified_pseudocode and error_message for code generation")
-            
-        new_code = provider.generate_code_with_model(
-            state["agent_info"],
-            state["current_code"],
-            state["modified_pseudocode"],
-            state["error_message"],
-        )
-        
+        elif state.get("modified_pseudocode"):
+             logger.info("Using modified_pseudocode for code generation")
+        elif state.get("error_message"):
+             logger.info("Using error_message for code generation retry")
+        else:
+             logger.info("Generating code based on initial state (no pseudocode modification or error)")
+
+        # Call the provider using the new state-based interface
+        new_code = provider.generate_code_from_state(state)
+
     except Exception as e:
         logger.error(f"Error generating code: {str(e)}")
         new_code = state["current_code"]
@@ -121,9 +122,6 @@ def verify_code(
         Updated generation state with verification results
     """
     logger.info(f"NODE: verify_code - current retry count: {state.get('retry_count', 0)}")
-    # Don't log the full code - sample is enough
-    # code_sample = truncate_for_log(state.get('current_code', '')) 
-    # logger.info(f"Code to verify (sample): {code_sample}")
     
     is_safe, error_message = verifier.is_safe(state["current_code"])
     error_msg_sample = truncate_for_log(error_message) if error_message else None
@@ -166,30 +164,3 @@ def should_retry(state: GenerationState, max_attempts: int = 5) -> str:
     logger.info(f"Should retry decision: {should_retry_value}")
     return should_retry_value
 
-def increment_retry_count(state: Dict[str, Any], node_name: str, node_output: Dict[str, Any]) -> Dict[str, Any]:
-    logger.info(f"Increment retry count middleware called, node_name: {node_name}, error_message: {node_output.get('error_message')}")
-    """
-    Middleware to increment retry count when verification fails.
-    Also updates initial_pseudocode with modified_pseudocode for the next iteration.
-
-    Args:
-        state: Current state before node execution
-        node_name: Name of the node that was executed
-        node_output: Output from the node execution
-
-    Returns:
-        Updated state with incremented retry count if needed
-    """
-    if node_name == "verify_code" and node_output.get("error_message"):
-        logger.info(f"Verification failed, incrementing retry count from {node_output['retry_count']} to {node_output['retry_count'] + 1}")
-        # Increment retry count
-        result = {**node_output, "retry_count": node_output["retry_count"] + 1}
-        
-        # Update initial_pseudocode with modified_pseudocode if available
-        if node_output.get("modified_pseudocode"):
-            logger.info("Updating initial_pseudocode with modified_pseudocode in middleware")
-            result["initial_pseudocode"] = node_output["modified_pseudocode"]
-            
-        return result
-    logger.info("No error message or not verify_code node, skipping retry count increment")
-    return node_output
