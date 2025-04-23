@@ -17,7 +17,7 @@ load_dotenv()
 class GraphProviderBase(BaseCodeGenerator):
     """Base class for graph-based code generators."""
     
-    def __init__(self, verifier: NetLogoVerifier, retry_max_attempts: int = 5, evolution_strategy: str = "simple", prompt_type: str = "groq", prompt_name: str = "prompt2", retry_prompt: str = ""):
+    def __init__(self, verifier: NetLogoVerifier, retry_max_attempts: int = 5, evolution_strategy: str = "simple", prompt_type: str = "groq", prompt_name: str = "prompt2", retry_prompt: str = None):
         """Initialize with verifier instance."""
         super().__init__(verifier)
         self.model = None  # To be set by child classes

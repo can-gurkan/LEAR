@@ -15,13 +15,6 @@ from src.utils.logging import get_logger
 logger = get_logger()
 
 
-def truncate_for_log(text, max_length=500):
-    """Helper function to truncate large strings for logging."""
-    if text and len(text) > max_length:
-        return text[:max_length] + "... [truncated]"
-    return text
-
-
 def evolve_pseudocode(
     state: GenerationState,
     provider: GraphProviderBase,
@@ -42,8 +35,8 @@ def evolve_pseudocode(
     logger.info(f"Evolving pseudocode, use_text_evolution: {use_text_evolution}")
 
     # Log truncated versions of potentially large strings
-    original_code_sample = truncate_for_log(state.get('original_code', ''))
-    initial_pseudocode_sample = truncate_for_log(state.get('initial_pseudocode', ''))
+    original_code_sample = state.get('original_code', '')
+    initial_pseudocode_sample = state.get('initial_pseudocode', '')
     logger.info(f"Original code (sample): {original_code_sample}")
     logger.info(f"Initial pseudocode (sample): {initial_pseudocode_sample}")
     
@@ -60,7 +53,7 @@ def evolve_pseudocode(
     )
     
     # Log truncated version of modified pseudocode
-    modified_pseudocode_sample = truncate_for_log(modified_pseudocode)
+    modified_pseudocode_sample = modified_pseudocode
     logger.info(f"Generated modified pseudocode (sample): \n{modified_pseudocode_sample}")
     
     state["modified_pseudocode"] = modified_pseudocode
@@ -81,7 +74,7 @@ def generate_code(
         Updated generation state with new code
     """
     retry_count = state.get('retry_count', 0)
-    error_msg = truncate_for_log(state.get('error_message', None))
+    error_msg = state.get('error_message', None)
     logger.info(f"NODE: generate_code - retry_count: {retry_count}, error_message: {error_msg}")
     
     try:
@@ -102,8 +95,7 @@ def generate_code(
         logger.error(f"Error generating code: {str(e)}")
         new_code = state["current_code"]
     
-    # Don't log the entire code - it could be very large
-    code_sample = truncate_for_log(new_code)
+    code_sample = new_code
     logger.info(f"Generated new code (sample): {code_sample}")
     return {**state, "current_code": new_code}
 
@@ -124,7 +116,7 @@ def verify_code(
     logger.info(f"NODE: verify_code - current retry count: {state.get('retry_count', 0)}")
     
     is_safe, error_message = verifier.is_safe(state["current_code"])
-    error_msg_sample = truncate_for_log(error_message) if error_message else None
+    error_msg_sample = error_message if error_message else None
     logger.info(f"Verification result: is_safe={is_safe}, error_message={error_msg_sample}")
     
     result = {

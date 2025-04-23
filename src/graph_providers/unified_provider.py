@@ -157,38 +157,37 @@ class GraphUnifiedProvider(GraphProviderBase):
             system_message = prompts.get("langchain", {}).get("cot_system", "You are a NetLogo programming assistant.")
             invoke_input = {} # Initialize empty invoke input
 
-            # If only error message is present, use error-only retry prompt
-            if error_message:
-                # Common setup
+            if error_message and modified_pseudocode:
+                self.logger.info(f"Using retry prompt '{self.retry_prompt}' with pseudocode due to error: {error_message[:100]}...")
+                
+                prompt_template = prompts.get("retry_prompts", {}).get(self.retry_prompt, "")
+                if not prompt_template:
+                    prompt_template = prompts.get("retry_prompts", {}).get("generate_code_with_pseudocode_and_error")
+                
+                # Format the prompt with all required fields
+                user_content = prompt_template.format(
+                    original_code=original_code, # Match prompt variable name
+                    error=error_message, # Match prompt variable name
+                    pseudocode=modified_pseudocode
+                )
+                # Update invoke_input for the chain
                 invoke_input["original_code"] = original_code
-                format_args = {"original_code": original_code}
+                invoke_input["error"] = error_message
+                invoke_input["pseudocode"] = modified_pseudocode
 
-                if modified_pseudocode:
-                    # Case 1: Both error and pseudocode are present
-                    log_suffix = f"with pseudocode due to error: {error_message[:100]}..."
-                    fallback_prompt_name = "generate_code_with_pseudocode_and_error"
-                    # Use 'error' key for prompt formatting and invoke_input
-                    format_args["error"] = error_message
-                    format_args["pseudocode"] = modified_pseudocode
-                    invoke_input["error"] = error_message
-                    invoke_input["pseudocode"] = modified_pseudocode
-                else:
-                    # Case 2: Only error is present
-                    log_suffix = f"without pseudocode due to error: {error_message[:100]}..."
-                    fallback_prompt_name = "generate_code_with_error"
-                    # Use 'error_message' key for prompt formatting and invoke_input
-                    format_args["error_message"] = error_message
-                    invoke_input["error_message"] = error_message
-
-                self.logger.info(f"Using retry prompt '{self.retry_prompt}' {log_suffix}")
-
-                # Get the template string using the chosen fallback
-                prompt_template = prompts.get("retry_prompts", {}).get(self.retry_prompt, fallback_prompt_name)
-
-                self.logger.info(f"Retry prompt template key used: '{self.retry_prompt}' (fallback: '{fallback_prompt_name}')")
-
-                # Format the user content
-                user_content = prompt_template.format(**format_args)
+            elif error_message:
+                # Case 2: Only Error is present - Use error-only retry prompt
+                self.logger.info(f"Using retry prompt '{self.retry_prompt}' without pseudocode due to error: {error_message[:100]}...")
+                
+                prompt_template = prompts.get("retry_prompts", {}).get(self.retry_prompt, "")
+                if not prompt_template:
+                    prompt_template = prompts.get("retry_prompts", {}).get("generate_code_with_error")
+                
+                user_content = prompt_template.format(original_code=original_code, error_message=error_message)
+                
+                # Update invoke_input
+                #invoke_input["original_code"] = original_code
+                invoke_input["error_message"] = error_message
 
             elif modified_pseudocode:
                 # Use code generation prompt with modified pseudocode
@@ -212,7 +211,7 @@ class GraphUnifiedProvider(GraphProviderBase):
                 ("system", system_message),
                 ("user", user_content)
             ])
-            self.logger.info(f"Final prompt created. User content sample: {user_content[:200]}...")
+            self.logger.info(f"Final prompt created. User content: {user_content}")
 
             chain = prompt | self.model | StrOutputParser()
 
@@ -226,7 +225,7 @@ class GraphUnifiedProvider(GraphProviderBase):
             if match:
                 code = match.group(1).strip()
                 if code:
-                    self.logger.info(f"Code extracted successfully. Sample: {code[:200]}...")
+                    self.logger.info(f"Code extracted successfully. Code: {code}")
                     return code
                 else:
                     self.logger.warning("Extracted code block was empty. Falling back.")
