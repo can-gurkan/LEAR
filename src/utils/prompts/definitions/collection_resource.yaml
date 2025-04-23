@@ -8,7 +8,7 @@ base_prompt: |
   Improve the given agent movement code following these precise specifications:
   Here is the current code of the turtle agent:
   ```
-    {}
+    {original_code}
   ```
   INPUT CONTEXT:
   - You have access to variables called input-resource-distances, input-resource-types, and weight

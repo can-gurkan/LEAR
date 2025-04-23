@@ -52,12 +52,12 @@ value:
 
     **Code with Error:**
     ```netlogo
-    {code}
+    {original_code}
     ```
 
     **Error Message:**
     ```
-    {error}
+    {error_message}
     ```
 
     **Guiding Pseudocode:**

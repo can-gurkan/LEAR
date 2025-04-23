@@ -10,7 +10,7 @@ base_prompt: |
   Here is the current code of the turtle agent:
 
   ```
-    {}
+    {original_code}
   ```
 
   INPUT CONTEXT:

@@ -6,7 +6,7 @@ value:
 
     Current code block to evolve:
     ```netlogo
-    {code}
+    {original_code}
     ```
 
     Food distance inputs: {inputs}

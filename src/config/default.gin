@@ -9,15 +9,15 @@ from src.mutation import text_based_evolution
 # Retry configuration
 CodeRetryHandler.max_attempts = 2
 GraphProviderBase.retry_max_attempts = 2
-GraphProviderBase.retry_prompt = 'generate_code_with_pseudocode_and_error'
+GraphProviderBase.retry_prompt = ''
 
 # Text evolution configuration (Strategy used by TextBasedEvolution class)
 TextBasedEvolution.evolution_strategy = 'complex'
 # GraphProviderBase.evolution_strategy removed as provider now uses state from graph
 
 # Prompt configuration - Check storeprompts.py dict (Used by provider for code generation)
-create_graph_provider.prompt_type = 'groq'  # groq, complex
-create_graph_provider.prompt_name = 'prompt3'  # prompt2, prompt1
+create_graph_provider.prompt_type = 'collection_resource'  # groq, complex
+create_graph_provider.prompt_name = 'zero_shot_code'  # prompt2, prompt1
 
 # Model-specific configurations
 GraphUnifiedProvider.temperature = 0.65

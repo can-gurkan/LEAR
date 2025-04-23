@@ -1,5 +1,5 @@
 import os
-import logging
+from src.utils import logging
 import gin, re
 from typing import Optional, List, Any
 from enum import Enum
@@ -56,7 +56,7 @@ class GraphUnifiedProvider(GraphProviderBase):
         self.model_name = model_name
         self.model = None
         self.api_key = None
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.get_logger()
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.claude_model_name = claude_model_name
@@ -157,36 +157,38 @@ class GraphUnifiedProvider(GraphProviderBase):
             system_message = prompts.get("langchain", {}).get("cot_system", "You are a NetLogo programming assistant.")
             invoke_input = {} # Initialize empty invoke input
 
-            if error_message and modified_pseudocode:
-                self.logger.info(f"Using retry prompt '{self.retry_prompt}' with pseudocode due to error: {error_message[:100]}...")
-                
-                prompt_template = prompts.get("retry_prompts", {}).get(self.retry_prompt, "generate_code_with_pseudocode_and_error")
-                
-                # Format the prompt with all required fields
-                user_content = prompt_template.format(
-                    code=original_code, # Match prompt variable name
-                    error=error_message, # Match prompt variable name
-                    pseudocode=modified_pseudocode
-                )
-                # Update invoke_input for the chain
-                invoke_input["code"] = original_code
-                invoke_input["error"] = error_message
-                invoke_input["pseudocode"] = modified_pseudocode
+            # If only error message is present, use error-only retry prompt
+            if error_message:
+                # Common setup
+                invoke_input["original_code"] = original_code
+                format_args = {"original_code": original_code}
 
-            elif error_message:
-                 # Case 2: Only Error is present - Use error-only retry prompt
+                if modified_pseudocode:
+                    # Case 1: Both error and pseudocode are present
+                    log_suffix = f"with pseudocode due to error: {error_message[:100]}..."
+                    fallback_prompt_name = "generate_code_with_pseudocode_and_error"
+                    # Use 'error' key for prompt formatting and invoke_input
+                    format_args["error"] = error_message
+                    format_args["pseudocode"] = modified_pseudocode
+                    invoke_input["error"] = error_message
+                    invoke_input["pseudocode"] = modified_pseudocode
+                else:
+                    # Case 2: Only error is present
+                    log_suffix = f"without pseudocode due to error: {error_message[:100]}..."
+                    fallback_prompt_name = "generate_code_with_error"
+                    # Use 'error_message' key for prompt formatting and invoke_input
+                    format_args["error_message"] = error_message
+                    invoke_input["error_message"] = error_message
 
-                 retry_prompt_key = getattr(self, 'retry_prompt', 'generate_code_with_error') # Default key from Gin
-                 self.logger.info(f"Using error-only retry prompt '{retry_prompt_key}' due to error: {error_message[:100]}...")
-                 
-                 # Default template if key is missing
-                 default_error_only_template = "{error_message}\n\nPlease fix the following code:\n```netlogo\n{original_code}\n```"
-                 prompt_template = prompts.get("retry_prompts", {}).get(retry_prompt_key, default_error_only_template)
-                 user_content = prompt_template.format(original_code=original_code, error_message=error_message)
-                 
-                 # Update invoke_input
-                 invoke_input["original_code"] = original_code
-                 invoke_input["error_message"] = error_message
+                self.logger.info(f"Using retry prompt '{self.retry_prompt}' {log_suffix}")
+
+                # Get the template string using the chosen fallback
+                prompt_template = prompts.get("retry_prompts", {}).get(self.retry_prompt, fallback_prompt_name)
+
+                self.logger.info(f"Retry prompt template key used: '{self.retry_prompt}' (fallback: '{fallback_prompt_name}')")
+
+                # Format the user content
+                user_content = prompt_template.format(**format_args)
 
             elif modified_pseudocode:
                 # Use code generation prompt with modified pseudocode
@@ -199,11 +201,11 @@ class GraphUnifiedProvider(GraphProviderBase):
 
             else:
                 self.logger.info(f"Using code generation/evolution prompt '{self.prompt_type}/{self.prompt_name}' with original code only.")
-                default_code_only_template = "Evolve or generate code based on the following NetLogo code:\n```netlogo\n{code}\n```"
+                default_code_only_template = "Evolve or generate code based on the following NetLogo code:\n```netlogo\n{original_code}\n```"
                 prompt_template = prompts.get(self.prompt_type, {}).get(self.prompt_name, default_code_only_template) 
-                user_content = prompt_template.format(code=original_code)
+                user_content = prompt_template.format(original_code=original_code)
                 
-                invoke_input = {"code": original_code}
+                invoke_input = {"original_code": original_code}
 
             # --- Construct Prompt & Chain ---
             prompt = ChatPromptTemplate.from_messages([

@@ -76,7 +76,7 @@ value:
     You are an expert NetLogo coder tasked with refining a turtle agent's movement code through small, incremental improvements. Your objective is to evolve the existing rule slightly rather than redesigning it entirely.
 
     **Current Rule to Evolve:**
-    {code}
+    {original_code}
 
     **Evolution Guidelines:**
 
@@ -121,7 +121,7 @@ value:
     You are an expert NetLogo programmer tasked with evolving the movement code for a turtle agent in a food-collection simulation. Your goal is to enhance and improve the previous agent rule through small, incremental modifications rather than complete rewrites.
 
     Here is the current rule for the turtle's movement:
-    {code}
+    {original_code}
 
     ENHANCEMENT GUIDELINES:
 

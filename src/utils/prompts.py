@@ -9,7 +9,7 @@ class LEARPrompts:
 
         # Chain of thought prompt for langchain providers
         self.langchain_cot_system = "You are a NetLogo expert."
-        self.langchain_cot_template = """Evolve code:\n{code}\n\nInputs: {inputs}"""
+        self.langchain_cot_template = """Evolve code:\n{original_code}\n\nInputs: {inputs}"""
 
         self.evolution_performance = "Energy: {energy}, Food: {food}, Lifetime: {lifetime}, Efficiency: {efficiency:.2f}"
         self.evolution_movement_pattern = "moves {direction} {value}"
@@ -23,7 +23,7 @@ class LEARPrompts:
 Provide clear, natural language descriptions of NetLogo code patterns, explaining what the code does in simple terms."""
 
         self.code_analysis_user_message = """Analyze this NetLogo code and describe what it does:
-{code}
+{original_code}
 
 Focus on:
 1. Movement patterns and conditions
@@ -51,10 +51,10 @@ Keep the explanation concise and focused on behavior analysis."""
 
         self.langchain_system_message = "You are a NetLogo expert."
         self.langchain_user_message_evolution = (
-            """Evolve code:\n{code}\n\nAnalysis: {evolution_description}"""
+            """Evolve code:\n{original_code}\n\nAnalysis: {evolution_description}"""
         )
 
-        self.langchain_user_message = """Evolve code:\n{code}\n\nInputs: {inputs}"""
+        self.langchain_user_message = """Evolve code:\n{original_code}\n\nInputs: {inputs}"""
 
         self.groq_prompt = """You are an expert NetLogo movement code generator. Generate code:
 - Movement: fd/forward, rt/right, lt/left
