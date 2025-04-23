@@ -16,8 +16,8 @@ class CodeRetryHandler:
         self.max_attempts = max_attempts
         self.error_prompt = """
             The generated NetLogo code has an error:
-            Code: {code}
-            Error: {error}
+            Code: {original_code}
+            Error: {error_message}
             
             Please fix the code following these rules:
             1. Use only fd, rt, or lt commands with numbers or 'random N'

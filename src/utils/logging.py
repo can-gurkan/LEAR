@@ -3,7 +3,7 @@ import os
 
 _logger = None  # Initialize the global logger variable
 
-def setup_logging(log_file_path='../../Logs/debug2.log', level=logging.DEBUG):
+def setup_logging(log_file_path='../../Logs/debug.log', level=logging.DEBUG):
     """Sets up logging configuration."""
     # Create log directory if it doesn't exist
     os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
@@ -11,6 +11,7 @@ def setup_logging(log_file_path='../../Logs/debug2.log', level=logging.DEBUG):
     global _logger
     _logger = logging.getLogger('lear_app')
     _logger.setLevel(level)
+    _logger.propagate = False  # Prevent propagation to avoid recursive logging
 
     # Remove any existing handlers to avoid duplicates on re-initialization
     if _logger.handlers:

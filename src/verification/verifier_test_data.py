@@ -1,26 +1,6 @@
-from src.verification.verify_netlogo import NetLogoVerifier, CodeComplexity
-import re
-
-def run_test_cases(test_cases):
-    verifier = NetLogoVerifier()
-    failures = 0
-    
-    for i, (test_code, expected) in enumerate(test_cases):
-        is_safe, message = verifier.is_safe(test_code)
-        complexity = verifier.measure_complexity(test_code)
-        
-        print(f'Test #{i+1}: {test_code}')
-        print(f'Expected: {expected}, Result: {is_safe}, Complexity: {complexity.name}')
-        
-        if is_safe != expected:
-            print(f'ERROR: {message}')
-            failures += 1
-        else:
-            print(f'SUCCESS: {"Safe" if is_safe else "Unsafe"} as expected')
-        print('')
-    
-    print(f'SUMMARY: {len(test_cases) - failures}/{len(test_cases)} tests passed')
-    return failures == 0
+"""
+Test cases for NetLogoVerifier.
+"""
 
 # Basic test cases from original file
 basic_test_cases = [
@@ -82,35 +62,20 @@ advanced_test_cases = [
     ('fd heading of turtle 1', False),  # of primitive
     ('fd 1 rt 90 die', False),  # dangerous primitive
     ('fd 1 rt 90 while [true] [fd 1]', False),  # infinite loop
+    
+    # Multiple if-else Statements
+    ("(ifelse item 0 input > 0 [fd 1] item 1 input > 0 [rt 90 fd 1])", True),
+    ("(ifelse item 0 input > 0 fd 1] item 1 input > 0 [rt 90 fd 1])", False),  # Syntax error (missing '[')
+    ("(ifelse-value item 0 input > 0 [1 + 2] item 1 input > 0 [sin random 360] [0])", True),
+    ("(ifelse item 0 input > 10 and item 1 input < 5 [fd 1] item 2 input != 0 [rt 45 fd 2] [lt 45 fd 1])", True), # Complex condition with logical operator
+    # Corrected: Added missing closing parenthesis and whitespace
+    ("(ifelse item 2 input != 0 [ fd 1 ] item 0 input != 0 and item 0 input < item 1 input [ lt 15 fd 0.5 ] item 1 input != 0 [ rt 15 fd 0.5 ] [ fd 1 ])", True),
+    
 ]
-
-print("\n=== RUNNING BASIC TEST CASES ===\n")
-basic_passed = run_test_cases(basic_test_cases)
-
-print("\n=== RUNNING ADVANCED TEST CASES ===\n")
-advanced_passed = run_test_cases(advanced_test_cases)
-
-# Output overall result
-if basic_passed and advanced_passed:
-    print("\nALL TESTS PASSED: The verifier appears capable of handling the complexity in the new prompt.")
-else:
-    print("\nSOME TESTS FAILED: The verifier may need adjustments to handle all patterns in the new prompt.")
-
-# Check verifier on specific examples from the prompt
-print("\n=== VALIDATING EXAMPLES FROM THE PROMPT ===\n")
+# Examples from the prompt to validate separately
 prompt_examples = [
     'fd random-float 2 rt sin (random 90) fd 1',
     'ifelse item 0 input > 0 [lt (45 - item 0 input / 2) fd 1] [rt random 45 fd 2]',
     'fd 1 rt (sin (random 90) * 45) fd random-float 3',
     'fd 1 rt cos (random 60) * 30 fd 2 lt sin (random 45) * 20'
 ]
-
-verifier = NetLogoVerifier()
-for example in prompt_examples:
-    is_safe, message = verifier.is_safe(example)
-    complexity = verifier.measure_complexity(example)
-    print(f'Example: {example}')
-    print(f'Valid: {is_safe}, Complexity: {complexity.name}')
-    if not is_safe:
-        print(f'Error: {message}')
-    print('')
