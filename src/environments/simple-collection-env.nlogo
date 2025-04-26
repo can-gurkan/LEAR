@@ -3,6 +3,7 @@ extensions [ py table fp rnd ]
 __includes [
   "env_utils/evolution.nls"
   "env_utils/logging.nls"
+  "env_utils/prompt_config.nls"
   "config/simple-collection-config.nls"
 ]
 
@@ -100,6 +101,7 @@ to setup
   setup-llm-agents
   setup-params
   if logging? [ setup-logger get-additional-params ]
+  write-prompt-config prompt-type prompt-name
   reset-ticks
 end
 
@@ -431,7 +433,7 @@ SWITCH
 313
 text-based-evolution
 text-based-evolution
-0
+1
 1
 -1000
 
@@ -533,6 +535,38 @@ verbose?
 1
 1
 -1000
+
+INPUTBOX
+400
+510
+629
+570
+prompt-type
+collection_simple
+1
+0
+String
+
+INPUTBOX
+635
+510
+864
+570
+prompt-name
+one_shot_code_wcomments
+1
+0
+String
+
+CHOOSER
+635
+575
+862
+620
+prompt-name
+prompt-name
+"zero_shot_code" "one_shot_code" "two_shot_code" "zero_shot_code_wcomments" "one_shot_code_wcomments" "two_shot_code_wcomments"
+4
 
 @#$#@#$#@
 ## WHAT IS IT?

@@ -4,6 +4,7 @@ __includes [
   "env_utils/evolution.nls"
   "env_utils/logging.nls"
   "config/simple-collection-config.nls"
+  "env_utils/prompt_config.nls"
 ]
 
 globals [
@@ -120,6 +121,7 @@ to setup
   setup-llm-agents
   setup-params
   if logging? [ setup-logger get-additional-params ]
+  write-prompt-config prompt-type prompt-name
   reset-ticks
 end
 
@@ -612,6 +614,28 @@ verbose?
 1
 1
 -1000
+
+INPUTBOX
+575
+565
+804
+625
+prompt-name
+NIL
+1
+0
+String
+
+INPUTBOX
+575
+500
+804
+560
+prompt-type
+NIL
+1
+0
+String
 
 @#$#@#$#@
 ## WHAT IS IT?
