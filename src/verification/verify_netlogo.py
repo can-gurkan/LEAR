@@ -161,9 +161,9 @@ class NetLogoVerifier:
             # Random generators
             'random', 'random-float',
             # Math functions
-            'sin', 'cos', 'tan',
+            'sin', 'cos', 'tan', 'abs',
             # List operations
-            'item', 'count', 'length', 'position',
+            'item', 'count', 'length', 'position', 'min', 'max',
             # Agent properties
             'xcor', 'ycor', 'heading',
             # Agent sensing
@@ -525,6 +525,7 @@ class NetLogoVerifier:
         'in-radius': 2, # agentset, radius
         'distance': 1, # target
         'towards': 1, # target
+        'min': 2, # number, number
         # Logical operators 'and', 'or', 'not' are handled by precedence parsing.
         # List/String constructors
         'list': -1, # Variadic arity
@@ -833,11 +834,11 @@ class NetLogoVerifier:
                  # If no errors occurred, infer return type (basic for now)
                  if inferred_type != TYPE_INVALID:
                       # TODO: Use REPORTER_INFO for better type inference later
-                      if reporter_name in {'random', 'random-float', 'sin', 'cos', 'tan', 'xcor', 'ycor', 'heading', 'distance', 'towards', 'count', 'length'}:
+                      if reporter_name in {'random', 'random-float', 'sin', 'cos', 'tan', 'xcor', 'ycor', 'heading', 'distance', 'towards', 'count', 'length', 'abs'}:
                            inferred_type = TYPE_NUMBER
                       elif reporter_name in {'any?'}:
                            inferred_type = TYPE_BOOLEAN
-                      elif reporter_name in {'item', 'position'}: # Can return num/bool/item-type
+                      elif reporter_name in {'item', 'position', 'min', 'max'}: # Can return num/bool/item-type
                            inferred_type = TYPE_ANY
                       elif reporter_name in {'in-radius'}:
                            inferred_type = TYPE_AGENTSET

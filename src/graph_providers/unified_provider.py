@@ -167,7 +167,7 @@ class GraphUnifiedProvider(GraphProviderBase):
                 # Format the prompt with all required fields
                 user_content = prompt_template.format(
                     original_code=original_code, # Match prompt variable name
-                    error=error_message, # Match prompt variable name
+                    error_message=error_message, # Match prompt variable name
                     pseudocode=modified_pseudocode
                 )
                 # Update invoke_input for the chain
