@@ -3,6 +3,7 @@ extensions [ py table fp rnd ]
 __includes [
   "env_utils/evolution.nls"
   "env_utils/logging.nls"
+  "env_utils/prompt_config.nls"
 ]
 
 globals [
@@ -77,6 +78,7 @@ to setup
   setup-resources
   setup-llm-agents
   if logging? [ setup-logger get-additional-params ]
+  write-prompt-config prompt-type prompt-name
   reset-ticks
 end
 
@@ -725,6 +727,28 @@ resource-radius
 1
 NIL
 HORIZONTAL
+
+INPUTBOX
+560
+465
+789
+525
+prompt-type
+NIL
+1
+0
+String
+
+INPUTBOX
+560
+530
+789
+590
+prompt-name
+NIL
+1
+0
+String
 
 @#$#@#$#@
 ## WHAT IS IT?
