@@ -111,8 +111,8 @@ ifelse item 0 food-observations < item 0 poison-observations and item 0 food-obs
       ]
     ]
   ]""", True),
-    ("""
-ifelse weight > 10 [
+    
+    ("""ifelse weight > 10 [
   ifelse xcor = 0 and ycor = 0 [
     rt random 20 lt random 20 fd 1
   ][
@@ -126,8 +126,8 @@ ifelse weight > 10 [
   ] [
     fd 1
   ])
-])
 ]""", True),
+    
     (
 """
 (ifelse item 2 food-observations > 0 and item 2 poison-observations = 0 
@@ -191,7 +191,7 @@ ifelse item 0 input > 0 and item 1 input <= 45 [
     if random-float 1 < 0.3 [
       bk 0.5
     ]
-  ])
+  ]]
     """, True),
     ("""
 ifelse item 0 input > 0 and item 0 input <= 45 [
@@ -210,7 +210,6 @@ ifelse item 0 input > 0 and item 0 input <= 45 [
   ]
 ]
 """, True),
-],
 ("""
  (ifelse min input-resource-distances <= 5 [
     (ifelse item (position (min input-resource-distances) input-resource-distances) input-resource-types) = "gold" [rt random 10 fd 1]
@@ -227,7 +226,9 @@ ifelse item 0 input > 0 and item 0 input <= 45 [
     [fd 1]
   ]
 ))
-""", False), # should be wrong
+""", False),
+
+]# should be wrong
 # Examples from the prompt to validate separately
 prompt_examples = [
     'fd random-float 2 rt sin (random 90) fd 1',

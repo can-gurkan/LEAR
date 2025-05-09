@@ -6,7 +6,7 @@ from verifier_test_data import basic_test_cases, advanced_test_cases, prompt_exa
 def run_test_cases(test_cases):
     verifier = NetLogoVerifier()
     failures = 0
-    
+        
     for i, (test_code, expected) in enumerate(test_cases):
         is_safe, message = verifier.is_safe(test_code)
         complexity = verifier.measure_complexity(test_code)
