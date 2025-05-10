@@ -170,9 +170,10 @@ class GraphUnifiedProvider(GraphProviderBase):
                     error_message=error_message, # Match prompt variable name
                     pseudocode=modified_pseudocode
                 )
+                
                 # Update invoke_input for the chain
                 invoke_input["original_code"] = original_code
-                invoke_input["error"] = error_message
+                invoke_input["error_message"] = error_message
                 invoke_input["pseudocode"] = modified_pseudocode
 
             elif error_message:
@@ -186,7 +187,7 @@ class GraphUnifiedProvider(GraphProviderBase):
                 user_content = prompt_template.format(original_code=original_code, error_message=error_message)
                 
                 # Update invoke_input
-                #invoke_input["original_code"] = original_code
+                invoke_input["original_code"] = original_code
                 invoke_input["error_message"] = error_message
 
             elif modified_pseudocode:
@@ -197,6 +198,7 @@ class GraphUnifiedProvider(GraphProviderBase):
                 
                 # Add necessary inputs for the prompt template
                 invoke_input["initial_pseudocode"] = modified_pseudocode
+                invoke_input["original_code"] = original_code
 
             else:
                 self.logger.info(f"Using code generation/evolution prompt '{self.prompt_type}/{self.prompt_name}' with original code only.")

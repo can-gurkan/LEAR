@@ -515,7 +515,7 @@ class NetLogoVerifier:
         # Random
         'random': 1, 'random-float': 1,
         # Math
-        'sin': 1, 'cos': 1, 'tan': 1,
+        'sin': 1, 'cos': 1, 'tan': 1, 'abs': 1,
         # List (Note: 'item' takes list and index)
         'item': 2, 'count': 1, 'length': 1, 'position': 2,
         # Agent properties (zero args)

@@ -121,6 +121,7 @@ def verify_code(
     
     result = {
         **state, 
+        "original_code": state["current_code"],
         "error_message": None if is_safe else error_message
     }
     
