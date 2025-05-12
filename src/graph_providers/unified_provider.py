@@ -8,6 +8,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_deepseek import ChatDeepSeek
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
@@ -21,6 +22,7 @@ class SupportedModels(Enum):
     DEEPSEEK = "deepseek"
     GROQ = "groq"
     OPENAI = "openai"
+    GEMINI = "gemini"
 
 @gin.configurable
 class GraphUnifiedProvider(GraphProviderBase):
@@ -36,7 +38,8 @@ class GraphUnifiedProvider(GraphProviderBase):
                  claude_model_name: str = "claude-3-5-sonnet-20240229",
                  deepseek_model_name: str = "deepseek-chat",
                  groq_model_name: str = "llama-3.3-70b-versatile",
-                 openai_model_name: str = "gpt-4o"):
+                 openai_model_name: str = "gpt-4o",
+                 gemini_model_name: str = "gemini-pro"):  # Added Gemini model name
         """
         Initialize with model name and verifier instance.
         
@@ -51,6 +54,7 @@ class GraphUnifiedProvider(GraphProviderBase):
             deepseek_model_name: Model name for DeepSeek
             groq_model_name: Model name for Groq
             openai_model_name: Model name for OpenAI
+            gemini_model_name: Model name for Gemini
         """
         super().__init__(verifier)
         self.model_name = model_name
@@ -63,6 +67,7 @@ class GraphUnifiedProvider(GraphProviderBase):
         self.deepseek_model_name = deepseek_model_name
         self.groq_model_name = groq_model_name
         self.openai_model_name = openai_model_name
+        self.gemini_model_name = gemini_model_name  # Store Gemini model name
         # Store prompt config explicitly
         self.prompt_type = prompt_type
         self.prompt_name = prompt_name
@@ -84,6 +89,10 @@ class GraphUnifiedProvider(GraphProviderBase):
             self.api_key = os.getenv('OPENAI_API_KEY')
             if not self.api_key:
                 raise ValueError("OPENAI_API_KEY environment variable is required")
+        elif self.model_name == SupportedModels.GEMINI.value:
+            self.api_key = os.getenv('GOOGLE_API_KEY')
+            if not self.api_key:
+                raise ValueError("GOOGLE_API_KEY environment variable is required")
         else:
             raise ValueError(f"Unsupported model name: {self.model_name}")
             
@@ -117,6 +126,13 @@ class GraphUnifiedProvider(GraphProviderBase):
                     openai_api_key=self.api_key,
                     temperature=self.temperature,
                     max_tokens=self.max_tokens
+                )
+            elif self.model_name == SupportedModels.GEMINI.value:
+                model = ChatGoogleGenerativeAI(
+                    model=self.gemini_model_name,
+                    google_api_key=self.api_key,
+                    temperature=self.temperature,
+                    max_output_tokens=self.max_tokens
                 )
             else:
                 raise ValueError(f"Unsupported model name: {self.model_name}")
@@ -249,7 +265,7 @@ def create_graph_provider(model_name: str = "groq", verifier: NetLogoVerifier = 
     Factory method to create a graph provider based on model name.
 
     Args:
-        model_name: Type of model to use ("groq", "claude", "openai", or "deepseek")
+        model_name: Type of model to use ("groq", "claude", "openai", "deepseek", or "gemini")
         verifier: NetLogoVerifier instance for code validation
         prompt_type: Type of prompt to use for code generation (configured by Gin)
         prompt_name: Name of prompt to use for code generation (configured by Gin)
