@@ -228,6 +228,54 @@ ifelse item 0 input > 0 and item 0 input <= 45 [
 ))
 """, False),
 
+# Latest Test cases from the experiments
+("""ifelse (weight > 5) [ 
+  ifelse (distance [0 0] < 5) [
+    fd 1 
+  ] [
+    rt random 20 
+    fd 1 
+  ]
+] [
+  let closest-resource (min (list (item 0 input-resource-distances) (item 1 input-resource-distances) (item 2 input-resource-distances)))
+  let closest-resource-index (ifelse (closest-resource = (item 0 input-resource-distances)) [ 0 ] 
+                              (closest-resource = (item 1 input-resource-distances)) [ 1 ] 
+                              [ 2 ])
+  if (closest-resource-index = 0) [ lt 10 ]
+  if (closest-resource-index = 1) [ rt 0 ]
+  if (closest-resource-index = 2) [ rt random 20 lt random 20 ]
+  fd 1
+]""", True),
+
+("""ifelse (weight > 5) [ 
+  ifelse (distance [0 0] < 5) [ 
+    fd 1 
+  ] [
+    rt random 20
+    fd 1
+  ]
+] [
+  let closest-resource (min input-resource-distances)
+  let closest-resource-index (position closest-resource input-resource-distances)
+  if (closest-resource < 10) [
+    ifelse (closest-resource-index = 0) [
+      lt 10
+      fd 1
+    ] [
+      ifelse (closest-resource-index = 1) [
+        rt 0
+        fd 1
+      ] [
+        rt -10
+        fd 1
+      ]
+    ]
+  ] [
+    rt random 20
+    fd 1
+  ]
+]""", True),
+
 ]# should be wrong
 # Examples from the prompt to validate separately
 prompt_examples = [

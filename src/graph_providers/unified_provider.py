@@ -133,7 +133,7 @@ class GraphUnifiedProvider(GraphProviderBase):
 
         Args:
             state: The current generation state dictionary. Expected keys include:
-                   'original_code', 'error_message' (optional),
+                   'original_code', 'current_code', 'error_message' (optional),
                    'modified_pseudocode' (optional), 'initial_pseudocode'.
 
         Returns:
@@ -147,6 +147,7 @@ class GraphUnifiedProvider(GraphProviderBase):
 
             # Extract relevant info from state
             original_code = state.get("original_code", "")
+            current_code = state.get("current_code", original_code)  # Use current_code for retries
             error_message = state.get("error_message", None)
             modified_pseudocode = state.get("modified_pseudocode", None)
             initial_pseudocode = state.get("initial_pseudocode", "") # Fallback if no modified
@@ -155,7 +156,7 @@ class GraphUnifiedProvider(GraphProviderBase):
             user_content = ""
 
             system_message = prompts.get("langchain", {}).get("cot_system", "You are a NetLogo programming assistant.")
-            invoke_input = {} # Initialize empty invoke input
+            invoke_input = {}
 
             if error_message and modified_pseudocode:
                 self.logger.info(f"Using retry prompt '{self.retry_prompt}' with pseudocode due to error: {error_message[:100]}...")
@@ -164,14 +165,14 @@ class GraphUnifiedProvider(GraphProviderBase):
                 if not prompt_template:
                     prompt_template = prompts.get("retry_prompts", {}).get("generate_code_with_pseudocode_and_error")
                 
-                # Format the prompt with all required fields
+                # Format the prompt with all required fields, using current_code instead of original_code
                 user_content = prompt_template.format(
-                    original_code=original_code, # Match prompt variable name
-                    error_message=error_message, # Match prompt variable name
+                    original_code=current_code,  # Use current_code for retries
+                    error_message=error_message,
                     pseudocode=modified_pseudocode
                 )
                 # Update invoke_input for the chain
-                invoke_input["original_code"] = original_code
+                invoke_input["original_code"] = current_code  # Use current_code for retries
                 invoke_input["error"] = error_message
                 invoke_input["pseudocode"] = modified_pseudocode
 
@@ -183,26 +184,27 @@ class GraphUnifiedProvider(GraphProviderBase):
                 if not prompt_template:
                     prompt_template = prompts.get("retry_prompts", {}).get("generate_code_with_error")
                 
-                user_content = prompt_template.format(original_code=original_code, error_message=error_message)
+                user_content = prompt_template.format(original_code=current_code, error_message=error_message)  # Use current_code for retries
                 
                 # Update invoke_input
-                #invoke_input["original_code"] = original_code
+                invoke_input["original_code"] = current_code  # Use current_code for retries
                 invoke_input["error_message"] = error_message
 
             elif modified_pseudocode:
                 # Use code generation prompt with modified pseudocode
                 self.logger.info(f"Using {self.evolution_strategy} for Code Generation with modified pseudocode.")
                 prompt_template = prompts.get("evolution_strategies", {}).get(self.evolution_strategy, "Generate NetLogo code based on this pseudocode:\n{pseudocode}\n\nOriginal code for context:\n```netlogo\n{original_code}\n```").get("code_prompt") # Default template
-                user_content = prompt_template.format(pseudocode=modified_pseudocode)
+                user_content = prompt_template.format(pseudocode=modified_pseudocode, original_code=original_code)  # Use original_code as context here
                 
                 # Add necessary inputs for the prompt template
                 invoke_input["initial_pseudocode"] = modified_pseudocode
+                invoke_input["original_code"] = original_code
 
             else:
                 self.logger.info(f"Using code generation/evolution prompt '{self.prompt_type}/{self.prompt_name}' with original code only.")
                 default_code_only_template = "Evolve or generate code based on the following NetLogo code:\n```netlogo\n{original_code}\n```"
                 prompt_template = prompts.get(self.prompt_type, {}).get(self.prompt_name, default_code_only_template) 
-                user_content = prompt_template.format(original_code=original_code)
+                user_content = prompt_template.format(original_code=original_code)  # Use original_code for first-time generation
                 
                 invoke_input = {"original_code": original_code}
 
@@ -211,7 +213,7 @@ class GraphUnifiedProvider(GraphProviderBase):
                 ("system", system_message),
                 ("user", user_content)
             ])
-            self.logger.info(f"Final prompt created. User content: {user_content}")
+            # self.logger.info(f"Final prompt created. User content: {user_content}")
 
             chain = prompt | self.model | StrOutputParser()
 

@@ -14,7 +14,8 @@ from src.netlogo_code_generator.nodes import (
     evolve_pseudocode,
     generate_code,
     verify_code,
-    should_retry)
+    should_retry,
+    should_retry_node)
 
 class NetLogoCodeGenerator(BaseCodeGenerator):
     """
@@ -58,11 +59,15 @@ class NetLogoCodeGenerator(BaseCodeGenerator):
         )
         
         # Define edges
-        # workflow.add_edge(START, "evolve_pseudocode")
         workflow.add_edge("evolve_pseudocode", "generate_code")
         workflow.add_edge("generate_code", "verify_code")
         
-        workflow.add_conditional_edges("verify_code", should_retry, {"retry": "generate_code", "end": END})
+        # Use the centralized retry configuration
+        workflow.add_conditional_edges(
+            "verify_code",
+            should_retry_node,
+            {"retry": "generate_code", "end": END}
+        )
                 
         workflow.set_entry_point("evolve_pseudocode")
         
