@@ -94,6 +94,29 @@ advanced_test_cases = [
     ('ifelse item 0 input > 0 [ ifelse item 1 input > 0 [ fd 1 ] [ rt 90 ] ifelse item 2 input > 0 [ bk 1 ] [ lt 90 ] ]', False), # Invalid syntax: second ifelse needs brackets
     ('ifelse item 0 input > 0 [ ifelse item 1 input > 0 [ ifelse item 2 input > 0 [ ifelse item 3 input > 0 [ fd 1 ] [ rt 90 ] ] [ bk 1 ] ] [ lt 90 ] ] [ fd 2 ]', True), # Quadruple nest
     
+    # Failing test case
+    ("""(ifelse 
+  ((item 2 poison-observations) < 5)
+  [
+    (ifelse 
+      ((item 0 poison-observations) < (item 1 poison-observations))
+      [lt 20]
+      [rt 20]
+    )
+    bk 1
+  ]
+  [
+    (ifelse 
+      ((item 0 poison-observations) < (item 1 poison-observations))
+      [rt 10]
+      ((item 1 poison-observations) < (item 0 poison-observations))
+      [lt 10]
+      [(ifelse (random 2 = 0) [lt 5] [rt 5])]
+    )
+    fd 1
+  ]
+)""", True),
+    
     # Most advanced, real examples
     ("""
 ifelse item 0 food-observations < item 0 poison-observations and item 0 food-observations > 0 
@@ -126,7 +149,6 @@ ifelse weight > 10 [
   ] [
     fd 1
   ])
-])
 ]""", True),
     (
 """
@@ -191,7 +213,8 @@ ifelse item 0 input > 0 and item 1 input <= 45 [
     if random-float 1 < 0.3 [
       bk 0.5
     ]
-  ])
+  ]
+]
     """, True),
     ("""
 ifelse item 0 input > 0 and item 0 input <= 45 [
@@ -210,8 +233,8 @@ ifelse item 0 input > 0 and item 0 input <= 45 [
   ]
 ]
 """, True),
-],
-("""
+    
+    ("""
  (ifelse min input-resource-distances <= 5 [
     (ifelse item (position (min input-resource-distances) input-resource-distances) input-resource-types) = "gold" [rt random 10 fd 1]
            [item (position (min input-resource-distances) input-resource-distances) input-resource-types) = "silver" [lt random 10 fd 1]
@@ -227,7 +250,9 @@ ifelse item 0 input > 0 and item 0 input <= 45 [
     [fd 1]
   ]
 ))
-""", False), # should be wrong
+""", False) # should be wrong
+]
+
 # Examples from the prompt to validate separately
 prompt_examples = [
     'fd random-float 2 rt sin (random 90) fd 1',

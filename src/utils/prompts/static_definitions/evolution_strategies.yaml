@@ -87,7 +87,7 @@ value:
 
       4. ALLOWED STRUCTURE:
          - You may use "if/ifelse" statements with item checks on the "input" list
-         - Basic example: ifelse item 0 input > 0 [fd 1] [rt 90 fd 2]
+         - Basic example: ifelse (item 0 input) > 0 [fd 1] [rt 90 fd 2]
          - For complex conditions, ensure proper bracket nesting and balance
          - Make sure every opening bracket '[' has a matching closing bracket ']'
          - Remember "input" is the only valid variable you can reference
@@ -232,7 +232,7 @@ value:
 
       5. ALLOWED STRUCTURE:
          - You may use "if/ifelse" statements with item checks on the "input" list
-         - Example: ifelse item 0 input > 0 [lt (45 - item 0 input / 2) fd 1] [rt random 45 fd 2]
+         - Example: ifelse (item 0 input) > 0 [lt (45 - (item 0 input) / 2) fd 1] [rt random 45 fd 2]
          - For complex or nested conditions, ensure proper bracket nesting and balance
          - Make sure every opening bracket '[' has a matching closing bracket ']'
          - Maximum nesting depth should be 3 levels to avoid complexity errors
@@ -276,7 +276,7 @@ value:
 
       Here is the current pseudocode of the turtle agent:
       ```
-      {current_pseudocode}
+      {pseudocode}
       ```
 
       Improve the given agent movement pseudocode following these precise specifications:
@@ -372,10 +372,40 @@ value:
       3. VALID COMMANDS AND SYNTAX:
       - Use only these movement commands: fd, forward, rt, right, lt, left, bk, back
       - Use only these reporters: random, random-float, sin, cos, item, xcor, ycor, heading
-      - The syntax of the if primitive is as follows: if boolean [ commands ]
-      - The syntax of the ifelse primitive is as follows: ifelse boolean [ commands1 ] [ commands2 ]
+      - Both `food-observations` and `poison-observations` are already 3 item lists, so you MUST not try casting them into a list by doing `item 0 [food-observations]` -> this is invalid syntax because food-observations is already a list. Nor is `[poison-observations] = [0 0 0]` correct either, because poison-observations is already a list as well.
+      - The syntax of the if primitive is as follows: if (boolean) [ commands ]. Note it ONLY has one boolean condition for the true case.
+      - The syntax of the ifelse primitive is as follows: ifelse (boolean) [ commands1 ] [ commands2 ].
       - An ifelse block that contains multiple boolean conditions must be enclosed in parentheses as follows:
-      (ifelse boolean1 [ commands1 ] boolean2 [ commands2 ] ... [ elsecommands ])
+      (ifelse (boolean1) [ commands1 ]
+              (boolean2) [ commands2 ]
+              (boolean3) [ commands3 ]
+              ...
+              [ elsecommands ])
+      Example:
+      ask patches [
+        (ifelse
+          (choice = 0 and choice != 5) [
+            set pcolor red
+            set plabel "r"
+          ]
+          (choice = 1 or choice = 7) [
+            set pcolor blue
+            set plabel "b"
+          ]
+          choice = 2 [
+            set pcolor green
+            set plabel "g"
+          ]
+          ; elsecommands
+          [
+            set pcolor yellow
+            set plabel "y"
+          ])
+      ]
+
+      - Ensure that when you are using the ifelse primitive, you surround BOTH the code to be executed if the condition is true and the code to be executed if the condition is false with brackets.
+      - Note that (item 0 list-name) is a valid prefix notation for Netlogo. This is true for some functions, like item, sin, max, min, not, etc, but not for operators like +, -, *, /, ^, =, !=, >, <, >=, <=, and, or. These operators follow infix notation like `(5 + 5 != 4) and (5 = 5)`.
+      - if and ifelse MUST be followed by () for the condition, and NOT []. The [] is reserved for the code to be executed if the condition is true or false.
 
       4. COMPLEXITY IMPLEMENTATION:
       - Accurately implement all described movement patterns
@@ -391,7 +421,9 @@ value:
       - DO NOT use "set", "let", or create any variables
       - DO NOT include any infinite loops - avoid "while" or "loop" constructs
       - DO NOT copy variable names from pseudocode and do not use any variables other than "food-observations" and "poison-observations"
+      - DO NOT start your code with `(`, though it is appropriate to use it throughout the code.
       - Strictly adhere to using ONLY the provided 'food-observations' and 'poison-observations' variables. Do not invent new ones.
+
 
       6. ALLOWED STRUCTURE:
       - You may use "if/ifelse" statements with item checks on the "food-observations" and "poison-observations" lists
@@ -400,15 +432,21 @@ value:
       - Remember "food-observations" and "poison-observations" are the only valid variables you can reference
 
       7. ERROR PREVENTION:
+      - IMPORTANT: There is no such thing as a `else` statement in NetLogo. It is only ifelse and if.
       - Ensure each condition has both true and false branches in ifelse statements
       - Verify that each command has a valid parameter
       - Make sure bracket pairs are properly matched and nested
+      - Each boolean condition must be enclosed in parentheses and NOT brackets. Brackets are reserved for the code to be executed following an ifelse or if statement.
+      - Each command like `item 0 food-observations` must be enclosed in parentheses: `(item 0 food-observations)`
+      - Since both food-observations and poison-observations are 3 item lists, you can use `item 0`, `item 1`, and `item 2` to access the items in the list, NOT `item 3` or beyond
       - Keep all numeric values between -1000 and 1000
+      - Whenever chaining together multiple functions, use parentheses to ensure the correct order of operations.
+        - example: `(not ((1 = 1) and (2 = 2)))` -> observe prefix notation for not, but infix notation for and and =.
 
       8. ROBUST IMPLEMENTATION:
       - Generate code that is resilient to edge cases
       - If pseudocode mentions a variable that doesn't exist in NetLogo (like 'food_left' or 'poison_ahead'), translate its purpose using `food-observations` or `poison-observations` (e.g., `item 0 food-observations > 0` or `item 2 poison-observations > 0`) without using the non-existent variable name.
-      - Focus on capturing the intent and behavior, not the exact syntax
+      - Focus on capturing the intent and behavior, not the exact syntax.
 
       Your task is to carefully analyze the provided pseudocode and translate it into well-formed NetLogo code that represents the described movement strategy.
       The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
@@ -426,7 +464,7 @@ value:
 
       Here is the current pseudocode of the turtle agent:
       ```
-      {current_pseudocode}
+      {pseudocode}
       ```
 
       Improve the given agent movement pseudocode following these precise specifications:
@@ -593,7 +631,7 @@ value:
 
       Here is the current pseudocode of the turtle agent:
       ```
-      {current_pseudocode}
+      {pseudocode}
       ```
 
       Improve the given agent movement pseudocode following these precise specifications:

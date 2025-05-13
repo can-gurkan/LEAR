@@ -47,4 +47,16 @@ def get_logger():
     global _logger
     if _logger is None:
         _logger = setup_logging()
+    disable_logging()
     return _logger
+
+def disable_logging():
+    """Disables the logger by removing all handlers and setting level to CRITICAL.
+    
+    This effectively prevents any logs below CRITICAL level from being processed
+    and removes all output destinations.
+    """
+    global _logger
+    if _logger is not None:
+        _logger.handlers.clear()  # Remove all handlers
+        _logger.setLevel(logging.CRITICAL)  # Set to highest level to minimize processing

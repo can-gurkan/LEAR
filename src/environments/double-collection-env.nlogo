@@ -102,7 +102,7 @@ end
 to setup
   clear-all
 
-  py:setup py:python
+  py:setup "/Users/kdawg/Documents/LEAR/.venv/bin/python"
   py:run "import os"
   py:run "import sys"
   py:run "from pathlib import Path"

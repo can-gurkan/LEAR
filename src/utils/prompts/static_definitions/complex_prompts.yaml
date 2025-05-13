@@ -39,7 +39,7 @@ value:
 
     5. SOPHISTICATED PATTERN EXAMPLES:
         - Adaptive Exploration: fd random-float 2 rt sin (random 90) fd 1
-        - Sensor-Responsive: ifelse item 0 input > 0 [lt (45 - item 0 input / 2) fd 1] [rt random 45 fd 2]
+        - Sensor-Responsive: ifelse (item 0 input) > 0 [lt (45 - (item 0 input) / 2) fd 1] [rt random 45 fd 2]
         - Trigonometric Navigation: fd 1 rt (sin (random 90) * 45) fd random-float 3
         - Multi-Stage Movement: fd 1 rt cos (random 60) * 30 fd 2 lt sin (random 45) * 20
 
