@@ -16,8 +16,8 @@ TextBasedEvolution.evolution_strategy = 'complex'
 # GraphProviderBase.evolution_strategy removed as provider now uses state from graph
 
 # Prompt configuration - Check storeprompts.py dict (Used by provider for code generation)
-create_graph_provider.prompt_type = 'collection_resource'  # collection_simple, collection_resource, collection_poison
-create_graph_provider.prompt_name = 'zero_shot_code'  # zero_shot_code one_shot_code two_shot_code zero_shot_code_wcomments
+create_graph_provider.prompt_type = 'sampling'
+create_graph_provider.prompt_name = 'zero_shot_code'
 
 # Model-specific configurations
 GraphUnifiedProvider.temperature = 0.65

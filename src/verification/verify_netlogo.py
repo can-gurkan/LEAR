@@ -204,7 +204,8 @@ class NetLogoVerifier:
             'input', 'energy', 'lifetime', 'food-collected',
             'xcor', 'ycor', 'heading', 'who', 'input-resource-distances', 'input-resource-types',
             'food-observations', 'poison-observations', '"silver"', '"gold"', '"crystal"',
-            'weight' # Added based on analysis of storeprompts.py
+            'weight',  # Added based on analysis of storeprompts.py
+            'energy-ahead', 'energy-left', 'energy-right'
         }
 
         # Precompile regex patterns for performance
