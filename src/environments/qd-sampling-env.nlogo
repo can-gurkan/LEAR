@@ -1998,6 +1998,94 @@ NetLogo 6.4.0
       <value value="&quot;zero_shot_code_wcomments&quot;"/>
     </enumeratedValueSet>
   </experiment>
+  <experiment name="qd-exp-egg" repetitions="10" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="10000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max-fitness</metric>
+    <metric>mean-energy</metric>
+    <metric>max-energy</metric>
+    <metric>max-fit-agent-rule</metric>
+    <metric>max-energy-agent-rule</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prompt-type">
+      <value value="&quot;sampling&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="landscape-func">
+      <value value="&quot;eggholder&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-archive-size">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="alpha">
+      <value value="0"/>
+      <value value="0.25"/>
+      <value value="0.5"/>
+      <value value="0.75"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="k-neighbors">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bd-dim">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;default&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sources">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;qd-dw-egg&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;claude&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="acceptance-threshold">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prompt-name">
+      <value value="&quot;zero_shot_code_wcomments&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
 </experiments>
 @#$#@#$#@
 @#$#@#$#@
