@@ -3,7 +3,7 @@ import os
 
 _logger = None  # Initialize the global logger variable
 
-def setup_logging(log_file_path='../../Logs/debug.log', level=logging.DEBUG):
+def setup_logging(log_file_path='/Users/old/logs/qd_lear/debug.log', level=logging.DEBUG):
     """Sets up logging configuration."""
     # Create log directory if it doesn't exist
     os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
@@ -47,4 +47,16 @@ def get_logger():
     global _logger
     if _logger is None:
         _logger = setup_logging()
+    disable_logging()
     return _logger
+
+def disable_logging():
+    """Disables the logger by removing all handlers and setting level to CRITICAL.
+    
+    This effectively prevents any logs below CRITICAL level from being processed
+    and removes all output destinations.
+    """
+    global _logger
+    if _logger is not None:
+        _logger.handlers.clear()  # Remove all handlers
+        _logger.setLevel(logging.CRITICAL)  # Set to highest level to minimize processing

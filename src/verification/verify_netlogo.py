@@ -205,7 +205,10 @@ class NetLogoVerifier:
             'xcor', 'ycor', 'heading', 'who', 'input-resource-distances', 'input-resource-types',
             'food-observations', 'poison-observations', '"silver"', '"gold"', '"crystal"',
             'weight',  # Added based on analysis of storeprompts.py
-            'energy-ahead', 'energy-left', 'energy-right'
+            'energy-ahead', 'energy-left', 'energy-right',
+            'energy-ahead-close', 'energy-left-close', 'energy-right-close',
+            'energy-ahead-medium', 'energy-left-medium', 'energy-right-medium',
+            'energy-ahead-far', 'energy-left-far', 'energy-right-far'
         }
 
         # Precompile regex patterns for performance

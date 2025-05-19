@@ -3,7 +3,7 @@ comment_instruction: |
   When writing your code, please add detailed comments to explain your approach and decision-making process.
 
 base_prompt: |
-  You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to traverse a grid of patches with different values of energy and try to maximize its energy by sampling the patches.
+  You are an expert NetLogo coder. You are trying to improve the code of a given turtle agent that is trying to traverse a grid of patches with different values of energy and try to maximize its energy by traveling on the patches with positive energy and avoiding patches with negative energy.
 
   Improve the given agent movement code following these precise specifications:
 
@@ -14,16 +14,23 @@ base_prompt: |
   ```
 
   INPUT CONTEXT:
-  - The agent has access to three variables containing information about its environment:
-    - energy-ahead is a variable that contains the energy of the patch ahead of the agent where the energy is a number between 0 and 3.
-    - energy-left is a variable that contains the energy of the patch to the left of the agent where the energy is a number between 0 and 3.
-    - energy-right is a variable that contains the energy of the patch to the right of the agent where the energy is a number between 0 and 3.
+  - The agent has access to nine variables containing information about its environment:
+    - energy-ahead-close is a variable that contains the energy of the patch ahead of the agent at a distance of 1 unit.
+    - energy-left-close is a variable that contains the energy of the patch 90 degrees to the left of the agent at a distance of 1 unit.
+    - energy-right-close is a variable that contains the energy of the patch 90 degrees to the right of the agent at a distance of 1 unit.
+    - energy-ahead-medium is a variable that contains the energy of the patch ahead of the agent at a distance of 4 units.
+    - energy-left-medium is a variable that contains the energy of the patch 90 degrees to the left of the agent at a distance of 4 units.
+    - energy-right-medium is a variable that contains the energy of the patch 90 degrees to the right of the agent at a distance of 4 units.
+    - energy-ahead-far is a variable that contains the energy of the patch ahead of the agent at a distance of 7 units.
+    - energy-left-far is a variable that contains the energy of the patch 90 degrees to the left of the agent at a distance of 7 units.
+    - energy-right-far is a variable that contains the energy of the patch 90 degrees to the right of the agent at a distance of 7 units.
+    - The agent also has access to the current heading of the agent (heading) and the current position of the agent (xcor, ycor), and the current time step (time-steps).
     - Use these to inform movement strategy
 
   SIMULATION ENVIRONMENT:
   - The goal is to collect as much energy as possible in a limited number of steps.
-  - The turtle agent can detect energy in the three patches ahead, left, and right.
-  - The energy values are between 0 and 3.
+  - The turtle agent can detect energy in the three patches ahead, three patches to the left, and three patches to the right.
+  - The energy values can be positive or negative. Avoid patches with high negative energy and find patches with high positive energy.
 
   CONSTRAINTS:
   1. Do not include code to kill or control any other agents
@@ -32,7 +39,7 @@ base_prompt: |
   4. Do not include code to create new agents
   5. Do not include code to change the rules of the simulation
   6. Follow NetLogo syntax and constraints
-  7. Do not use any undefined variables or commands besides the three variables mentioned above. These are energy-ahead, energy-left, and energy-right. 
+  7. Do not use any undefined variables or commands besides the variables mentioned above. These are energy-ahead-close, energy-left-close, and energy-right-close, energy-ahead-medium, energy-left-medium, and energy-right-medium, energy-ahead-far, energy-left-far, and energy-right-far, heading, xcor, ycor, and time-steps. 
   8. Focus on movement strategies based on the three variables mentioned above.
 
   VALID COMMANDS AND SYNTAX:
@@ -59,7 +66,7 @@ base_prompt: |
   STRATEGIC GOALS:
   1. Respond to sensor readings intelligently
   2. Combine different movement patterns
-  3. Be creative in your movement strategy
+  3. Be CREATIVE in your movement strategy and think outside of the box
 
   The code must be runnable in NetLogo in the context of a turtle. Do not write any procedures and assume that the code will be run in an ask turtles block.
   Return ONLY the changed NetLogo code. Do not include any explanations or outside the code block.
@@ -72,7 +79,7 @@ one_shot_example: |
 
   Example:
   Current Rule: fd 1 rt random 45
-  Updated Rule: ifelse (item 0 food-observations > 0) and (item 0 poison-observations = 0) [lt 10 fd 1] [ifelse (item 1 food-observations > 0) and (item 1 poison-observations = 0) [rt 10 fd 1] [fd 1 rt random 20]]
+  Updated Rule: 
   Explanation: This rule checks if there's food in the left cone with no poison, turning left to approach it. If not, it checks the right cone. If neither condition is met, it moves forward with some random turning.
 
 two_shot_example: |
@@ -80,25 +87,5 @@ two_shot_example: |
   Another Example:
   Current Rule: rt 30 fd 1 lt 15
   Updated Rule:
-  ifelse (item 2 food-observations > 0) and (item 2 poison-observations = 0) [
-    fd 1.5
-  ] [
-    ifelse (item 0 poison-observations > 0) and (item 0 poison-observations < 3) [
-      rt 45 fd 1
-    ] [
-      ifelse (item 1 poison-observations > 0) and (item 1 poison-observations < 3) [
-        lt 45 fd 1
-      ] [
-        ifelse (item 0 food-observations > 0) [
-          lt 15 fd 0.8
-        ] [
-          ifelse (item 1 food-observations > 0) [
-            rt 15 fd 0.8
-          ] [
-            fd 0.5 rt random 30
-          ]
-        ]
-      ]
-    ]
-  ]
+  
   Explanation: This rule prioritizes food directly ahead while actively avoiding nearby poison. It turns away from poison when detected at close range. If no immediate threat exists, it moves toward food in either side cone, or explores randomly.

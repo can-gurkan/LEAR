@@ -1,11 +1,11 @@
 to setup-params-default
-  set num-llm-agents 10
+  set num-llm-agents 6
   set num-sources 3
-  set ticks-per-generation 500
+  set ticks-per-generation 200
   set logging? true
   set llm-mutation? true
   set text-based-evolution false
-  set llm-type "groq"
+  set llm-type "claude"
   
   ;; initial rules
   set init-rule "lt random 20 rt random 20 fd 1"
@@ -13,7 +13,13 @@ to setup-params-default
   
   ;; selection algo params
   set selection "tournament" ;"fitness-prop"
-  set num-parents 2
-  set tournament-size 8
-  set selection-pressure 0.8
+  set num-parents 1
+  set tournament-size num-llm-agents
+  set selection-pressure 1
+  
+  ;; QD params
+  set alpha 0
+  set bd-dim 8
+  set acceptance-threshold 0.5
+  set max-archive-size 1000
 end

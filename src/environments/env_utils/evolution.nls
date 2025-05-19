@@ -61,9 +61,9 @@ to update-generation-stats
   let gen-info (list ticks gen-fitness)
   set generation-stats lput gen-info generation-stats
 
-  let best-agent max-one-of llm-agents [fitness]
-  if [fitness] of best-agent > best-rule-fitness [
-    set best-rule-fitness [fitness] of best-agent
+  let best-agent max-one-of llm-agents [energy]
+  if [energy] of best-agent > best-rule-fitness [
+    set best-rule-fitness [energy] of best-agent
     set best-rule [rule] of best-agent
   ]
 end

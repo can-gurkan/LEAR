@@ -23,8 +23,7 @@ value:
         - DO NOT use loops or recursion - these create infinite loops
 
     3. ALLOWED STRUCTURE:
-        - You may use "if/ifelse" statements with item checks on the "input" list
-        - Basic example: ifelse item 0 input != 0 [fd 1] [rt 90 fd 2]
+        - You may use "if/ifelse" statements
         - For complex or nested conditions, maintain proper bracket balance
 
     4. FORMATTING:

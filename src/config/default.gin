@@ -7,8 +7,8 @@ from src.graph_providers import base as graph_base
 from src.mutation import text_based_evolution
 
 # Retry configuration
-CodeRetryHandler.max_attempts = 2
-GraphProviderBase.retry_max_attempts = 2
+CodeRetryHandler.max_attempts = 5
+GraphProviderBase.retry_max_attempts = 5
 GraphProviderBase.retry_prompt = None
 
 # Text evolution configuration (Strategy used by TextBasedEvolution class)
@@ -17,7 +17,7 @@ TextBasedEvolution.evolution_strategy = 'complex'
 
 # Prompt configuration - Check storeprompts.py dict (Used by provider for code generation)
 create_graph_provider.prompt_type = 'sampling'
-create_graph_provider.prompt_name = 'zero_shot_code'
+create_graph_provider.prompt_name = 'zero_shot_code_wcomments'
 
 # Model-specific configurations
 GraphUnifiedProvider.temperature = 0.65
