@@ -6,6 +6,10 @@ from src.graph_providers import unified_provider
 from src.graph_providers import base as graph_base
 from src.mutation import text_based_evolution
 from src.utils import retry_config
+from src.utils import logging
+
+# disable logging when False
+logging.get_logger.enable_logging = True
 
 # Centralized retry configuration
 # This single value controls all retry attempts in the system

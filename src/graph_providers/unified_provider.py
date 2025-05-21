@@ -189,7 +189,7 @@ class GraphUnifiedProvider(GraphProviderBase):
                 )
                 # Update invoke_input for the chain
                 invoke_input["original_code"] = current_code  # Use current_code for retries
-                invoke_input["error"] = error_message
+                invoke_input["error_message"] = error_message
                 invoke_input["pseudocode"] = modified_pseudocode
 
             elif error_message:
