@@ -276,6 +276,27 @@ ifelse item 0 input > 0 and item 0 input <= 45 [
   ]
 ]""", True),
 
+("""ifelse [food-sensor] > 0.5 [
+  rt (180 - (sin (random-float 90) * 90))
+  fd (1 + ([food-sensor] * 2))
+] [
+  fd (random-float 2)
+  rt (cos (random-float 90) * 30)
+]
+
+ifelse [food-sensor-left] > 0.3 [
+  lt ([food-sensor-left] * 90)
+  fd (1 + ([food-sensor-left] * 1.5))
+] [
+  fd 1
+  rt (random-float 10)
+]
+
+if [energy-level] < 0.2 [
+  fd 0.5
+  rt (random-float 5)
+]""", False),
+
 ]# should be wrong
 # Examples from the prompt to validate separately
 prompt_examples = [

@@ -6,10 +6,6 @@ from src.graph_providers import unified_provider
 from src.graph_providers import base as graph_base
 from src.mutation import text_based_evolution
 from src.utils import retry_config
-from src.utils import logging
-
-# Logging configuration
-src.utils.logging.setup_logging.enabled = False  # Set to False to disable logging
 
 # Centralized retry configuration
 # This single value controls all retry attempts in the system
@@ -20,8 +16,8 @@ TextBasedEvolution.evolution_strategy = 'complex'
 # GraphProviderBase.evolution_strategy removed as provider now uses state from graph
 
 # Prompt configuration - Check storeprompts.py dict (Used by provider for code generation)
-create_graph_provider.prompt_type = 'collection_simple'
-create_graph_provider.prompt_name = 'one_shot_code_wcomments'
+create_graph_provider.prompt_type = ''
+create_graph_provider.prompt_name = ''
 
 # Model-specific configurations
 GraphUnifiedProvider.temperature = 0.65
