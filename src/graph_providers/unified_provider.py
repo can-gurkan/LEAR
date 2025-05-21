@@ -39,7 +39,7 @@ class GraphUnifiedProvider(GraphProviderBase):
                  deepseek_model_name: str = "deepseek-chat",
                  groq_model_name: str = "llama-3.3-70b-versatile",
                  openai_model_name: str = "gpt-4o",
-                 gemini_model_name: str = "gemini-pro"):  # Added Gemini model name
+                 gemini_model_name: str = "gemini-2.5-flash-preview-05-20"):  # Added Gemini model name
         """
         Initialize with model name and verifier instance.
         
