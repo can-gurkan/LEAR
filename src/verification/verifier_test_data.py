@@ -111,8 +111,8 @@ ifelse item 0 food-observations < item 0 poison-observations and item 0 food-obs
       ]
     ]
   ]""", True),
-    ("""
-ifelse weight > 10 [
+    
+    ("""ifelse weight > 10 [
   ifelse xcor = 0 and ycor = 0 [
     rt random 20 lt random 20 fd 1
   ][
@@ -126,8 +126,8 @@ ifelse weight > 10 [
   ] [
     fd 1
   ])
-])
 ]""", True),
+    
     (
 """
 (ifelse item 2 food-observations > 0 and item 2 poison-observations = 0 
@@ -191,7 +191,7 @@ ifelse item 0 input > 0 and item 1 input <= 45 [
     if random-float 1 < 0.3 [
       bk 0.5
     ]
-  ])
+  ]]
     """, True),
     ("""
 ifelse item 0 input > 0 and item 0 input <= 45 [
@@ -210,7 +210,6 @@ ifelse item 0 input > 0 and item 0 input <= 45 [
   ]
 ]
 """, True),
-],
 ("""
  (ifelse min input-resource-distances <= 5 [
     (ifelse item (position (min input-resource-distances) input-resource-distances) input-resource-types) = "gold" [rt random 10 fd 1]
@@ -227,7 +226,78 @@ ifelse item 0 input > 0 and item 0 input <= 45 [
     [fd 1]
   ]
 ))
-""", False), # should be wrong
+""", False),
+
+# Latest Test cases from the experiments
+("""ifelse (weight > 5) [ 
+  ifelse (distance [0 0] < 5) [
+    fd 1 
+  ] [
+    rt random 20 
+    fd 1 
+  ]
+] [
+  let closest-resource (min (list (item 0 input-resource-distances) (item 1 input-resource-distances) (item 2 input-resource-distances)))
+  let closest-resource-index (ifelse (closest-resource = (item 0 input-resource-distances)) [ 0 ] 
+                              (closest-resource = (item 1 input-resource-distances)) [ 1 ] 
+                              [ 2 ])
+  if (closest-resource-index = 0) [ lt 10 ]
+  if (closest-resource-index = 1) [ rt 0 ]
+  if (closest-resource-index = 2) [ rt random 20 lt random 20 ]
+  fd 1
+]""", True),
+
+("""ifelse (weight > 5) [ 
+  ifelse (distance [0 0] < 5) [ 
+    fd 1 
+  ] [
+    rt random 20
+    fd 1
+  ]
+] [
+  let closest-resource (min input-resource-distances)
+  let closest-resource-index (position closest-resource input-resource-distances)
+  if (closest-resource < 10) [
+    ifelse (closest-resource-index = 0) [
+      lt 10
+      fd 1
+    ] [
+      ifelse (closest-resource-index = 1) [
+        rt 0
+        fd 1
+      ] [
+        rt -10
+        fd 1
+      ]
+    ]
+  ] [
+    rt random 20
+    fd 1
+  ]
+]""", True),
+
+("""ifelse [food-sensor] > 0.5 [
+  rt (180 - (sin (random-float 90) * 90))
+  fd (1 + ([food-sensor] * 2))
+] [
+  fd (random-float 2)
+  rt (cos (random-float 90) * 30)
+]
+
+ifelse [food-sensor-left] > 0.3 [
+  lt ([food-sensor-left] * 90)
+  fd (1 + ([food-sensor-left] * 1.5))
+] [
+  fd 1
+  rt (random-float 10)
+]
+
+if [energy-level] < 0.2 [
+  fd 0.5
+  rt (random-float 5)
+]""", False),
+
+]# should be wrong
 # Examples from the prompt to validate separately
 prompt_examples = [
     'fd random-float 2 rt sin (random 90) fd 1',

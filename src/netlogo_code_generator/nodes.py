@@ -3,61 +3,72 @@ Node implementations for the NetLogo code generation graph.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, TypedDict, Optional
+from langgraph.graph import StateGraph, END
 
 from src.netlogo_code_generator.state import GenerationState
 from src.mutation.text_based_evolution import TextBasedEvolution
 from src.graph_providers.base import GraphProviderBase
 from src.verification.verify_netlogo import NetLogoVerifier
 from src.utils.logging import get_logger
+from src.utils.retry_config import should_retry
 
 # Get the global logger instance
 logger = get_logger()
 
+class GenerationState(TypedDict):
+    """State for the NetLogo code generation graph."""
+    original_code: str
+    current_code: str
+    agent_info: list
+    error_message: Optional[str]
+    retry_count: int
+    use_text_evolution: bool
+    initial_pseudocode: str
+    modified_pseudocode: Optional[str]
 
 def evolve_pseudocode(
     state: GenerationState,
     provider: GraphProviderBase,
 ) -> GenerationState:
     """
-    Generate modified pseudocode if text-based evolution is enabled.
+    Evolve pseudocode using the provider.
 
     Args:
         state: Current generation state
         provider: Model provider for text generation
-        use_text_evolution: Whether to use text-based evolution
 
     Returns:
-        Updated generation state with modified pseudocode
+        Updated generation state with evolved pseudocode
     """
-    logger.info(f"NODE: evolve_pseudocode")
-    use_text_evolution = state.get("use_text_evolution", False)
-    logger.info(f"Evolving pseudocode, use_text_evolution: {use_text_evolution}")
-
-    # Log truncated versions of potentially large strings
-    original_code_sample = state.get('original_code', '')
-    initial_pseudocode_sample = state.get('initial_pseudocode', '')
-    logger.info(f"Original code (sample): {original_code_sample}")
-    logger.info(f"Initial pseudocode (sample): {initial_pseudocode_sample}")
+    logger.info("NODE: evolve_pseudocode - Starting pseudocode evolution")
     
+    # Skip if not using text evolution
     if not state["use_text_evolution"]:
-        logger.info("Text evolution disabled, skipping pseudocode generation")
+        logger.info("Text evolution disabled, skipping pseudocode evolution")
         return state
 
-    logger.info("Text evolution enabled, generating pseudocode")
-    text_evolution = TextBasedEvolution(provider)
-    modified_pseudocode = text_evolution.generate_pseudocode( 
-        state["agent_info"], 
-        state["initial_pseudocode"], 
-        state["original_code"]
-    )
-    
-    # Log truncated version of modified pseudocode
-    modified_pseudocode_sample = modified_pseudocode
-    logger.info(f"Generated modified pseudocode (sample): \n{modified_pseudocode_sample}")
-    
-    state["modified_pseudocode"] = modified_pseudocode
-    return state
+    try:
+        # Get current pseudocode
+        current_pseudocode = state.get("modified_pseudocode", state["initial_pseudocode"])
+        logger.info(f"Current pseudocode: {current_pseudocode}")
+
+        # Generate evolved pseudocode
+        # Instantiate TextBasedEvolution with the LLM provider
+        text_evolver = TextBasedEvolution(provider=provider)
+        evolved_pseudocode = text_evolver.generate_pseudocode(
+            agent_info=state["agent_info"],
+            current_text=current_pseudocode,
+            original_code=state["original_code"]
+        )
+        logger.info(f"Evolved pseudocode: {evolved_pseudocode}")
+
+        # Update state with evolved pseudocode
+        return {**state, "modified_pseudocode": evolved_pseudocode}
+
+    except Exception as e:
+        logger.error(f"Error in evolve_pseudocode: {str(e)}")
+        return state
 
 def generate_code(
     state: GenerationState,
@@ -140,19 +151,16 @@ def verify_code(
     
     return result
 
-def should_retry(state: GenerationState, max_attempts: int = 5) -> str:
-    logger.info(f"Checking if should retry, retry_count: {state['retry_count']}, max_attempts: {max_attempts}, error_message: {state['error_message']}")
+def should_retry_node(state: GenerationState) -> str:
     """
     Determine if code generation should be retried.
     
     Args:
         state: Current generation state
-        max_attempts: Maximum number of retry attempts
         
     Returns:
         "retry" if should retry, "end" otherwise
     """
-    should_retry_value = "retry" if state["error_message"] and state["retry_count"] < max_attempts else "end"
-    logger.info(f"Should retry decision: {should_retry_value}")
-    return should_retry_value
-
+    retry_decision = should_retry(state["retry_count"], state["error_message"])
+    logger.info(f"Should retry decision: {retry_decision}")
+    return "retry" if retry_decision else "end"

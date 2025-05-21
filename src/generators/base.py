@@ -6,7 +6,6 @@ import logging
 import gin
 
 from src.utils.storeprompts import prompts
-from src.utils.retry import CodeRetryHandler
 from src.verification.verify_netlogo import NetLogoVerifier
 
 
