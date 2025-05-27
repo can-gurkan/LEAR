@@ -146,6 +146,45 @@ to-report eggholder [x y]
   report -1 * (y + a) * sin (sqrt (abs (y + x / b + a)) * 180 / pi) - x * sin (sqrt (abs (x - (y + a))) * 180 / pi)
 end
 
+to-report griewank [x y]
+  let a 4000
+  let b 1
+  let bound 14
+  let scale bound / max-pxcor
+  set x x * scale
+  set y y * scale
+  ;report sum map [z -> a + ((z ^ 2) / a - a * cos (2 * pi * z * 180 / pi))] list x y
+  report b + ((x ^ 2 + y ^ 2) / a) - (cos ((x / sqrt 1) * 180 / pi) * cos ((y / sqrt 2) * 180 / pi))
+end
+
+to-report schwefel [x y]
+  let a 418.9829
+  let bound 500
+  let scale bound / max-pxcor
+  set x x * scale
+  set y y * scale
+  ;report sum map [z -> a + ((z ^ 2) / a - a * cos (2 * pi * z * 180 / pi))] list x y
+  report sum map [z -> a - (z * sin ((sqrt abs z) * 180 / pi))] list x y
+end
+
+to-report crosstray [x y]
+  let a -0.0001
+  let b 100
+  let bound 10
+  let scale bound / max-pxcor
+  set x x * scale
+  set y y * scale
+  report a * ( abs (sin (x * 180 / pi) * sin (y * 180 / pi) * exp (abs(b - (sqrt (x ^ 2 + y ^ 2)) / pi))) + 1 ) ^ 0.1
+end
+
+to-report holdertab [x y]
+  let bound 5.4
+  let scale bound / max-pxcor
+  set x x * scale
+  set y y * scale
+  report abs (sin (x * 180 / pi) * cos (y * 180 / pi) * exp (abs(1 - sqrt(x ^ 2 + y ^ 2) / pi)))
+end
+
 to-report sine-test [x0 y0]
   let bound 6
   let scale (bound / max-pxcor)
@@ -160,6 +199,10 @@ to-report get-landscape-func
     fn = "rastrigin" [[[x y] -> rastrigin x y]]
     fn = "drop-wave" [[[x y] -> drop-wave x y]]
     fn = "eggholder" [[[x y] -> eggholder x y]]
+    fn = "griewank"  [[[x y] -> griewank  x y]]
+    fn = "schwefel"  [[[x y] -> schwefel  x y]]
+    fn = "crosstray" [[[x y] -> crosstray x y]]
+    fn = "holdertab" [[[x y] -> holdertab x y]]
     fn = "sine-test" [[[x y] -> sine-test x y]]
   )
 end
@@ -189,6 +232,7 @@ to color-patches
   let sc-high 1 ;max [value] of patches ; 2.2 ;2.2
   ;ask patches [set pcolor scale-color blue value sc-low sc-high]
   ask patches [set pcolor palette:scale-gradient [[0 180 30] [30 30 30] [20 80 255]] value sc-low sc-high]
+  ;ask patches with [pcolor != orange] [set pcolor palette:scale-gradient [[160 0 245] [30 30 30] [10 170 255]] value -1 1]
 end
 
 to setup-archive
@@ -249,7 +293,7 @@ end
 to harvest
   let val [value] of patch-here
   set energy energy + val
-  ask patch-here [set value 0]
+  ask patch-here [set value 0] ;set pcolor orange]
 ;  if val > 0 [
 ;    set energy energy + val
 ;    ask patch-here [set value 0]
@@ -614,7 +658,7 @@ SWITCH
 173
 logging?
 logging?
-0
+1
 1
 -1000
 
@@ -832,8 +876,8 @@ CHOOSER
 410
 landscape-func
 landscape-func
-"rastrigin" "drop-wave" "eggholder" "sine-test"
-2
+"rastrigin" "drop-wave" "eggholder" "griewank" "schwefel" "crosstray" "holdertab" "sine-test"
+6
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -2072,6 +2116,268 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="experiment-name">
       <value value="&quot;qd-dw-egg&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;claude&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="acceptance-threshold">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prompt-name">
+      <value value="&quot;zero_shot_code_wcomments&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="qd-exp-gr" repetitions="10" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="10000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max-fitness</metric>
+    <metric>mean-energy</metric>
+    <metric>max-energy</metric>
+    <metric>max-fit-agent-rule</metric>
+    <metric>max-energy-agent-rule</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <runMetricsCondition>ticks mod ticks-per-generation = 0</runMetricsCondition>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prompt-type">
+      <value value="&quot;sampling&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="landscape-func">
+      <value value="&quot;griewank&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-archive-size">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="alpha">
+      <value value="0"/>
+      <value value="0.25"/>
+      <value value="0.5"/>
+      <value value="0.75"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="k-neighbors">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bd-dim">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;default&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sources">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;qd-dw-gr&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;claude&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="acceptance-threshold">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prompt-name">
+      <value value="&quot;zero_shot_code_wcomments&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="qd-exp-ct" repetitions="10" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="10000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max-fitness</metric>
+    <metric>mean-energy</metric>
+    <metric>max-energy</metric>
+    <metric>max-fit-agent-rule</metric>
+    <metric>max-energy-agent-rule</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prompt-type">
+      <value value="&quot;sampling&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="landscape-func">
+      <value value="&quot;crosstray&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-archive-size">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="alpha">
+      <value value="0"/>
+      <value value="0.25"/>
+      <value value="0.5"/>
+      <value value="0.75"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="k-neighbors">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bd-dim">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;default&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sources">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;qd-dw-ct&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-type">
+      <value value="&quot;claude&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection">
+      <value value="&quot;tournament&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="acceptance-threshold">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prompt-name">
+      <value value="&quot;zero_shot_code_wcomments&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="qd-exp-ht" repetitions="10" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="10000"/>
+    <metric>generation</metric>
+    <metric>mean-fitness</metric>
+    <metric>max-fitness</metric>
+    <metric>mean-energy</metric>
+    <metric>max-energy</metric>
+    <metric>max-fit-agent-rule</metric>
+    <metric>max-energy-agent-rule</metric>
+    <metric>best-rule-fitness</metric>
+    <metric>best-rule</metric>
+    <enumeratedValueSet variable="tournament-size">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="prompt-type">
+      <value value="&quot;sampling&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="landscape-func">
+      <value value="&quot;holdertab&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="max-archive-size">
+      <value value="500"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="alpha">
+      <value value="0"/>
+      <value value="0.25"/>
+      <value value="0.5"/>
+      <value value="0.75"/>
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-llm-agents">
+      <value value="6"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="k-neighbors">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="verbose?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="selection-pressure">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-config-file?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="logging?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-parents">
+      <value value="2"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="bd-dim">
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="config-file">
+      <value value="&quot;default&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ticks-per-generation">
+      <value value="200"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-sources">
+      <value value="3"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="text-based-evolution">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="llm-mutation?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="experiment-name">
+      <value value="&quot;qd-dw-ht&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="llm-type">
       <value value="&quot;claude&quot;"/>
