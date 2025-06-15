@@ -50,8 +50,8 @@ test_cases = [
     [ fd 7 ]
     ; If no positive energy detected, add some randomness to exploration
     [
-        lt random 45
-        rt random 45
+        lt random 32
+        rt random 23
         fd 1
     ]
     )""", True), 
@@ -77,7 +77,47 @@ test_cases = [
     (energy-right-far > 0 and energy-right-far > energy-ahead-far and energy-right-far > energy-left-far)
     [ rt 90 ifelse energy-right-far > 5 [ fd 7 ] [ fd 3 ] ]
     [ rt (random 90 - 45) fd 1 ]
-    )""", False)
+    )""", False),
+
+    ("""ifelse energy-ahead-close > 0
+[ fd 1 ]
+[
+  ifelse energy-left-close > 0
+  [ lt 90 fd 1 ]
+  [
+    ifelse energy-right-close > 0
+    [ rt 90 fd 1 ]
+    [
+      ifelse energy-ahead-medium > 0
+      [ fd 4 ]
+      [
+        ifelse energy-left-medium > 0
+        [ lt 90 fd 4 ]
+        [
+          ifelse energy-right-medium > 0
+          [ rt 90 fd 4 ]
+          [
+            ifelse energy-ahead-far > 0
+            [ fd 7 ]
+            [
+              ifelse energy-left-far > 0
+              [ lt 90 fd 7 ]
+              [
+                ifelse energy-right-far > 0
+                [ rt 90 fd 7 ]
+                [
+                  rt random-float 45
+                  lt random-float 40
+                  fd 2
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+]""", True)
 
 
 ]

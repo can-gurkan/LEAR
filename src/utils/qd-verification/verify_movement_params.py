@@ -15,7 +15,7 @@ def verify_movement_logic(code: str) -> bool:
 
     Returns True iff no invalid parameters are found.
     """
-    cleaned  = clean_code(code)
+    cleaned = clean_code(strip_final_block(code))
     commands = extract_commands(cleaned)
 
     for direction, value in commands:
@@ -66,3 +66,23 @@ def extract_commands(cleaned: str) -> list[tuple[str,int]]:
             result.append(('forward', n))
 
     return result
+
+def strip_final_block(code: str) -> str:
+    """
+    Remove the very last bracketed block [...]
+    so none of its commands will be extracted.
+    """
+
+    start = code.rfind('[')
+    if start == -1:
+        return code
+    
+    depth = 0
+    for i in range(start, len(code)):
+        if code[i] == '[':
+            depth += 1
+        elif code[i] == ']':
+            depth -= 1
+            if depth == 0:
+                return code[:start] + code[i+1:]
+    return code
