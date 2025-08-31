@@ -8,6 +8,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_deepseek import ChatDeepSeek
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
@@ -21,6 +22,7 @@ class SupportedModels(Enum):
     DEEPSEEK = "deepseek"
     GROQ = "groq"
     OPENAI = "openai"
+    GEMINI = "gemini"
 
 @gin.configurable
 class GraphUnifiedProvider(GraphProviderBase):
@@ -36,7 +38,8 @@ class GraphUnifiedProvider(GraphProviderBase):
                  claude_model_name: str = "claude-3-5-sonnet-20240229",
                  deepseek_model_name: str = "deepseek-chat",
                  groq_model_name: str = "llama-3.3-70b-versatile",
-                 openai_model_name: str = "gpt-4o"):
+                 openai_model_name: str = "gpt-4o",
+                 gemini_model_name: str = "gemini-2.5-flash-preview-05-20"):  # Added Gemini model name
         """
         Initialize with model name and verifier instance.
         
@@ -51,6 +54,7 @@ class GraphUnifiedProvider(GraphProviderBase):
             deepseek_model_name: Model name for DeepSeek
             groq_model_name: Model name for Groq
             openai_model_name: Model name for OpenAI
+            gemini_model_name: Model name for Gemini
         """
         super().__init__(verifier)
         self.model_name = model_name
@@ -63,6 +67,7 @@ class GraphUnifiedProvider(GraphProviderBase):
         self.deepseek_model_name = deepseek_model_name
         self.groq_model_name = groq_model_name
         self.openai_model_name = openai_model_name
+        self.gemini_model_name = gemini_model_name  # Store Gemini model name
         # Store prompt config explicitly
         self.prompt_type = prompt_type
         self.prompt_name = prompt_name
@@ -84,6 +89,10 @@ class GraphUnifiedProvider(GraphProviderBase):
             self.api_key = os.getenv('OPENAI_API_KEY')
             if not self.api_key:
                 raise ValueError("OPENAI_API_KEY environment variable is required")
+        elif self.model_name == SupportedModels.GEMINI.value:
+            self.api_key = os.getenv('GOOGLE_API_KEY')
+            if not self.api_key:
+                raise ValueError("GOOGLE_API_KEY environment variable is required")
         else:
             raise ValueError(f"Unsupported model name: {self.model_name}")
             
@@ -118,6 +127,13 @@ class GraphUnifiedProvider(GraphProviderBase):
                     temperature=self.temperature,
                     max_tokens=self.max_tokens
                 )
+            elif self.model_name == SupportedModels.GEMINI.value:
+                model = ChatGoogleGenerativeAI(
+                    model=self.gemini_model_name,
+                    google_api_key=self.api_key,
+                    temperature=self.temperature,
+                    max_output_tokens=self.max_tokens
+                )
             else:
                 raise ValueError(f"Unsupported model name: {self.model_name}")
             return model
@@ -133,7 +149,7 @@ class GraphUnifiedProvider(GraphProviderBase):
 
         Args:
             state: The current generation state dictionary. Expected keys include:
-                   'original_code', 'error_message' (optional),
+                   'original_code', 'current_code', 'error_message' (optional),
                    'modified_pseudocode' (optional), 'initial_pseudocode'.
 
         Returns:
@@ -147,6 +163,7 @@ class GraphUnifiedProvider(GraphProviderBase):
 
             # Extract relevant info from state
             original_code = state.get("original_code", "")
+            current_code = state.get("current_code", original_code)  # Use current_code for retries
             error_message = state.get("error_message", None)
             modified_pseudocode = state.get("modified_pseudocode", None)
             initial_pseudocode = state.get("initial_pseudocode", "") # Fallback if no modified
@@ -155,7 +172,7 @@ class GraphUnifiedProvider(GraphProviderBase):
             user_content = ""
 
             system_message = prompts.get("langchain", {}).get("cot_system", "You are a NetLogo programming assistant.")
-            invoke_input = {} # Initialize empty invoke input
+            invoke_input = {}
 
             if error_message and modified_pseudocode:
                 self.logger.info(f"Using retry prompt '{self.retry_prompt}' with pseudocode due to error: {error_message[:100]}...")
@@ -164,15 +181,15 @@ class GraphUnifiedProvider(GraphProviderBase):
                 if not prompt_template:
                     prompt_template = prompts.get("retry_prompts", {}).get("generate_code_with_pseudocode_and_error")
                 
-                # Format the prompt with all required fields
+                # Format the prompt with all required fields, using current_code instead of original_code
                 user_content = prompt_template.format(
-                    original_code=original_code, # Match prompt variable name
-                    error_message=error_message, # Match prompt variable name
+                    original_code=current_code,  # Use current_code for retries
+                    error_message=error_message,
                     pseudocode=modified_pseudocode
                 )
                 # Update invoke_input for the chain
-                invoke_input["original_code"] = original_code
-                invoke_input["error"] = error_message
+                invoke_input["original_code"] = current_code  # Use current_code for retries
+                invoke_input["error_message"] = error_message
                 invoke_input["pseudocode"] = modified_pseudocode
 
             elif error_message:
@@ -183,26 +200,27 @@ class GraphUnifiedProvider(GraphProviderBase):
                 if not prompt_template:
                     prompt_template = prompts.get("retry_prompts", {}).get("generate_code_with_error")
                 
-                user_content = prompt_template.format(original_code=original_code, error_message=error_message)
+                user_content = prompt_template.format(original_code=current_code, error_message=error_message)  # Use current_code for retries
                 
                 # Update invoke_input
-                #invoke_input["original_code"] = original_code
+                invoke_input["original_code"] = current_code  # Use current_code for retries
                 invoke_input["error_message"] = error_message
 
             elif modified_pseudocode:
                 # Use code generation prompt with modified pseudocode
                 self.logger.info(f"Using {self.evolution_strategy} for Code Generation with modified pseudocode.")
                 prompt_template = prompts.get("evolution_strategies", {}).get(self.evolution_strategy, "Generate NetLogo code based on this pseudocode:\n{pseudocode}\n\nOriginal code for context:\n```netlogo\n{original_code}\n```").get("code_prompt") # Default template
-                user_content = prompt_template.format(pseudocode=modified_pseudocode)
+                user_content = prompt_template.format(pseudocode=modified_pseudocode, original_code=original_code)  # Use original_code as context here
                 
                 # Add necessary inputs for the prompt template
                 invoke_input["initial_pseudocode"] = modified_pseudocode
+                invoke_input["original_code"] = original_code
 
             else:
                 self.logger.info(f"Using code generation/evolution prompt '{self.prompt_type}/{self.prompt_name}' with original code only.")
                 default_code_only_template = "Evolve or generate code based on the following NetLogo code:\n```netlogo\n{original_code}\n```"
                 prompt_template = prompts.get(self.prompt_type, {}).get(self.prompt_name, default_code_only_template) 
-                user_content = prompt_template.format(original_code=original_code)
+                user_content = prompt_template.format(original_code=original_code)  # Use original_code for first-time generation
                 
                 invoke_input = {"original_code": original_code}
 
@@ -211,7 +229,7 @@ class GraphUnifiedProvider(GraphProviderBase):
                 ("system", system_message),
                 ("user", user_content)
             ])
-            self.logger.info(f"Final prompt created. User content: {user_content}")
+            # self.logger.info(f"Final prompt created. User content: {user_content}")
 
             chain = prompt | self.model | StrOutputParser()
 
@@ -247,7 +265,7 @@ def create_graph_provider(model_name: str = "groq", verifier: NetLogoVerifier = 
     Factory method to create a graph provider based on model name.
 
     Args:
-        model_name: Type of model to use ("groq", "claude", "openai", or "deepseek")
+        model_name: Type of model to use ("groq", "claude", "openai", "deepseek", or "gemini")
         verifier: NetLogoVerifier instance for code validation
         prompt_type: Type of prompt to use for code generation (configured by Gin)
         prompt_name: Name of prompt to use for code generation (configured by Gin)

@@ -202,7 +202,7 @@ class NetLogoVerifier:
         self.comparison_operators = {'=', '!=', '>', '<', '>=', '<='}
         self.allowed_variables = {
             'input', 'energy', 'lifetime', 'food-collected',
-            'xcor', 'ycor', 'heading', 'who', 'input-resource-distances', 'input-resource-types',
+            'input-resource-distances', 'input-resource-types',
             'food-observations', 'poison-observations', '"silver"', '"gold"', '"crystal"',
             'weight' # Added based on analysis of storeprompts.py
         }
@@ -283,9 +283,14 @@ class NetLogoVerifier:
                     elif val_lower in {'and', 'or', 'not'}:
                          token_type = TokenType.LOGICAL
                     # Note: Variables remain IDENTIFIER unless matched above.
+                    
+                    # Ensure built-in turtle properties are always treated as reporters,
+                    # even when used in variable contexts
+                    if val_lower in {'xcor', 'ycor', 'heading', 'who'}:
+                        token_type = TokenType.REPORTER
 
                 yield Token(token_type, value, line_num, column)
-
+        
         # Yield EOF token at the end
         yield Token(TokenType.EOF, '', line_num, len(code) - line_start + 1)
 
@@ -328,22 +333,24 @@ class NetLogoVerifier:
         if len(code) > self.max_code_length:
             result.add_error(ValidationError(f"Code exceeds maximum length of {self.max_code_length} characters"))
 
-        # --- Step 3: Basic Structural Validation ---
+        # --- Step 3: Basic Safety Check ---
         dangerous_result = self._check_dangerous_primitives_tokenized(filtered_tokens)
         result.merge(dangerous_result)
         if not result.is_valid: return result
 
+        # --- Step 4: Detailed Validation ---
+        # Changed order: Syntax check first, then bracket balance (more accurate for complex structures)
+        syntax_result = self._check_syntax_tokenized(filtered_tokens)
+        result.merge(syntax_result)
+        if not result.is_valid: return result  # Stop early if syntax errors occurred
+        
+        # Only check bracket balance if syntax passed (avoids false positives from nested structures)
         balance_result = self._check_brackets_balance_tokenized(filtered_tokens)
         result.merge(balance_result)
         if not result.is_valid: return result
 
-        # --- Step 4: Detailed Validation ---
         movement_result = self._check_movement_commands_tokenized(filtered_tokens)
         result.merge(movement_result)
-
-        syntax_result = self._check_syntax_tokenized(filtered_tokens)
-        result.merge(syntax_result)
-        # Stop early if major syntax errors occurred before checking ranges
         if not result.is_valid: return result
 
         # Call the token-based value range check
@@ -374,7 +381,26 @@ class NetLogoVerifier:
         opening_types = {TokenType.LPAREN, TokenType.LBRACKET}
         closing_types = {TokenType.RPAREN, TokenType.RBRACKET}
 
-        for token in tokens:
+        # Handle common pattern of extra closing parenthesis at end of ifelse statements
+        # This happens in NetLogo code, though technically incorrect syntax
+        ignore_trailing_rparen = False
+        if len(tokens) >= 2 and tokens[-2].type == TokenType.RBRACKET and tokens[-1].type == TokenType.RPAREN:
+            # Look for matching LPAREN earlier in the token stream
+            paren_level = 0
+            for idx, token in enumerate(tokens[:-1]):
+                if token.type == TokenType.LPAREN:
+                    paren_level += 1
+                elif token.type == TokenType.RPAREN:
+                    paren_level -= 1
+            # If there's no matching LPAREN, this might be an extra trailing paren
+            if paren_level <= 0:
+                ignore_trailing_rparen = True
+
+        for i, token in enumerate(tokens):
+            # Skip the last token if it's a trailing RPAREN we've decided to ignore
+            if ignore_trailing_rparen and i == len(tokens) - 1 and token.type == TokenType.RPAREN:
+                continue
+                
             if token.type in opening_types:
                 stack.append((bracket_map[token.type], token))
             elif token.type in closing_types:
@@ -658,7 +684,7 @@ class NetLogoVerifier:
                       inferred_type = TYPE_INVALID
             else:
                  # Basic type inference for known variables
-                 if var_name in {'xcor', 'ycor', 'heading', 'who', 'energy', 'lifetime', 'food-collected', 'weight'}:
+                 if var_name in {'energy', 'lifetime', 'food-collected', 'weight'}:
                       inferred_type = TYPE_NUMBER
                  elif var_name in {'"silver"', '"gold"', '"crystal"'}:
                       inferred_type = TYPE_STRING
@@ -788,14 +814,21 @@ class NetLogoVerifier:
                  ))
                  next_index = i + 1
                  inferred_type = TYPE_INVALID
-            elif arity is None or arity == 0: # 0-arity handled as IDENTIFIER, None is error
-                 # This case should ideally not be reached if 0-arity reporters are handled above
+            elif arity is None: # None is error
                  result.add_error(ValidationError(
                      f"Unknown or disallowed reporter '{current_token.value}' used in expression",
                      line_number=current_token.line, code_snippet=current_token.value
                  ))
                  next_index = i + 1
                  inferred_type = TYPE_INVALID
+            elif arity == 0:  # Handle zero-argument reporters properly
+                 # These are built-in properties like xcor, ycor, heading
+                 # They don't take arguments and directly return values
+                 if reporter_name in {'xcor', 'ycor', 'heading', 'who', 'energy', 'lifetime', 'food-collected', 'weight'}:
+                      inferred_type = TYPE_NUMBER
+                 else:
+                      inferred_type = TYPE_ANY  # Default for unknown 0-arity reporters
+                 next_index = i + 1
             else:
                  # Consume the reporter token itself
                  current_arg_index = i + 1
@@ -838,7 +871,11 @@ class NetLogoVerifier:
                            inferred_type = TYPE_NUMBER
                       elif reporter_name in {'any?'}:
                            inferred_type = TYPE_BOOLEAN
-                      elif reporter_name in {'item', 'position', 'min', 'max'}: # Can return num/bool/item-type
+                      elif reporter_name in {'item'}: # Special handling for item
+                           # item can return any type depending on list contents
+                           # but we know it's safe to use in boolean contexts
+                           inferred_type = TYPE_ANY
+                      elif reporter_name in {'position', 'min', 'max'}: # Can return num/bool/item-type
                            inferred_type = TYPE_ANY
                       elif reporter_name in {'in-radius'}:
                            inferred_type = TYPE_AGENTSET
@@ -973,9 +1010,7 @@ class NetLogoVerifier:
             elif op_type in boolean_ops and op_val in {'and', 'or'}:
                 if left_type not in allowed_boolean_operands or right_type not in allowed_boolean_operands:
                      # Error if definitely incompatible
-                     if TYPE_NUMBER in (left_type, right_type) or \
-                        TYPE_STRING in (left_type, right_type) or \
-                        TYPE_LIST in (left_type, right_type): # Add other non-boolean types
+                     if TYPE_STRING in (left_type, right_type): # Only strings are definitely incompatible
                          result.add_error(ValidationError(
                              f"Operator '{op_val}' expects boolean operands, but got {left_type} and {right_type}",
                              line_number=operator_token.line
@@ -988,7 +1023,10 @@ class NetLogoVerifier:
                  # Comparisons are generally permissive type-wise in NetLogo
                  if left_type not in allowed_comparison_operands or right_type not in allowed_comparison_operands:
                       pass # Allow most comparisons for now
+                 # Any comparison operation always results in a boolean, regardless of operand types
                  current_op_result_type = TYPE_BOOLEAN # Result is boolean
+                 # No validation errors for comparison operators type mismatches at this point
+                 # NetLogo is quite flexible with comparisons
             else:
                  # Should not happen if _get_token_precedence is correct
                  result.add_error(ValidationError(f"Unhandled operator type: {op_type.name}", line_number=operator_token.line))
@@ -1049,11 +1087,15 @@ class NetLogoVerifier:
 
         # Check condition type (should be boolean)
         # Allow ANY/UNKNOWN as condition might resolve at runtime
-        if cond_type not in {TYPE_BOOLEAN, TYPE_ANY, TYPE_UNKNOWN, TYPE_INVALID}:
-             result.add_error(ValidationError(
-                 f"{statement_type} expects a boolean condition, but got {cond_type}",
-                 line_number=tokens[i].line # Line where condition starts
-             ))
+        if cond_type not in {TYPE_BOOLEAN, TYPE_ANY, TYPE_UNKNOWN, TYPE_INVALID, TYPE_NUMBER}:
+             # More permissive type checking for if conditions
+             # NetLogo allows non-boolean values in conditions (coerces to boolean)
+             # Only show warning for definitely non-boolean types like STRING
+             if cond_type == TYPE_STRING:
+                 result.add_error(ValidationError(
+                     f"{statement_type} expects a boolean condition, but got {cond_type}",
+                     line_number=tokens[i].line # Line where condition starts
+                 ))
 
         # Attempt recovery even if condition is invalid/wrong type
         if not cond_result.is_valid or cond_type == TYPE_INVALID:
@@ -1149,7 +1191,6 @@ class NetLogoVerifier:
 
     def _validate_multi_conditional(self, tokens: List[Token], start_idx: int, statement_type: str) -> Tuple[ValidationResult, int]:
         """Validate multi-conditional ifelse/ifelse-value using tokens."""
-        # Returns: ValidationResult, consumed_token_count
         result = ValidationResult(True)
         i = start_idx # Should start at LPAREN
         paren_token = tokens[i]
@@ -1172,19 +1213,19 @@ class NetLogoVerifier:
                  elif tokens[i].type == TokenType.EOF: break
                  i += 1
              return result, i + 1 if i < len(tokens) else i
-        i += 1 # Move past statement type (ifelse or ifelse-value)
 
+        i += 1 # Move past statement type (ifelse or ifelse-value)
         has_processed_at_least_one_pair = False
+
         while i < len(tokens):
-            # --- Check for loop termination conditions first ---
             current_token = tokens[i]
 
-            # 1. End of statement?
+            # End of statement?
             if current_token.type == TokenType.RPAREN:
                 i += 1 # Consume ')'
-                break # Exit loop
+                break
 
-            # 2. Optional final else block?
+            # Optional final else block?
             if current_token.type == TokenType.LBRACKET:
                 i += 1 # Consume '['
                 else_branch_start_i = i
@@ -1206,7 +1247,7 @@ class NetLogoVerifier:
 
                 # Validate else branch contents
                 else_branch_tokens = tokens[else_branch_start_i:else_branch_end_i]
-                else_branch_result, _ = self._validate_branch_contents( # Ignore branch type
+                else_branch_result, _ = self._validate_branch_contents(
                      else_branch_tokens,
                      statement_type,
                      opening_bracket_line=tokens[else_branch_start_i-1].line
@@ -1216,15 +1257,14 @@ class NetLogoVerifier:
                 # After the final else branch, we MUST find the closing parenthesis
                 if i >= len(tokens) or tokens[i].type != TokenType.RPAREN:
                      result.add_error(ValidationError(f"Expected ')' after final else branch in {statement_type}", line_number=tokens[i-1].line if i > 0 else paren_token.line))
-                     # Don't consume if RPAREN is missing, let the final check handle it
                 else:
                      i += 1 # Consume ')'
-                break # Exit loop after processing final else
+                break
 
-            # --- If not RPAREN or LBRACKET, assume it's a condition-branch pair ---
+            # If not RPAREN or LBRACKET, assume it's a condition-branch pair
             has_processed_at_least_one_pair = True
 
-            # 3. Parse Condition
+            # Parse Condition
             cond_result, cond_end_i, cond_type = self._validate_expression(tokens, i, min_precedence=-1)
             result.merge(cond_result)
 
@@ -1235,19 +1275,17 @@ class NetLogoVerifier:
                      line_number=tokens[i].line
                  ))
 
-            # If condition is invalid, stop processing this statement
+            # If condition is invalid, continue to next condition
             if not cond_result.is_valid or cond_type == TYPE_INVALID:
-                 i = cond_end_i # Advance index past the invalid expression
-                 break # Exit the while loop
+                 i = cond_end_i
+                 continue
 
-            # Condition was valid, update index
             i = cond_end_i
 
-            # 4. Expect and Parse Command Block '[' ... ']'
+            # Expect and Parse Command Block '[' ... ']'
             if i >= len(tokens) or tokens[i].type != TokenType.LBRACKET:
                  result.add_error(ValidationError(f"Expected '[' after condition in {statement_type}", line_number=tokens[i-1].line if i > 0 else paren_token.line))
-                 # If '[' is missing, stop processing this statement
-                 break # Exit the while loop
+                 break
             else:
                  i += 1 # Move past '['
                  branch_start_i = i
@@ -1263,7 +1301,6 @@ class NetLogoVerifier:
                  if bracket_level != 0:
                      result.add_error(ValidationError(f"Unclosed bracket in {statement_type} branch", line_number=tokens[branch_start_i-1].line))
                      branch_end_i = i
-                     # Stop processing if branch is unclosed
                      break
                  else:
                      branch_end_i = i
@@ -1271,32 +1308,24 @@ class NetLogoVerifier:
 
                  # Validate condition branch contents
                  branch_tokens = tokens[branch_start_i:branch_end_i]
-                 branch_result, _ = self._validate_branch_contents( # Ignore branch type
+                 branch_result, _ = self._validate_branch_contents(
                       branch_tokens,
                       statement_type,
                       opening_bracket_line=tokens[branch_start_i-1].line
                  )
                  result.merge(branch_result)
-                 # Loop continues to check for RPAREN, LBRACKET, or next condition
 
-        # --- Post-loop checks ---
-        # Check if the loop exited because it reached the end of tokens unexpectedly
+        # Post-loop checks
         if i < len(tokens) and tokens[i].type == TokenType.EOF and (i == 0 or tokens[i-1].type != TokenType.RPAREN):
              result.add_error(ValidationError(f"Unexpected end of input within multi-conditional {statement_type}", line_number=tokens[i-1].line if i > 0 else paren_token.line))
-        # Check if we ended correctly (the token *before* the current index 'i' should be RPAREN)
         elif i == 0 or (i > 0 and tokens[i-1].type != TokenType.RPAREN):
-             # Avoid adding duplicate error if already reported missing ')'
              if not result.errors or "Expected ')'" not in result.errors[-1].message:
                  line_num = tokens[i-1].line if i > 0 else paren_token.line
                  result.add_error(ValidationError(f"Expected ')' to end multi-conditional {statement_type}", line_number=line_num))
-        # Check if any condition-branch pairs were processed
-        elif not has_processed_at_least_one_pair and i > 0 and tokens[i-1].type == TokenType.RPAREN: # Ensure it didn't just parse '()'
-             # Check if the token before RPAREN was the statement type
+        elif not has_processed_at_least_one_pair and i > 0 and tokens[i-1].type == TokenType.RPAREN:
              if i > 1 and tokens[i-2].type == TokenType.COMMAND and tokens[i-2].value.lower() == statement_type:
                   result.add_error(ValidationError(f"Multi-conditional {statement_type} must have at least one condition/branch pair or an else branch", line_number=paren_token.line))
 
-
-        # Return the result and the number of tokens consumed by the entire multi-conditional statement
         return result, i - start_idx
 
     def _validate_branch_contents(self, tokens: List[Token], statement_type: str, opening_bracket_line: int) -> Tuple[ValidationResult, str]:
@@ -1340,17 +1369,24 @@ class NetLogoVerifier:
                  branch_type = TYPE_INVALID # Mark as invalid due to extra tokens
             # If valid and consumed all, branch_type remains expr_type.
         else: # 'if' or 'ifelse' command block validation
-            # Use the main syntax checker for the branch content
-            eof_token = Token(TokenType.EOF, '', tokens[-1].line, tokens[-1].column + 1) if tokens else Token(TokenType.EOF, '', branch_start_line, 1)
-            # Validate the sequence of commands within the block
+            # Use the main syntax checker for the branch content.
+            # An EOF token is appended to signal the end of the block to _check_syntax_tokenized.
+            eof_line = tokens[-1].line if tokens else branch_start_line
+            eof_col = tokens[-1].column + 1 if tokens else 1
+            eof_token = Token(TokenType.EOF, '', eof_line, eof_col)
+            
             branch_syntax_result = self._check_syntax_tokenized(tokens + [eof_token])
 
             if not branch_syntax_result.is_valid:
                  # Add context to errors from the branch validation
                  for error in branch_syntax_result.errors:
-                      error.message = f"Invalid command sequence in {statement_type} branch (line ~{branch_start_line}): {error.message}"
-                      # Adjust line numbers if possible? Difficult without original code mapping.
-                 result.merge(branch_syntax_result)
+                      # Prepend context if not already present to avoid duplication
+                      # and ensure the original error message from _check_syntax_tokenized is preserved.
+                      context_prefix = f"Invalid command sequence in {statement_type} branch (starting line ~{branch_start_line}): "
+                      if not error.message.startswith(context_prefix) and \
+                         not error.message.startswith("Invalid command sequence in"): # General check for similar context
+                           error.message = context_prefix + error.message
+                 result.merge(branch_syntax_result) # Merge after potentially modifying messages
                  branch_type = TYPE_INVALID
             else:
                  branch_type = TYPE_COMMAND_BLOCK # Valid command sequence

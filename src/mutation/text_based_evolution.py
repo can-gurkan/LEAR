@@ -2,11 +2,9 @@ from typing import List, Dict, Optional
 from dataclasses import dataclass
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-
-import logging
 import re
 import gin
-
+from src.utils.logging import get_logger
 from src.utils.storeprompts import prompts
 from src.graph_providers.base import GraphProviderBase
 
@@ -30,10 +28,10 @@ class TextBasedEvolution:
             evolution_strategy: The evolution strategy to use (e.g., "simple", "complex")
                                 Controls which prompts will be used for code generation
         """
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger()
         self.provider = provider
         self.evolution_strategy = evolution_strategy
-        print(self.evolution_strategy)
+        
         self.logger.info(f"Initialized TextBasedEvolution with strategy: {evolution_strategy}")
 
     def generate_pseudocode(self, agent_info: list, current_text: str, original_code: str) -> str:
