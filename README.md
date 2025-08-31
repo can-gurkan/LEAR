@@ -1,20 +1,12 @@
-# LEAR
-LLM-driven Evolution of Agent Rules
+# LEAR: LLM-Driven Evolution of Agent-Based Rules
+
+Implementation of ["LEAR: LLM-Driven Evolution of Agent-Based Rules"](https://dl.acm.org/doi/10.1145/3712255.3734368)
 
 ## Overview
 
 This project explores the use of **Large Language Models (LLMs)** within **Agent-Based Modeling (ABM)** environments to iteratively enhance agent movement and functionality through **automated code generation**.
 
-Traditional genetic programming typically relies on **mutation operators** — small, stochastic changes applied to numerical agent behaviors — to explore behavior spaces (Poli et al., 2013). This project introduces and evaluates a **novel approach** by leveraging **LLM-driven code generation** as an advanced mutation operator.
-
-## Approach
-
-- **Traditional Method**: Utilizes conventional mutation operators to introduce slight, random variations in agent behavior.
-- **Proposed Method**: Integrates LLMs to autonomously generate, modify, and optimize the agent behavior code based on iterative feedback from the environment.
-
-## Goal
-
-The primary objective is to **compare the effectiveness** of LLM-generated mutations against traditional mutation strategies used in genetic programming. By doing so, the project seeks to assess whether LLMs can provide a more sophisticated and efficient mechanism for evolving agent behaviors.
+We provide benchmarks that evaluate the efficacy of LLM-generated code in multi-agent domains. Our approach leverages the sophisticated code-generation capabilities of LLMs to introduce semantically meaningful variations during the evolutionary process. Specifically, we explore and systematically compare different prompting strategies to assess their impact on the quality of evolved agent behaviors. Additionally, we propose a novel methodology where evolution operates at a higher abstraction level by mutating pseudocode representations of agent behaviors, subsequently converting them into executable code through another LLM-mediated step. This strategy capitalizes on the extensive natural language training data of LLMs, potentially enabling the discovery of more innovative solutions.
 
 ## Installation
 
@@ -81,7 +73,24 @@ Alternatively, update your configuration file or code as needed to locate NetLog
 
 
 ## Citation
-Poli, Riccardo, et al. "Genetic programming: An introductory tutorial and a survey of techniques 
-    and applications." Univ. Essex School of Computer Science and Electronic Engineering 
-    Technical Report No. CES-475 (2007): 1-112.
 
+To cite this work, please use
+
+```bibtex
+@inproceedings{10.1145/3712255.3734368,
+author = {Gurkan, Can and Jwalapuram, Narasimha Karthik and Wang, Kevin and Danda, Rudy and Rasmussen, Leif and Chen, John and Wilensky, Uri},
+title = {LEAR: LLM-Driven Evolution of Agent-Based Rules},
+year = {2025},
+isbn = {9798400714641},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3712255.3734368},
+doi = {10.1145/3712255.3734368},
+booktitle = {Proceedings of the Genetic and Evolutionary Computation Conference Companion},
+pages = {2309–2326},
+numpages = {18},
+keywords = {large language models, genetic programming, evolutionary computation, multi-agent systems, agent-based modeling},
+location = {NH Malaga Hotel, Malaga, Spain},
+series = {GECCO '25 Companion}
+}
+```
