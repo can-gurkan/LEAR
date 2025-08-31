@@ -1,6 +1,6 @@
 # LEAR: LLM-Driven Evolution of Agent-Based Rules
 
-Implementation of ["LEAR: LLM-Driven Evolution of Agent-Based Rules"](https://dl.acm.org/doi/10.1145/3712255.3734368)
+Implementation of ["LEAR: LLM-Driven Evolution of Agent-Based Rules"](https://dl.acm.org/doi/10.1145/3712255.3734368) accepted yo GECCO '25.
 
 ## Overview
 
@@ -77,7 +77,7 @@ Alternatively, update your configuration file or code as needed to locate NetLog
 To cite this work, please use
 
 ```bibtex
-@inproceedings{10.1145/3712255.3734368,
+@inproceedings{LEAR_GURKAN,
 author = {Gurkan, Can and Jwalapuram, Narasimha Karthik and Wang, Kevin and Danda, Rudy and Rasmussen, Leif and Chen, John and Wilensky, Uri},
 title = {LEAR: LLM-Driven Evolution of Agent-Based Rules},
 year = {2025},
