@@ -1,6 +1,6 @@
 # LEAR: LLM-Driven Evolution of Agent-Based Rules
 
-Implementation of ["LEAR: LLM-Driven Evolution of Agent-Based Rules"](https://dl.acm.org/doi/10.1145/3712255.3734368) accepted yo GECCO '25.
+Implementation of ["LEAR: LLM-Driven Evolution of Agent-Based Rules"](https://dl.acm.org/doi/10.1145/3712255.3734368) accepted to GECCO '25.
 
 ## Overview
 
